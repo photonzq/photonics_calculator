@@ -1,9 +1,12 @@
 # Photonics Calculator
 
-`photonics_calculator.html` — a single self-contained page of interactive
-back-of-the-envelope calculators for laser and integrated-photonics work.
-No build step and no server: open the file in a browser (Tailwind and KaTeX
-load from a CDN, so keep a network connection for the styling and equations).
+Live page: **https://photonzq.github.io/photonics_calculator/**
+
+`index.html` — a single self-contained page of interactive back-of-the-envelope
+calculators for laser and integrated-photonics work. No build step and no server:
+open it from the link above, or open the file straight from disk in a browser.
+Tailwind and KaTeX load from a CDN, so keep a network connection for the styling
+and equations.
 
 ## Sections
 
@@ -32,8 +35,17 @@ git show archive/wavelength-converter-old:wavelength_frequency_converter_old.htm
 git show archive/gaussian-beam-standalone:gaussian_beam_calculator.html > gaussian_beam_calculator.html
 ```
 
-`git log --follow photonics_calculator.html` follows the file across its rename
-from `wavelength_frequency_converter.html`.
+`git log --follow index.html` follows the page across its renames from
+`wavelength_frequency_converter.html`.
+
+## Hosting
+
+GitHub Pages serves this from the `main` branch, root folder — the page is
+`index.html`, so the repository URL loads the calculator directly. `.nojekyll`
+is present so the files are published verbatim rather than run through Jekyll.
+Every asset is either inline or an absolute `https://` CDN URL and no path is
+root-relative, so the page works unchanged at a project subpath, at a user page,
+or behind a custom domain.
 
 ## Note on Google Drive
 

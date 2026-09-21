@@ -1814,7 +1814,7 @@
         };
         const PULSE_SHAPE_FACTORS = {
             'sech2': { t0_factor: 1.7627, power_factor: 2 }, // P0 = E / (2 * T0)
-            'gaussian': { t0_factor: 1.6651, power_factor: Math.sqrt(Math.PI/2) * 1.6651 } // P0 = E / (T0 * sqrt(pi/2))
+            'gaussian': { t0_factor: 1.6651, power_factor: Math.sqrt(Math.PI) } // P0 = E / (T0 * sqrt(pi)), for P(t) = P0 exp(-t^2/T0^2)
         };
 
         // --- Unit Factors to Base SI Units ---
@@ -2034,7 +2034,10 @@
         // --- Precision Helper ---
         function getPrecision() {
             const digits = parseInt(precisionInput.value, 10);
-            return isNaN(digits) || digits < 0 ? 4 : digits;
+            if (isNaN(digits) || digits < 0) return 4;
+            // toFixed()/toExponential() throw a RangeError outside 0-100, and the
+            // input's max="10" does not stop a typed or pasted value, so clamp here.
+            return Math.min(digits, 10);
         }
 
         // --- Quick Preset Setter ---
@@ -2622,16 +2625,24 @@
             } else if (source === 'tau_out') {
                 const tau_out_val = parseFloat(elongTauOutInput.value);
                 const tau_out_unit = elongTauOutUnit.value;
-                if (isNaN(tau_out_val) || tau_out_val < tau0_val) {
+                if (isNaN(tau_out_val) || tau_out_val <= 0) {
                     elongMInput.value = '';
                     elongPowerFactor.textContent = '-';
                     isSyncing = false;
                     return;
                 }
 
+                // Compare the two durations in seconds: the fields carry independent
+                // units, so comparing the typed numbers rejected valid inputs (0.3 ps
+                // out of 100 fs in) and left a stale dispersion value on screen.
                 const tau_out_s = tau_out_val * TIME_SI[tau_out_unit];
                 const M = tau_out_s / tau0_s;
-                if (M < 1.0) { isSyncing = false; return; }
+                if (M < 1.0) {
+                    elongMInput.value = '';
+                    elongPowerFactor.textContent = '-';
+                    isSyncing = false;
+                    return;
+                }
 
                 const gdd_mag_s2 = (tau0_s ** 2 / factorConstant) * Math.sqrt(M ** 2 - 1);
                 const disp_unit = elongDispUnit.value;
@@ -3385,7 +3396,7 @@
                 const p0_unit = solitonPeakPowerUnitSelect.value;
                 if (!isNaN(p0_val) && p0_val > 0) {
                     const p0_W = p0_val * POWER_SI[p0_unit];
-                    energy_J = p0_W * (t0_s * (shape === 'gaussian' ? shapeFactors.power_factor / shapeFactors.t0_factor : shapeFactors.power_factor));
+                    energy_J = p0_W * (t0_s * shapeFactors.power_factor);
                     solitonEnergyInput.value = (energy_J / ENERGY_SI[energy_unit]).toFixed(digits);
                 }
             } else if (source === 'ld') {
@@ -3403,7 +3414,7 @@
                 if (!isNaN(lnl_val) && lnl_val > 0) {
                     const lnl_m = lnl_val * LENGTH_SI[lnl_unit];
                     const peakPower_W = 1 / (gamma_si * lnl_m);
-                    energy_J = peakPower_W * (t0_s * (shape === 'gaussian' ? shapeFactors.power_factor / shapeFactors.t0_factor : shapeFactors.power_factor));
+                    energy_J = peakPower_W * (t0_s * shapeFactors.power_factor);
                     solitonEnergyInput.value = (energy_J / ENERGY_SI[energy_unit]).toFixed(digits);
                 }
             }
@@ -3411,7 +3422,7 @@
             energy_val = parseFloat(solitonEnergyInput.value);
             if (!isNaN(energy_val) && energy_val > 0) {
                 energy_J = energy_val * ENERGY_SI[energy_unit];
-                const peakPower_W = energy_J / (t0_s * (shape === 'gaussian' ? shapeFactors.power_factor / shapeFactors.t0_factor : shapeFactors.power_factor));
+                const peakPower_W = energy_J / (t0_s * shapeFactors.power_factor);
                 const Ld_m = (t0_s ** 2) / Math.abs(beta2_s2_per_m);
                 const Lnl_m = 1 / (gamma_si * peakPower_W);
                 const N = Math.sqrt(Ld_m / Lnl_m);
@@ -3593,8 +3604,14 @@
                     if (!isNaN(wz_target_m) && wz_target_m >= w0_m && w0_m > 0) {
                         zR_m = (Math.PI * n * (w0_m ** 2)) / (M2 * lambda_m);
                         const ratio = wz_target_m / w0_m;
-                        z_m = zR_m * Math.sqrt(Math.max(0, ratio ** 2 - 1));
+                        // Stay on whichever side of the waist the cursor is already on
+                        const zSign = z_m < 0 ? -1 : 1;
+                        z_m = zSign * zR_m * Math.sqrt(Math.max(0, ratio ** 2 - 1));
                         gbZDistanceInput.value = (z_m / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(digits);
+                    } else {
+                        // No z gives a spot smaller than the waist: refresh w(z) from
+                        // the current z instead of leaving an unreachable value on screen
+                        source = 'z';
                     }
                 }
 
@@ -4152,6 +4169,28 @@
         });
 
 
+        // --- Safety Net for the Shared isSyncing Latch ---
+        // Each section sets isSyncing while it writes its sibling fields and clears
+        // it again at every exit point. If one of them ever throws in between, the
+        // latch would stay true and every calculator on the page would silently stop
+        // responding (stale values, no error) until a reload. Release it on the way
+        // out of an exception instead.
+        [
+            'updateNmThzWavenumber', 'updateDelta', 'updatePulse', 'updateGdd',
+            'updatePulseElongation', 'updateFresnel', 'updateFpCavity',
+            'updateResonator', 'updateBraggGrating', 'updateSolitonParameters'
+        ].forEach((name) => {
+            const original = window[name];
+            window[name] = function (...args) {
+                try {
+                    return original.apply(this, args);
+                } catch (err) {
+                    isSyncing = false;
+                    console.error(name + '() failed:', err);
+                }
+            };
+        });
+
         // --- Global Sync Function ---
         function updateAllCalculations() {
             updateNmThzWavenumber('nm');
@@ -4261,7 +4300,20 @@
             fresnelAngleInput.value = (angleUnit === 'rad' ? (deg * Math.PI / 180) : deg).toFixed(getPrecision());
             updateFresnel('theta_i');
         });
-        fresnelAngleUnitSelect.addEventListener('change', () => updateFresnel('theta_i'));
+        fresnelAngleUnitSelect.addEventListener('change', () => {
+            // Re-express the typed angle in the new unit rather than reinterpreting
+            // the old number under it (45 deg is 0.7854 rad, not 45 rad, which would
+            // fall outside the 0-90 deg guard and leave the section stranded).
+            const angleUnit = fresnelAngleUnitSelect.value;
+            const deg = parseFloat(fresnelAngleSlider.value);
+            if (!isNaN(deg)) {
+                fresnelAngleInput.value = (angleUnit === 'rad' ? (deg * Math.PI / 180) : deg).toFixed(getPrecision());
+            }
+            // The spinner bounds are unit-dependent too (89.9 deg = 1.569 rad).
+            fresnelAngleInput.max = angleUnit === 'rad' ? '1.569' : '89.9';
+            fresnelAngleInput.step = angleUnit === 'rad' ? '0.01' : '0.1';
+            updateFresnel('theta_i');
+        });
         fresnelThetaTInput.addEventListener('input', () => updateFresnel('theta_t'));
         fresnelBrewsterInput.addEventListener('input', () => updateFresnel('brewster'));
 

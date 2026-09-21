@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Wavelength & Frequency Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&family=Signika:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- KaTeX for beautiful math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMeaPoAbJNdMYGNJ5GQEVUIm1iBVANoMK3HdV1OMiUPeSJ6dL" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIgsOcwrBwl+bMrN2EkrJeLwlPAXBGgF6vep2LSMV+SBFApU" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURPl3sdLFNjUhnsZqCVKRpdgaMGTcNWxmdl/aOpgHSAzPgnAxHFOna" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: 'Signika', sans-serif;
+        }
+        .calc-input {
+            @apply w-full p-4 text-xl md:text-2xl border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition focus:bg-blue-50;
+        }
+        .calc-input[readonly] {
+            @apply bg-gray-100 text-gray-700 cursor-not-allowed;
+        }
+        .calc-select {
+            @apply w-full p-4 text-lg md:text-xl border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none h-full;
+        }
+        .group-box {
+            @apply p-6 border border-gray-200 rounded-xl bg-white shadow-lg space-y-4;
+        }
+        .group-title {
+            font-family: 'Lato', sans-serif;
+            font-size: 1.5rem; /* 24px */
+            line-height: 2rem;
+            font-weight: 700;
+            text-align: center;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .group-title {
+                font-size: 1.75rem; /* 28px */
+                line-height: 2.25rem;
+            }
+        }
+        .input-label {
+            @apply block text-base font-medium text-gray-600 mb-1;
+        }
+        .arrow-separator {
+            @apply flex items-center justify-center text-3xl font-bold text-gray-500;
+        }
+        .equation-box {
+            @apply text-center text-gray-600 bg-gray-50 p-3 rounded-md my-2 text-lg;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md mx-auto space-y-8">
+        
+        <h1 class="text-4xl md:text-5xl font-bold text-center text-gray-900" style="font-family: 'Lato', sans-serif;">Optical Calculator</h1>
+
+        <!-- Conversion Group -->
+        <div class="group-box">
+            <h2 class="group-title">Wavelength ↔ Frequency</h2>
+            <div class="equation-box">$$ f = \frac{c}{\lambda} $$</div>
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div>
+                    <label for="nmInput" class="input-label">Wavelength (nm)</label>
+                    <input type="number" id="nmInput" placeholder="nm" class="calc-input">
+                </div>
+                <div class="arrow-separator md:rotate-0 rotate-90">↔</div>
+                <div>
+                    <label for="thzInput" class="input-label">Frequency (THz)</label>
+                    <input type="number" id="thzInput" placeholder="THz" class="calc-input">
+                </div>
+            </div>
+        </div>
+
+        <!-- Delta Conversion Group -->
+        <div class="group-box">
+            <h2 class="group-title">Wavelength Δ ↔ Frequency Δ</h2>
+            <div class="equation-box">$$ \Delta f \approx \left| \frac{c}{\lambda_c^2} \Delta\lambda \right| $$</div>
+             <div>
+                <label for="deltaCenterNm" class="input-label">Center λ (nm)</label>
+                <input type="number" id="deltaCenterNm" value="1550" class="calc-input">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div>
+                    <label for="deltaNmInput" class="input-label">Δλ (nm)</label>
+                    <input type="number" id="deltaNmInput" placeholder="nm" class="calc-input">
+                </div>
+                <div class="arrow-separator md:rotate-0 rotate-90">↔</div>
+                <div>
+                    <label for="deltaGhzInput" class="input-label">Δf (GHz)</label>
+                    <input type="number" id="deltaGhzInput" placeholder="GHz" class="calc-input">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pulse Properties Group -->
+        <div class="group-box">
+            <h2 class="group-title">Transform-Limited Pulses</h2>
+            <div class="equation-box">$$ \Delta t = \frac{\text{TBP}}{\Delta f} $$</div>
+            <div>
+                <label for="pulseCenterNmInput" class="input-label">Center λ (nm)</label>
+                <input type="number" id="pulseCenterNmInput" value="1550" class="calc-input">
+            </div>
+             <div class="grid grid-cols-2 gap-4">
+                <select id="pulseShapeSelect" class="calc-select">
+                    <option value="sech2">Sech² (0.315)</option>
+                    <option value="gaussian">Gaussian (0.441)</option>
+                    <option value="custom">Custom TBP</option>
+                </select>
+                <input type="number" id="customTbpInput" placeholder="TBP e.g. 0.315" class="calc-input hidden">
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                 <div>
+                    <label for="bandwidthInput" class="input-label">3dB Bandwidth</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="bandwidthInput" placeholder="BW" class="calc-input">
+                        <select id="bandwidthUnitSelect" class="calc-select w-24">
+                            <option value="nm">nm</option>
+                            <option value="thz">THz</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="arrow-separator md:rotate-0 rotate-90">↔</div>
+                <div>
+                    <label for="pulseWidthInput" class="input-label">Pulse Width (fs)</label>
+                    <input type="number" id="pulseWidthInput" placeholder="fs" class="calc-input">
+                </div>
+            </div>
+        </div>
+
+        <!-- Dispersion Conversion Group -->
+        <div class="group-box">
+            <h2 class="group-title">Group Delay Dispersion (GDD)</h2>
+            <div class="equation-box">$$ GDD_{ps^2} = - \frac{\lambda_{nm}^2}{2 \pi c} D_{ps/nm} \cdot 10^3 $$</div>
+            <div>
+                 <label for="gddCenterNm" class="input-label">Center λ (nm)</label>
+                <input type="number" id="gddCenterNm" value="1550" class="calc-input">
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div>
+                    <label for="dInput" class="input-label">D (ps/nm)</label>
+                    <input type="number" id="dInput" placeholder="ps/nm" class="calc-input">
+                </div>
+                <div class="arrow-separator md:rotate-0 rotate-90">↔</div>
+                <div>
+                    <label for="gddInput" class="input-label">GDD (ps²)</label>
+                    <input type="number" id="gddInput" placeholder="ps²" class="calc-input">
+                </div>
+            </div>
+        </div>
+
+        <!-- Specialized Calculators -->
+        <div class="group-box">
+            <h2 class="group-title">Waveguide Bragg Grating</h2>
+            <div class="equation-box">$$ \lambda_B = \frac{n_1 + n_2}{2} \Lambda \cdot 2 $$</div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="neff1Input" class="input-label">Effective Index 1 (n₁)</label>
+                    <input type="number" id="neff1Input" value="1.8" step="0.01" class="calc-input">
+                </div>
+                <div>
+                    <label for="neff2Input" class="input-label">Effective Index 2 (n₂)</label>
+                    <input type="number" id="neff2Input" value="1.8" step="0.01" class="calc-input">
+                </div>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div>
+                    <label for="braggWavelengthInput" class="input-label">Bragg λ (nm)</label>
+                    <input type="number" id="braggWavelengthInput" placeholder="nm" class="calc-input">
+                </div>
+                <div class="arrow-separator md:rotate-0 rotate-90">↔</div>
+                <div>
+                    <label for="braggPeriodInput" class="input-label">Period Λ (nm)</label>
+                    <input type="number" id="braggPeriodInput" placeholder="nm" class="calc-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="group-box">
+            <h2 class="group-title">Microresonator Loss & Linewidth</h2>
+            <div class="equation-box">$$ \mathcal{F} = \frac{\text{FSR}}{\kappa_0/2\pi}, \ Q = \frac{f_0}{\kappa_0/2\pi}, \ \alpha = \frac{n_g \kappa_0}{c} $$</div>
+            <div>
+                <label for="resCenterNmInput" class="input-label">Center λ (nm)</label>
+                <input type="number" id="resCenterNmInput" value="1550" class="calc-input">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="resNgInput" class="input-label">Group Index (n₉)</label>
+                    <input type="number" id="resNgInput" value="2.0" class="calc-input">
+                </div>
+                <div>
+                    <label for="resFsrInput" class="input-label">FSR (GHz)</label>
+                    <input type="number" id="resFsrInput" value="100" class="calc-input">
+                </div>
+            </div>
+            <div class="space-y-4">
+                 <div>
+                    <label for="resLinewidthInput" class="input-label">κ₀/2π Linewidth (MHz)</label>
+                    <input type="number" id="resLinewidthInput" placeholder="MHz" class="calc-input">
+                </div>
+                 <div>
+                    <label for="resLossPerMInput" class="input-label">Loss α (1/m)</label>
+                    <input type="number" id="resLossPerMInput" placeholder="1/m" class="calc-input">
+                </div>
+                 <div>
+                    <label for="resLossDbMInput" class="input-label">Loss (dB/m)</label>
+                    <input type="number" id="resLossDbMInput" placeholder="dB/m" class="calc-input">
+                </div>
+            </div>
+             <!-- Outputs -->
+            <div class="border-t border-gray-200 pt-4 mt-4 space-y-4">
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="resFinesseOutput" class="input-label">Intrinsic Finesse</label>
+                        <input type="number" id="resFinesseOutput" readonly class="calc-input">
+                    </div>
+                    <div>
+                        <label for="resLossRatioOutput" class="input-label">Intrinsic Loss / trip</label>
+                        <input type="number" id="resLossRatioOutput" readonly class="calc-input">
+                    </div>
+                </div>
+                <div>
+                    <label for="resQfactorOutput" class="input-label">Intrinsic Q Factor</label>
+                    <input type="text" id="resQfactorOutput" readonly class="calc-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="group-box">
+            <h2 class="group-title">Soliton Parameters</h2>
+            <div class="equation-box">$$ L_D = \frac{T_0^2}{|\beta_2|}, \ L_{NL} = \frac{1}{\gamma P_0}, \ N^2 = \frac{L_D}{L_{NL}} $$</div>
+            <!-- Inputs -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="solitonBeta2Input" class="input-label">GVD β₂</label>
+                     <div class="flex gap-2">
+                        <input type="number" id="solitonBeta2Input" value="-10000" class="calc-input">
+                        <select id="solitonBeta2Unit" class="calc-select w-28">
+                            <option value="fs2/m">fs²/m</option>
+                            <option value="ps2/cm">ps²/cm</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="solitonGammaInput" class="input-label">Gamma γ (1/(W·m))</label>
+                    <input type="number" id="solitonGammaInput" value="1" class="calc-input">
+                </div>
+                 <div>
+                    <label for="solitonTfwhmInput" class="input-label">Pulse T_fwhm (ps)</label>
+                    <input type="number" id="solitonTfwhmInput" value="1" class="calc-input">
+                </div>
+                <div>
+                    <label for="solitonEnergyInput" class="input-label">Pulse Energy (pJ)</label>
+                    <input type="number" id="solitonEnergyInput" value="150" class="calc-input">
+                </div>
+            </div>
+            <!-- Outputs -->
+            <div class="border-t border-gray-200 pt-4 mt-4 space-y-4">
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="solitonPeakPowerOutput" class="input-label">Peak Power P₀ (W)</label>
+                        <input type="number" id="solitonPeakPowerOutput" readonly class="calc-input">
+                    </div>
+                    <div>
+                        <label for="solitonOrderOutput" class="input-label">Soliton Order N</label>
+                        <input type="number" id="solitonOrderOutput" readonly class="calc-input">
+                    </div>
+                </div>
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="solitonLdOutput" class="input-label">Dispersion L_D (cm)</label>
+                        <input type="number" id="solitonLdOutput" readonly class="calc-input">
+                    </div>
+                    <div>
+                        <label for="solitonLnlOutput" class="input-label">Nonlinear L_NL (cm)</label>
+                        <input type="number" id="solitonLnlOutput" readonly class="calc-input">
+                    </div>
+                </div>
+                 <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label for="solitonFissionLengthOutput" class="input-label">Fission L_fiss (cm)</label>
+                        <input type="number" id="solitonFissionLengthOutput" readonly class="calc-input">
+                    </div>
+                    <div>
+                        <label for="solitonFundamentalEnergyOutput" class="input-label">Fund. Soliton Energy (pJ)</label>
+                        <input type="number" id="solitonFundamentalEnergyOutput" readonly class="calc-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Global Settings -->
+        <div class="group-box">
+            <h2 class="group-title">Display Settings</h2>
+            <div class="flex items-center justify-center space-x-4">
+                <label for="precisionInput" class="input-label mb-0 text-xl">Result Digits:</label>
+                <input type="number" id="precisionInput" value="4" min="0" max="10" class="calc-input w-24 p-2 text-center">
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Constants ---
+        const C = 299792458; // Speed of light in m/s
+        const DB_CONVERSION = 10 * Math.log10(Math.E); // Approx 4.343
+        const TBP_VALUES = {
+            'sech2': 0.315,
+            'gaussian': 0.441
+        };
+        const PULSE_SHAPE_FACTORS = {
+            'sech2': { t0_factor: 1.7627, power_factor: 2 }, // P0 = E / (2 * T0)
+            'gaussian': { t0_factor: 1.665, power_factor: Math.sqrt(Math.PI/2) * 1.665 } // P0 = E / (T0 * sqrt(pi/2))
+        };
+
+        // --- DOM Elements ---
+        const nmInput = document.getElementById('nmInput');
+        const thzInput = document.getElementById('thzInput');
+        
+        const deltaCenterNm = document.getElementById('deltaCenterNm');
+        const deltaNmInput = document.getElementById('deltaNmInput');
+        const deltaGhzInput = document.getElementById('deltaGhzInput');
+        
+        const pulseCenterNmInput = document.getElementById('pulseCenterNmInput');
+        const pulseShapeSelect = document.getElementById('pulseShapeSelect');
+        const customTbpInput = document.getElementById('customTbpInput');
+        const bandwidthInput = document.getElementById('bandwidthInput');
+        const bandwidthUnitSelect = document.getElementById('bandwidthUnitSelect');
+        const pulseWidthInput = document.getElementById('pulseWidthInput');
+        
+        const gddCenterNm = document.getElementById('gddCenterNm');
+        const dInput = document.getElementById('dInput');
+        const gddInput = document.getElementById('gddInput');
+        
+        const neff1Input = document.getElementById('neff1Input');
+        const neff2Input = document.getElementById('neff2Input');
+        const braggWavelengthInput = document.getElementById('braggWavelengthInput');
+        const braggPeriodInput = document.getElementById('braggPeriodInput');
+        
+        const resCenterNmInput = document.getElementById('resCenterNmInput');
+        const resNgInput = document.getElementById('resNgInput');
+        const resFsrInput = document.getElementById('resFsrInput');
+        const resLinewidthInput = document.getElementById('resLinewidthInput');
+        const resLossPerMInput = document.getElementById('resLossPerMInput');
+        const resLossDbMInput = document.getElementById('resLossDbMInput');
+        const resFinesseOutput = document.getElementById('resFinesseOutput');
+        const resLossRatioOutput = document.getElementById('resLossRatioOutput');
+        const resQfactorOutput = document.getElementById('resQfactorOutput');
+
+        // Soliton Parameters
+        const solitonBeta2Input = document.getElementById('solitonBeta2Input');
+        const solitonBeta2Unit = document.getElementById('solitonBeta2Unit');
+        const solitonGammaInput = document.getElementById('solitonGammaInput');
+        const solitonTfwhmInput = document.getElementById('solitonTfwhmInput');
+        const solitonEnergyInput = document.getElementById('solitonEnergyInput');
+        const solitonPeakPowerOutput = document.getElementById('solitonPeakPowerOutput');
+        const solitonOrderOutput = document.getElementById('solitonOrderOutput');
+        const solitonLdOutput = document.getElementById('solitonLdOutput');
+        const solitonLnlOutput = document.getElementById('solitonLnlOutput');
+        const solitonFissionLengthOutput = document.getElementById('solitonFissionLengthOutput');
+        const solitonFundamentalEnergyOutput = document.getElementById('solitonFundamentalEnergyOutput');
+
+        const precisionInput = document.getElementById('precisionInput');
+        
+        let lastEditedPulseField = 'bw'; // 'bw' or 'pw'
+        let lastEditedResonatorField = 'linewidth';
+
+        // --- Functions ---
+        function getPrecision() {
+            const digits = parseInt(precisionInput.value, 10);
+            return isNaN(digits) || digits < 0 ? 4 : digits;
+        }
+
+        // --- Calculation Logic ---
+        function updateAllCalculations() {
+            updateNmThz(true);
+            updateDelta(true);
+            updatePulse(lastEditedPulseField);
+            updateGdd(true);
+            updateBraggGrating(true);
+            updateResonator(lastEditedResonatorField);
+            updateSolitonParameters();
+        }
+
+        function updateNmThz(fromNm) {
+            const digits = getPrecision();
+            if (fromNm) {
+                const nm = parseFloat(nmInput.value);
+                if (!isNaN(nm) && nm > 0) {
+                    const thz = (C / (nm * 1e-9)) / 1e12;
+                    thzInput.value = thz.toFixed(digits);
+                } else {
+                    thzInput.value = '';
+                }
+            } else {
+                const thz = parseFloat(thzInput.value);
+                if (!isNaN(thz) && thz > 0) {
+                    const nm = (C / (thz * 1e12)) * 1e9;
+                    nmInput.value = nm.toFixed(digits);
+                } else {
+                    nmInput.value = '';
+                }
+            }
+        }
+        
+        function updateDelta(fromNm) {
+            const digits = getPrecision();
+            const centerNm = parseFloat(deltaCenterNm.value);
+            if(isNaN(centerNm) || centerNm <=0) return;
+
+            if(fromNm) {
+                const deltaNm = parseFloat(deltaNmInput.value);
+                if(!isNaN(deltaNm)){
+                    const centerLambdaM = centerNm * 1e-9;
+                    const deltaLambdaM = deltaNm * 1e-9;
+                    const deltaFHz = Math.abs((C / (centerLambdaM ** 2)) * deltaLambdaM);
+                    deltaGhzInput.value = (deltaFHz / 1e9).toFixed(digits);
+                } else {
+                    deltaGhzInput.value = '';
+                }
+            } else {
+                const deltaGHz = parseFloat(deltaGhzInput.value);
+                 if(!isNaN(deltaGHz)){
+                    const centerLambdaM = centerNm * 1e-9;
+                    const deltaFHz = deltaGHz * 1e9;
+                    const deltaLambdaM = Math.abs(((centerLambdaM ** 2) / C) * deltaFHz);
+                    deltaNmInput.value = (deltaLambdaM * 1e9).toFixed(digits);
+                 } else {
+                    deltaNmInput.value = '';
+                 }
+            }
+        }
+        
+        function getTbp() {
+            const shape = pulseShapeSelect.value;
+            if (shape === 'custom') {
+                const val = parseFloat(customTbpInput.value);
+                return isNaN(val) || val <= 0 ? null : val;
+            }
+            return TBP_VALUES[shape];
+        }
+
+        function updatePulse(source) {
+            const digits = getPrecision();
+            const centerNm = parseFloat(pulseCenterNmInput.value);
+            const tbp = getTbp();
+
+            if (isNaN(centerNm) || centerNm <= 0 || tbp === null) return;
+            
+            if (source === 'bw') {
+                const bandwidth = parseFloat(bandwidthInput.value);
+                const unit = bandwidthUnitSelect.value;
+                 if (isNaN(bandwidth) || bandwidth <= 0) { pulseWidthInput.value = ''; return; }
+
+                let deltaF_hz;
+                if (unit === 'nm') {
+                    const centerLambdaM = centerNm * 1e-9;
+                    const deltaLambdaM = bandwidth * 1e-9;
+                    deltaF_hz = (C / (centerLambdaM ** 2)) * deltaLambdaM;
+                } else {
+                    deltaF_hz = bandwidth * 1e12;
+                }
+
+                if (deltaF_hz !== 0) {
+                    const pulseWidth_s = tbp / deltaF_hz;
+                    pulseWidthInput.value = (pulseWidth_s * 1e15).toFixed(digits);
+                } else {
+                     pulseWidthInput.value = '';
+                }
+
+            } else { // source === 'pw'
+                const pulseWidth_fs = parseFloat(pulseWidthInput.value);
+                if (isNaN(pulseWidth_fs) || pulseWidth_fs <= 0) { bandwidthInput.value = ''; return; }
+                
+                const pulseWidth_s = pulseWidth_fs * 1e-15;
+                const deltaF_hz = tbp / pulseWidth_s;
+                const unit = bandwidthUnitSelect.value;
+                
+                if (unit === 'nm') {
+                    const centerLambda_m = centerNm * 1e-9;
+                    const deltaLambda_m = (centerLambda_m ** 2 / C) * deltaF_hz;
+                    bandwidthInput.value = (deltaLambda_m * 1e9).toFixed(digits);
+                } else { // thz
+                    bandwidthInput.value = (deltaF_hz / 1e12).toFixed(digits);
+                }
+            }
+        }
+        
+        function updateGdd(fromD) {
+            const digits = getPrecision();
+            const lambda_nm = parseFloat(gddCenterNm.value);
+            if(isNaN(lambda_nm) || lambda_nm <=0) return;
+
+            if(fromD) {
+                const d_ps_nm = parseFloat(dInput.value);
+                 if(!isNaN(d_ps_nm)) {
+                    const gdd = -d_ps_nm * (lambda_nm**2) / (2 * Math.PI * C) * 1e3;
+                    gddInput.value = gdd.toFixed(digits);
+                 } else {
+                    gddInput.value = '';
+                 }
+            } else {
+                const gdd_ps2 = parseFloat(gddInput.value);
+                if(!isNaN(gdd_ps2)) {
+                    const d = -gdd_ps2 * (2 * Math.PI * C) / (lambda_nm**2 * 1e3);
+                    dInput.value = d.toFixed(digits);
+                } else {
+                    dInput.value = '';
+                }
+            }
+        }
+        
+        function updateBraggGrating(fromWavelength) {
+            const digits = getPrecision();
+            const neff1 = parseFloat(neff1Input.value);
+            const neff2 = parseFloat(neff2Input.value);
+
+            if (isNaN(neff1) || isNaN(neff2) || neff1 <= 0 || neff2 <= 0) {
+                braggPeriodInput.value = '';
+                braggWavelengthInput.value = '';
+                 return;
+            }
+            
+            const neff_avg = (neff1 + neff2) / 2.0;
+
+            if (fromWavelength) {
+                const wavelength = parseFloat(braggWavelengthInput.value);
+                if (!isNaN(wavelength) && wavelength > 0) {
+                    const period = wavelength / (2 * neff_avg);
+                    braggPeriodInput.value = period.toFixed(digits);
+                } else {
+                    braggPeriodInput.value = '';
+                }
+            } else {
+                const period = parseFloat(braggPeriodInput.value);
+                if (!isNaN(period) && period > 0) {
+                    const wavelength = period * (2 * neff_avg);
+                    braggWavelengthInput.value = wavelength.toFixed(digits);
+                } else {
+                    braggWavelengthInput.value = '';
+                }
+            }
+        }
+
+        function updateResonator(source) {
+            const digits = getPrecision();
+            const ng = parseFloat(resNgInput.value);
+            const fsr_ghz = parseFloat(resFsrInput.value);
+            const center_nm = parseFloat(resCenterNmInput.value);
+            
+            const clearResOutputs = () => {
+                resLossPerMInput.value = '';
+                resLossDbMInput.value = '';
+                resFinesseOutput.value = '';
+                resLossRatioOutput.value = '';
+                resQfactorOutput.value = '';
+            };
+            const clearAllResOutputs = () => {
+                resLinewidthInput.value = '';
+                clearResOutputs();
+            };
+
+            if (source === 'linewidth') {
+                const linewidth_mhz = parseFloat(resLinewidthInput.value);
+                if (isNaN(ng) || ng <= 0 || isNaN(linewidth_mhz) || linewidth_mhz < 0) {
+                    clearResOutputs(); return;
+                }
+                const k0 = linewidth_mhz * 1e6 * 2 * Math.PI;
+                const alpha_per_m = (ng * k0) / C;
+                resLossPerMInput.value = alpha_per_m.toFixed(digits);
+                resLossDbMInput.value = (alpha_per_m * DB_CONVERSION).toFixed(digits);
+            
+            } else if (source === 'loss_per_m') {
+                const alpha_per_m = parseFloat(resLossPerMInput.value);
+                 if (isNaN(ng) || ng <= 0 || isNaN(alpha_per_m) || alpha_per_m < 0) {
+                    clearAllResOutputs(); return;
+                }
+                const k0 = (alpha_per_m * C) / ng;
+                const linewidth_mhz = k0 / (2 * Math.PI * 1e6);
+                resLinewidthInput.value = linewidth_mhz.toFixed(digits);
+                resLossDbMInput.value = (alpha_per_m * DB_CONVERSION).toFixed(digits);
+
+            } else { // source === 'loss_db_m'
+                const alpha_db_m = parseFloat(resLossDbMInput.value);
+                 if (isNaN(ng) || ng <= 0 || isNaN(alpha_db_m) || alpha_db_m < 0) {
+                    clearAllResOutputs(); return;
+                }
+                const alpha_per_m = alpha_db_m / DB_CONVERSION;
+                const k0 = (alpha_per_m * C) / ng;
+                const linewidth_mhz = k0 / (2 * Math.PI * 1e6);
+                resLinewidthInput.value = linewidth_mhz.toFixed(digits);
+                resLossPerMInput.value = alpha_per_m.toFixed(digits);
+            }
+            
+            // Finesse, Q and Loss Ratio Calculations (dependent on the above)
+            const final_linewidth_mhz = parseFloat(resLinewidthInput.value);
+            const final_alpha_per_m = parseFloat(resLossPerMInput.value);
+
+            if (!isNaN(fsr_ghz) && fsr_ghz > 0 && !isNaN(final_linewidth_mhz) && final_linewidth_mhz > 0) {
+                const finesse = (fsr_ghz * 1e9) / (final_linewidth_mhz * 1e6);
+                resFinesseOutput.value = finesse.toFixed(digits);
+
+                const cavity_length_m = C / (ng * fsr_ghz * 1e9);
+                const loss_ratio = 1 - Math.exp(-final_alpha_per_m * cavity_length_m);
+                resLossRatioOutput.value = loss_ratio.toFixed(digits);
+            } else {
+                resFinesseOutput.value = '';
+                resLossRatioOutput.value = '';
+            }
+
+            if (!isNaN(center_nm) && center_nm > 0 && !isNaN(final_linewidth_mhz) && final_linewidth_mhz > 0) {
+                const center_freq_hz = C / (center_nm * 1e-9);
+                const linewidth_hz = final_linewidth_mhz * 1e6;
+                const q_factor = center_freq_hz / linewidth_hz;
+                resQfactorOutput.value = q_factor.toExponential(digits);
+            } else {
+                resQfactorOutput.value = '';
+            }
+        }
+
+        function updateSolitonParameters() {
+            const digits = getPrecision();
+            
+            // --- Get Inputs ---
+            const beta2_val = parseFloat(solitonBeta2Input.value);
+            const beta2_unit = solitonBeta2Unit.value;
+            const gamma_per_W_m = parseFloat(solitonGammaInput.value);
+            const tfwhm_ps = parseFloat(solitonTfwhmInput.value);
+            const energy_pJ = parseFloat(solitonEnergyInput.value);
+            
+            const shape = pulseShapeSelect.value;
+            const shapeFactors = PULSE_SHAPE_FACTORS[shape] || PULSE_SHAPE_FACTORS['sech2'];
+
+            const allInputsValid = ![beta2_val, gamma_per_W_m, tfwhm_ps, energy_pJ].some(isNaN);
+
+            const clearOutputs = () => {
+                solitonPeakPowerOutput.value = '';
+                solitonOrderOutput.value = '';
+                solitonLdOutput.value = '';
+                solitonLnlOutput.value = '';
+                solitonFissionLengthOutput.value = '';
+                solitonFundamentalEnergyOutput.value = '';
+            }
+
+            if (!allInputsValid) {
+                clearOutputs();
+                return;
+            }
+
+            // --- Unit Conversions to SI ---
+            let beta2_s2_per_m;
+            if (beta2_unit === 'fs2/m') {
+                beta2_s2_per_m = beta2_val * 1e-30;
+            } else { // ps2/cm
+                beta2_s2_per_m = beta2_val * 1e-22; // (1e-12)^2 / 1e-2
+            }
+            
+            const tfwhm_s = tfwhm_ps * 1e-12;
+            const energy_J = energy_pJ * 1e-12;
+
+            // --- Intermediate Calculations ---
+            const t0_s = tfwhm_s / shapeFactors.t0_factor;
+            const peakPower_W = energy_J / (t0_s * (shape === 'gaussian' ? shapeFactors.power_factor / shapeFactors.t0_factor : shapeFactors.power_factor) );
+             
+            if (isNaN(t0_s) || t0_s <= 0 || isNaN(peakPower_W) || peakPower_W <= 0) {
+                clearOutputs();
+                return;
+            }
+
+            // --- Core Calculations ---
+            const Ld_m = (t0_s ** 2) / Math.abs(beta2_s2_per_m);
+            const Lnl_m = 1 / (gamma_per_W_m * peakPower_W);
+            const N_squared = Ld_m / Lnl_m;
+            const N = Math.sqrt(N_squared);
+            const L_fiss_m = (N > 0) ? Ld_m / N : Infinity;
+
+            const fundamentalEnergy_J = (2 * Math.abs(beta2_s2_per_m)) / (gamma_per_W_m * t0_s);
+
+            // --- Set Outputs ---
+            solitonPeakPowerOutput.value = peakPower_W.toFixed(digits);
+            solitonOrderOutput.value = N.toFixed(digits);
+            solitonLdOutput.value = (Ld_m * 100).toFixed(digits); // m to cm
+            solitonLnlOutput.value = (Lnl_m * 100).toFixed(digits); // m to cm
+            solitonFissionLengthOutput.value = isFinite(L_fiss_m) ? (L_fiss_m * 100).toFixed(digits) : '∞';
+            solitonFundamentalEnergyOutput.value = (fundamentalEnergy_J * 1e12).toFixed(digits); // J to pJ
+        }
+
+
+        // --- Event Listeners ---
+        nmInput.addEventListener('input', () => updateNmThz(true));
+        thzInput.addEventListener('input', () => updateNmThz(false));
+
+        deltaCenterNm.addEventListener('input', () => updateDelta(true));
+        deltaNmInput.addEventListener('input', () => updateDelta(true));
+        deltaGhzInput.addEventListener('input', () => updateDelta(false));
+
+        pulseCenterNmInput.addEventListener('input', () => { updatePulse(lastEditedPulseField); updateSolitonParameters(); });
+        pulseShapeSelect.addEventListener('change', () => {
+            customTbpInput.classList.toggle('hidden', pulseShapeSelect.value !== 'custom');
+            updatePulse(lastEditedPulseField);
+            updateSolitonParameters();
+        });
+        customTbpInput.addEventListener('input', () => updatePulse(lastEditedPulseField));
+        bandwidthInput.addEventListener('input', () => {
+            lastEditedPulseField = 'bw';
+            updatePulse('bw');
+        });
+        bandwidthUnitSelect.addEventListener('change', () => updatePulse('pw')); // Recalc BW from PW when unit changes
+        pulseWidthInput.addEventListener('input', () => {
+            lastEditedPulseField = 'pw';
+            updatePulse('pw');
+        });
+        
+        gddCenterNm.addEventListener('input', () => updateGdd(true));
+        dInput.addEventListener('input', () => updateGdd(true));
+        gddInput.addEventListener('input', () => updateGdd(false));
+        
+        neff1Input.addEventListener('input', () => {
+            neff2Input.value = neff1Input.value;
+            updateBraggGrating(true);
+        });
+        neff2Input.addEventListener('input', () => updateBraggGrating(true));
+        braggWavelengthInput.addEventListener('input', () => updateBraggGrating(true));
+        braggPeriodInput.addEventListener('input', () => updateBraggGrating(false));
+        
+        resCenterNmInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
+        resNgInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
+        resFsrInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
+        resLinewidthInput.addEventListener('input', () => {
+            lastEditedResonatorField = 'linewidth';
+            updateResonator('linewidth');
+        });
+        resLossPerMInput.addEventListener('input', () => {
+            lastEditedResonatorField = 'loss_per_m';
+            updateResonator('loss_per_m');
+        });
+        resLossDbMInput.addEventListener('input', () => {
+            lastEditedResonatorField = 'loss_db_m';
+            updateResonator('loss_db_m');
+        });
+
+        // Soliton Parameter Listeners
+        [solitonBeta2Input, solitonGammaInput, solitonTfwhmInput, solitonEnergyInput, solitonBeta2Unit].forEach(el => {
+            el.addEventListener('input', updateSolitonParameters);
+        });
+
+        precisionInput.addEventListener('input', updateAllCalculations);
+        
+        // --- Initial Calculation & KaTeX Rendering ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateAllCalculations();
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ]
+            });
+        });
+
+    </script>
+</body>
+</html>

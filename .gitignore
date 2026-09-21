@@ -1,0 +1,10 @@
+# OS / editor cruft
+Thumbs.db
+desktop.ini
+.DS_Store
+*~
+*.swp
+
+# Google Drive conflict copies
+*(1).html
+* - Copy.html

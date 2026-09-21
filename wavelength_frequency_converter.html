@@ -1865,7 +1865,8 @@
         const POWER_SI = {
             'w': 1,
             'kw': 1e3,
-            'mw': 1e-3
+            'mw': 1e-3,
+            'uw': 1e-6
         };
 
         // --- DOM Elements ---
@@ -2196,8 +2197,21 @@
                 dotColor = '#0f766e';
             }
 
+            // Compact acronym for narrow badges (Gaussian beam section)
+            const SHORT_BANDS = {
+                'Extreme UV / X-Ray': 'EUV / X-Ray',
+                'Ultraviolet (UV)': 'UV',
+                'Visible Spectrum': 'Visible',
+                'Near-Infrared (NIR)': 'NIR',
+                'Short-Wavelength Infrared (SWIR)': 'SWIR',
+                'Mid-Wavelength Infrared (MWIR / MIR)': 'MWIR',
+                'Long-Wavelength Infrared (LWIR / Thermal IR)': 'LWIR',
+                'Far-Infrared (FIR) / Terahertz (THz)': 'FIR / THz'
+            };
+
             return {
                 band,
+                shortBand: SHORT_BANDS[band] || band,
                 subBand,
                 dotColor,
                 isVisible,
@@ -3639,8 +3653,8 @@
             const spec = getSpectralClassification(nm);
             if (spec) {
                 gbBeamColorDot.style.backgroundColor = spec.dotColor;
-                gbBeamColorLabel.textContent = `${nm.toFixed(1)} nm • ${spec.band}`;
-                gbWavelengthBadge.textContent = `λ = ${nm.toFixed(1)} nm (${spec.band})`;
+                gbBeamColorLabel.textContent = `${nm.toFixed(1)} nm • ${spec.shortBand}`;
+                gbWavelengthBadge.textContent = `λ = ${nm.toFixed(1)} nm (${spec.shortBand})`;
                 gbWavelengthBadge.style.color = spec.dotColor;
             }
 
@@ -4341,6 +4355,7 @@
         precisionInput.addEventListener('input', updateAllCalculations);
         window.addEventListener('resize', () => {
             if (currentVisTab === 'curve') updateFresnel('theta_i');
+            if (gbCurrentTab === 'intensity') updateGaussianBeam('z');
         });
 
         // --- DOM Ready Initialization ---

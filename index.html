@@ -264,6 +264,64 @@
             background: #cbd5e1;
             border-radius: 2px;
         }
+
+        /* Smooth scrolling & Jump Navigation */
+        html {
+            scroll-behavior: smooth;
+        }
+        .jump-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 0.375rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            white-space: nowrap;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.15s ease-in-out;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            flex-shrink: 0;
+        }
+        .jump-pill:hover {
+            background-color: #eef2ff;
+            border-color: #c7d2fe;
+            color: #4338ca;
+            transform: translateY(-1px);
+        }
+        .jump-pill.active {
+            background-color: #4f46e5;
+            border-color: #4338ca;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.35);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Target highlight animation when jumped to with hash link */
+        :target {
+            scroll-margin-top: 7rem;
+            animation: target-flash 1.6s ease-out;
+        }
+        @keyframes target-flash {
+            0% {
+                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.45);
+            }
+            70% {
+                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            }
+            100% {
+                box-shadow: none;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
@@ -293,6 +351,57 @@
                 </div>
             </div>
         </div>
+
+        <!-- QUICK JUMP NAVIGATION BAR -->
+        <nav aria-label="Tool Jump List" class="border-t border-slate-100 bg-slate-50/90 backdrop-blur px-4 sm:px-6 lg:px-8 py-2">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+                <!-- Jump Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar text-xs font-semibold" id="jumpPillsContainer">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1 flex-shrink-0">
+                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        Jump to:
+                    </span>
+                    <a href="#spectral" class="jump-pill" data-section="spectral"><span>🌈</span> Spectral</a>
+                    <a href="#ultrafast" class="jump-pill" data-section="ultrafast"><span>⏱️</span> Ultrafast</a>
+                    <a href="#fresnel" class="jump-pill" data-section="fresnel"><span>🪞</span> Fresnel</a>
+                    <a href="#cavities" class="jump-pill" data-section="cavities"><span>🔬</span> Cavities</a>
+                    <a href="#nonlinear" class="jump-pill" data-section="nonlinear"><span>⚡</span> Solitons</a>
+                    <a href="#gaussian-beam" class="jump-pill" data-section="gaussian-beam"><span>🎯</span> Gaussian Beam</a>
+                </div>
+
+                <!-- Specific Tool Dropdown -->
+                <div class="flex items-center gap-1.5 text-xs flex-shrink-0">
+                    <label for="quickToolSelect" class="text-[11px] font-semibold text-slate-500 hidden md:inline">Specific Tool:</label>
+                    <select id="quickToolSelect" class="text-xs font-semibold bg-white border border-slate-200 rounded-md px-2 py-1 text-slate-700 hover:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-sm">
+                        <option value="" disabled selected>Select tool...</option>
+                        <optgroup label="1. Spectral & Frequency Domain">
+                            <option value="#wavelength-converter">⚡ Wavelength ↔ Frequency ↔ Wavenumber</option>
+                            <option value="#differential-bandwidth">Δ Differential Bandwidth (Δλ ↔ Δf)</option>
+                        </optgroup>
+                        <optgroup label="2. Ultrafast Pulses & Dispersion">
+                            <option value="#transform-limited">⌛ Transform-Limited Pulses</option>
+                            <option value="#dispersion-gdd">📊 GDD ↔ Total Dispersion (D)</option>
+                            <option value="#pulse-elongation">📈 Pulse Elongation (Broadening)</option>
+                        </optgroup>
+                        <optgroup label="3. Fresnel Interfaces">
+                            <option value="#fresnel-interface">🪞 Fresnel Reflection & Interfaces</option>
+                        </optgroup>
+                        <optgroup label="4. Cavities & Guided Waves">
+                            <option value="#microresonator">⭕ Microresonator Loss, Linewidth & Q</option>
+                            <option value="#fabry-perot">🪞 Fabry-Pérot (FP) Cavity</option>
+                            <option value="#bragg-grating">📐 Waveguide Bragg Grating</option>
+                        </optgroup>
+                        <optgroup label="5. Nonlinear Optics">
+                            <option value="#solitons">🌀 Soliton Parameters & Characteristic Lengths</option>
+                        </optgroup>
+                        <optgroup label="6. Gaussian Beam Propagation">
+                            <option value="#gaussian-parameters">📐 Gaussian Waist, Rayleigh & Divergence</option>
+                            <option value="#gaussian-visualizer">🎯 Caustic, Wavefronts, Intensity & Lens</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <!-- Main Container -->
@@ -301,7 +410,7 @@
         <!-- ========================================== -->
         <!-- SECTION 1: SPECTRAL & FREQUENCY DOMAIN -->
         <!-- ========================================== -->
-        <section class="space-y-4">
+        <section id="spectral" class="space-y-4 scroll-mt-28">
             <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
                 <span class="text-xl">🌈</span>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Spectral & Frequency Domain</h2>
@@ -310,7 +419,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <!-- CARD 1: Wavelength <-> Frequency <-> Wavenumber -->
-                <div class="group-card">
+                <div id="wavelength-converter" class="group-card scroll-mt-28">
                     <div class="card-header flex justify-between items-center">
                         <h3 class="group-title">
                             <span class="text-indigo-600">⚡</span> Wavelength ↔ Frequency ↔ Wavenumber
@@ -424,7 +533,7 @@
                 </div>
 
                 <!-- CARD 2: Delta Conversion -->
-                <div class="group-card">
+                <div id="differential-bandwidth" class="group-card scroll-mt-28">
                     <div class="card-header flex justify-between items-center">
                         <h3 class="group-title">
                             <span class="text-indigo-600">Δ</span> Differential Bandwidth ($\Delta\lambda \leftrightarrow \Delta f \leftrightarrow \Delta\tilde{\nu}$)
@@ -495,7 +604,7 @@
         <!-- ========================================== -->
         <!-- SECTION 2: ULTRAFAST PULSES & DISPERSION -->
         <!-- ========================================== -->
-        <section class="space-y-4">
+        <section id="ultrafast" class="space-y-4 scroll-mt-28">
             <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
                 <span class="text-xl">⏱️</span>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Ultrafast Pulses & Dispersion</h2>
@@ -504,7 +613,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- CARD 1: Transform-Limited Pulses -->
-                <div class="group-card">
+                <div id="transform-limited" class="group-card scroll-mt-28">
                     <div class="card-header">
                         <h3 class="group-title">
                             <span class="text-cyan-600">⌛</span> Transform-Limited Pulses
@@ -565,7 +674,7 @@
                 </div>
 
                 <!-- CARD 2: GDD Conversion -->
-                <div class="group-card">
+                <div id="dispersion-gdd" class="group-card scroll-mt-28">
                     <div class="card-header">
                         <h3 class="group-title">
                             <span class="text-cyan-600">📊</span> GDD ↔ Total Dispersion ($D$)
@@ -620,7 +729,7 @@
                 </div>
 
                 <!-- CARD 3: Pulse Elongation / Dispersion Broadening -->
-                <div class="group-card border-cyan-200 shadow-md">
+                <div id="pulse-elongation" class="group-card border-cyan-200 shadow-md scroll-mt-28">
                     <div class="card-header bg-gradient-to-r from-cyan-50 to-indigo-50 border-b border-cyan-100 flex justify-between items-center">
                         <h3 class="group-title text-cyan-900">
                             <span class="text-cyan-600">📈</span> Pulse Elongation (Broadening)
@@ -694,13 +803,13 @@
         <!-- ========================================== -->
         <!-- SECTION 3: FRESNEL REFLECTION & INTERFACES -->
         <!-- ========================================== -->
-        <section class="space-y-4">
+        <section id="fresnel" class="space-y-4 scroll-mt-28">
             <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
                 <span class="text-xl">🪞</span>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Fresnel Reflection & Interfaces</h2>
             </div>
 
-            <div class="group-card border-amber-200 shadow-md">
+            <div id="fresnel-interface" class="group-card border-amber-200 shadow-md scroll-mt-28">
                 <div class="card-header bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 flex flex-wrap justify-between items-center gap-2">
                     <h3 class="group-title text-amber-900">
                         <span class="text-amber-600">⚡</span> Fresnel Equations & Optical Interface ($s$ & $p$ Polarizations)
@@ -925,14 +1034,14 @@
         <!-- ========================================== -->
         <!-- SECTION 4: CAVITIES & GUIDED WAVES -->
         <!-- ========================================== -->
-        <section class="space-y-6">
+        <section id="cavities" class="space-y-6 scroll-mt-28">
             <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
                 <span class="text-xl">🔬</span>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Cavity Resonators & Guided Waves</h2>
             </div>
 
             <!-- CARD 1: Microresonator Loss, Linewidth & Q-Factor (FULL WIDTH) -->
-            <div class="group-card w-full">
+            <div id="microresonator" class="group-card w-full scroll-mt-28">
                 <div class="card-header flex justify-between items-center">
                     <h3 class="group-title">
                         <span class="text-emerald-600">⭕</span> Microresonator Loss & Linewidth
@@ -1028,7 +1137,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 <!-- CARD 2: Fabry-Pérot (FP) Cavity Calculator -->
-                <div class="group-card border-emerald-200 shadow-md">
+                <div id="fabry-perot" class="group-card border-emerald-200 shadow-md scroll-mt-28">
                     <div class="card-header bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100 flex justify-between items-center">
                         <h3 class="group-title text-emerald-900">
                             <span class="text-emerald-600">🪞</span> Fabry-Pérot (FP) Cavity
@@ -1141,7 +1250,7 @@
                 </div>
 
                 <!-- CARD 3: Bragg Grating -->
-                <div class="group-card">
+                <div id="bragg-grating" class="group-card scroll-mt-28">
                     <div class="card-header flex justify-between items-center">
                         <h3 class="group-title">
                             <span class="text-emerald-600">📐</span> Waveguide Bragg Grating
@@ -1193,13 +1302,13 @@
         <!-- ========================================== -->
         <!-- SECTION 5: NONLINEAR OPTICS & SOLITONS -->
         <!-- ========================================== -->
-        <section class="space-y-4">
+        <section id="nonlinear" class="space-y-4 scroll-mt-28">
             <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
                 <span class="text-xl">⚡</span>
                 <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Nonlinear Optics & Soliton Dynamics</h2>
             </div>
 
-            <div class="group-card">
+            <div id="solitons" class="group-card scroll-mt-28">
                 <div class="card-header flex flex-wrap justify-between items-center gap-2">
                     <h3 class="group-title">
                         <span class="text-purple-600">🌀</span> Soliton Parameters & Characteristic Lengths
@@ -1325,24 +1434,17 @@
         <!-- ========================================== -->
         <!-- SECTION 6: GAUSSIAN BEAM PROPAGATION -->
         <!-- ========================================== -->
-        <section class="space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-300 pb-2 flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">🎯</span>
-                    <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Gaussian Beam Propagation & Focusing</h2>
-                </div>
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                    <span id="gbWavelengthBadge" class="px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono">
-                        λ = 1550 nm (SWIR)
-                    </span>
-                </div>
+        <section id="gaussian-beam" class="space-y-6 scroll-mt-28">
+            <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
+                <span class="text-xl">🎯</span>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Gaussian Beam Propagation & Focusing</h2>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
 
                 <!-- LEFT COLUMN: Parameter Controls & Physical Metrics (5 cols on xl) -->
                 <div class="xl:col-span-5 space-y-4">
-                    <div class="group-card">
+                    <div id="gaussian-parameters" class="group-card scroll-mt-28">
                         <div class="card-header flex justify-between items-center">
                             <h3 class="group-title">
                                 <span class="text-indigo-600">📐</span> Beam Parameters & Propagation
@@ -1551,7 +1653,7 @@
 
                 <!-- RIGHT COLUMN: Interactive Vector Illustration & Profiles (7 cols on xl) -->
                 <div class="xl:col-span-7 space-y-4">
-                    <div class="group-card">
+                    <div id="gaussian-visualizer" class="group-card scroll-mt-28">
                         <div class="card-header flex justify-between items-center flex-wrap gap-2">
                             <div class="flex items-center gap-2">
                                 <button type="button" id="gbTabCausticBtn" class="px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition">
@@ -1564,9 +1666,9 @@
                                     Thin Lens Focusing
                                 </button>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2" title="Beam Spectral Band">
                                 <span class="w-3 h-3 rounded-full border border-slate-300 shadow-sm" id="gbBeamColorDot" style="background-color: #ea580c;"></span>
-                                <span class="text-xs font-mono text-slate-500 font-semibold" id="gbBeamColorLabel">1550 nm</span>
+                                <span class="text-xs font-mono text-slate-500 font-semibold" id="gbBeamColorLabel">SWIR</span>
                             </div>
                         </div>
                         <div class="card-body p-4 space-y-3">
@@ -3490,7 +3592,6 @@
         const gbLensContainer = document.getElementById('gbLensContainer');
         const gbBeamColorDot = document.getElementById('gbBeamColorDot');
         const gbBeamColorLabel = document.getElementById('gbBeamColorLabel');
-        const gbWavelengthBadge = document.getElementById('gbWavelengthBadge');
         const gbSyncWavelengthBtn = document.getElementById('gbSyncWavelengthBtn');
 
         // SVG Elements
@@ -3665,14 +3766,13 @@
             gbI0Display.textContent = formatScientific(I0_w_cm2, digits) + ' W/cm²';
             gbIzDisplay.textContent = formatScientific(Iz_w_cm2, digits) + ' W/cm²';
 
-            // 5. Update Color & Wavelength Badge
+            // 5. Update Beam Color Indicator
             const nm = lambda_m * 1e9;
             const spec = getSpectralClassification(nm);
             if (spec) {
                 gbBeamColorDot.style.backgroundColor = spec.dotColor;
-                gbBeamColorLabel.textContent = `${nm.toFixed(1)} nm • ${spec.shortBand}`;
-                gbWavelengthBadge.textContent = `λ = ${nm.toFixed(1)} nm (${spec.shortBand})`;
-                gbWavelengthBadge.style.color = spec.dotColor;
+                gbBeamColorDot.title = `Beam Spectral Band: ${spec.band}`;
+                if (gbBeamColorLabel) gbBeamColorLabel.textContent = spec.shortBand;
             }
 
             // 6. Redraw Visualizations
@@ -4410,6 +4510,85 @@
             if (gbCurrentTab === 'intensity') updateGaussianBeam('z');
         });
 
+        // ==========================================
+        // QUICK JUMP NAVIGATION & SCROLLSPY
+        // ==========================================
+        const quickToolSelect = document.getElementById('quickToolSelect');
+        const jumpPills = document.querySelectorAll('.jump-pill');
+
+        if (quickToolSelect) {
+            quickToolSelect.addEventListener('change', (e) => {
+                const targetHash = e.target.value;
+                if (targetHash) {
+                    window.location.hash = targetHash;
+                    setTimeout(() => { quickToolSelect.value = ''; }, 300);
+                }
+            });
+        }
+
+        // Aliases for user convenience when linking via URL hash
+        const HASH_ALIASES = {
+            '#dispersion': '#dispersion-gdd',
+            '#gdd': '#dispersion-gdd',
+            '#pulse': '#transform-limited',
+            '#pulses': '#ultrafast',
+            '#elongation': '#pulse-elongation',
+            '#broadening': '#pulse-elongation',
+            '#soliton': '#solitons',
+            '#cavity': '#cavities',
+            '#fp': '#fabry-perot',
+            '#mr': '#microresonator',
+            '#bragg': '#bragg-grating',
+            '#grating': '#bragg-grating',
+            '#gaussian': '#gaussian-beam',
+            '#beam': '#gaussian-beam',
+            '#caustic': '#gaussian-visualizer',
+            '#spectrum': '#spectral',
+            '#wavelength': '#wavelength-converter',
+            '#delta': '#differential-bandwidth'
+        };
+
+        function resolveHash(hash) {
+            const lower = (hash || '').toLowerCase();
+            return HASH_ALIASES[lower] || hash;
+        }
+
+        function handleHashJump() {
+            if (!window.location.hash) return;
+            const targetHash = resolveHash(window.location.hash);
+            const targetEl = document.querySelector(targetHash);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        window.addEventListener('hashchange', handleHashJump);
+
+        // ScrollSpy: highlight active section pill as user scrolls
+        if ('IntersectionObserver' in window) {
+            const sections = document.querySelectorAll('main > section[id]');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const secId = entry.target.id;
+                        jumpPills.forEach(pill => {
+                            if (pill.getAttribute('data-section') === secId) {
+                                pill.classList.add('active');
+                            } else {
+                                pill.classList.remove('active');
+                            }
+                        });
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '-15% 0px -65% 0px',
+                threshold: 0.05
+            });
+
+            sections.forEach(sec => observer.observe(sec));
+        }
+
         // --- DOM Ready Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             try {
@@ -4427,6 +4606,9 @@
                 updateAllCalculations();
             } catch (calcErr) {
                 console.error('Calculation init error:', calcErr);
+            }
+            if (window.location.hash) {
+                setTimeout(handleHashJump, 150);
             }
         });
     </script>

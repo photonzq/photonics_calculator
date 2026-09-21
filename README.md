@@ -37,6 +37,10 @@ from `wavelength_frequency_converter.html`.
 
 ## Note on Google Drive
 
-The repo lives inside a synced Drive folder. Drive syncs `.git/` like any other
-directory, so avoid running git here from two machines at the same time — push
-to a remote instead if this ever needs to be shared.
+The working copy lives inside a synced Drive folder, and Drive syncs `.git/`
+like any other directory, so avoid running git here from two machines at the same
+time. The canonical copy is the GitHub remote:
+
+```bash
+git clone https://github.com/photonzq/photonics_calculator.git
+```

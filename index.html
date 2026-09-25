@@ -265,6 +265,78 @@
             border-radius: 2px;
         }
 
+        /* KaTeX's screen-reader MathML copy is absolutely positioned; anchoring it to
+           its own formula stops it from widening the page on phones */
+        .katex {
+            position: relative;
+        }
+
+        /* Uppercase labels must not uppercase their math (λ would render as Λ, κ as Κ) */
+        .metric-label .katex,
+        .uppercase .katex {
+            text-transform: none;
+        }
+
+        /* Wavelength preset chips */
+        .lambda-preset {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            padding: 0.1rem 0.45rem;
+            border-radius: 0.3rem;
+            border: 1px solid #e2e8f0;
+            background-color: #ffffff;
+            color: #334155;
+            transition: all 0.15s ease-in-out;
+        }
+        .lambda-preset:hover {
+            background-color: #eef2ff;
+            border-color: #c7d2fe;
+            color: #4338ca;
+        }
+
+        /* Collapsible physics notes & assumptions under each calculator */
+        .phys-note {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            background-color: #fcfcfd;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: #475569;
+            line-height: 1.55;
+        }
+        .phys-note > summary {
+            cursor: pointer;
+            padding: 0.4rem 0.65rem;
+            font-weight: 600;
+            color: #4338ca;
+            list-style: none;
+        }
+        .phys-note > summary::-webkit-details-marker { display: none; }
+        .phys-note > summary::before { content: '▸ '; }
+        .phys-note[open] > summary::before { content: '▾ '; }
+        .phys-note ul {
+            margin: 0;
+            padding: 0 0.9rem 0.6rem 1.9rem;
+            list-style: disc;
+        }
+        .phys-note li + li { margin-top: 0.3rem; }
+
+        /* Inline warning shown when inputs leave a formula's range of validity */
+        .phys-warning {
+            border: 1px solid #fecaca;
+            background-color: #fef2f2;
+            color: #991b1b;
+            border-radius: 0.375rem;
+            padding: 0.4rem 0.65rem;
+            font-size: 0.75rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .phys-warning.is-info {
+            border-color: #fde68a;
+            background-color: #fffbeb;
+            color: #92400e;
+        }
+
         /* Smooth scrolling & Jump Navigation */
         html {
             scroll-behavior: smooth;
@@ -736,7 +808,7 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="equation-box">$$ \tau_{\text{out}} = \tau_0 \sqrt{1 + \left( \frac{2\pi \cdot \text{TBP} \cdot |\text{GDD}|}{\tau_0^2} \right)^2} $$</div>
+                        <div class="equation-box">$$ \tau_{\text{out}} = \tau_0 \sqrt{1 + \left( \frac{2\pi \cdot \text{TBP} \cdot |\text{GDD}|}{\tau_0^2} \right)^2} $$<div class="text-[10px] text-slate-400 font-inter -mt-1">exact for Gaussian · sech² uses the exact numerical curve</div></div>
                         
                         <!-- Initial Pulse Width -->
                         <div>
@@ -792,6 +864,8 @@
                                 <div id="elongPowerFactor" class="metric-value text-indigo-700 text-sm mt-1">33.9% (-4.7 dB)</div>
                             </div>
                         </div>
+
+                        <div id="elongSourceLabel" class="text-[11px] text-slate-500 font-inter">Uses λ and TBP from the Transform-Limited card.</div>
 
                     </div>
                 </div>
@@ -935,6 +1009,22 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- TIR phase & evanescent field (shown only beyond the critical angle) -->
+                            <div id="fresnelTirInfo" class="hidden grid grid-cols-3 gap-2 bg-rose-50/60 p-2.5 rounded-md border border-rose-200 text-center">
+                                <div>
+                                    <div class="text-[10px] font-bold text-rose-800 uppercase">Phase $\phi_s$</div>
+                                    <div id="fresnelTirPhiS" class="font-mono font-bold text-sm text-rose-700">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] font-bold text-rose-800 uppercase">$\Delta = \phi_p - \phi_s$</div>
+                                    <div id="fresnelTirDelta" class="font-mono font-bold text-sm text-rose-700">-</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] font-bold text-rose-800 uppercase">Field depth $d/\lambda_0$</div>
+                                    <div id="fresnelTirDepth" class="font-mono font-bold text-sm text-rose-700">-</div>
+                                </div>
                             </div>
 
                         </div>
@@ -1257,8 +1347,8 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="equation-box">$$ \lambda_B = \frac{n_1 + n_2}{2} \Lambda \cdot 2 = n_{\text{eff,avg}} \cdot 2 \Lambda $$</div>
-                        
+                        <div class="equation-box">$$ m\,\lambda_B = 2\,\bar n_{\text{eff}}\,\Lambda \qquad \bar n_{\text{eff}} = d\,n_1 + (1-d)\,n_2 $$</div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label for="neff1Input" class="input-label">Effective Index $n_1$ ($n_{\text{ridge}}$)</label>
@@ -1266,9 +1356,18 @@
                             </div>
                             <div>
                                 <label for="neff2Input" class="input-label">Effective Index $n_2$ ($n_{\text{slot}}$)</label>
-                                <input type="number" id="neff2Input" value="1.8" step="0.01" class="calc-input">
+                                <input type="number" id="neff2Input" value="1.795" step="0.001" class="calc-input">
+                            </div>
+                            <div>
+                                <label for="braggDutyInput" class="input-label">Duty Cycle $d$ (fraction at $n_1$)</label>
+                                <input type="number" id="braggDutyInput" value="0.5" step="0.05" min="0" max="1" class="calc-input">
+                            </div>
+                            <div>
+                                <label for="braggOrderInput" class="input-label">Grating Order $m$</label>
+                                <input type="number" id="braggOrderInput" value="1" step="1" min="1" class="calc-input">
                             </div>
                         </div>
+                        <div class="text-[11px] text-slate-500 font-inter">Average index $\bar n_{\text{eff}}$ = <span id="braggNavgDisplay" class="font-mono font-bold text-slate-700">-</span></div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                             <div>
@@ -1316,7 +1415,18 @@
                 </div>
                 <div class="card-body space-y-6">
                     <div class="equation-box">$$ L_D = \frac{T_0^2}{|\beta_2|} \qquad L_{\text{NL}} = \frac{1}{\gamma P_0} \qquad N = \sqrt{\frac{L_D}{L_{\text{NL}}}} \qquad L_{\text{fiss}} \approx \frac{L_D}{N} $$</div>
-                    
+
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 text-xs">
+                            <label for="solitonShapeSelect" class="font-semibold text-slate-600">Pulse shape:</label>
+                            <select id="solitonShapeSelect" class="calc-select py-1 text-xs">
+                                <option value="sech2" selected>sech² (T_fwhm = 1.763 T₀)</option>
+                                <option value="gaussian">Gaussian (T_fwhm = 1.665 T₀)</option>
+                            </select>
+                        </div>
+                        <div id="solitonWarning" class="phys-warning hidden"></div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div>
                             <label for="solitonBeta2Input" class="input-label">GVD $\beta_2$</label>
@@ -1324,6 +1434,8 @@
                                 <input type="number" id="solitonBeta2Input" value="-10000" class="calc-input">
                                 <select id="solitonBeta2Unit" class="calc-unit-select w-20 text-xs">
                                     <option value="fs2/m" selected>fs²/m</option>
+                                    <option value="fs2/mm">fs²/mm</option>
+                                    <option value="fs2/cm">fs²/cm</option>
                                     <option value="ps2/cm">ps²/cm</option>
                                     <option value="ps2/m">ps²/m</option>
                                     <option value="ps2/km">ps²/km</option>
@@ -1646,6 +1758,7 @@
                                 <div class="text-[10px] text-slate-400 italic pt-1">
                                     Editing $w(z)$ solves for distance $z$. All waist, Rayleigh, and divergence parameters back-compute in real time.
                                 </div>
+                                <div id="gbWarning" class="phys-warning is-info hidden"></div>
                             </div>
                         </div>
                     </div>
@@ -1885,7 +1998,7 @@
                                 </div>
 
                                 <div class="p-3 bg-amber-50/50 border border-amber-200 rounded-md text-xs text-amber-900 leading-relaxed">
-                                    <strong>Diffraction Limit & Collimation:</strong> When collimated beam of diameter $D$ enters a lens of focal length $f$, the focused spot diameter is $2w_0' \approx \frac{4 M^2 \lambda f}{\pi D}$.
+                                    <strong>Diffraction Limit & Collimation:</strong> When a collimated beam of $1/e^2$ diameter $D$ enters a lens of focal length $f$, the focused spot diameter is $2w_0' \approx \frac{4 M^2 \lambda f}{\pi D}$.
                                 </div>
                             </div>
 
@@ -2024,6 +2137,7 @@
         const elongTauOutUnit = document.getElementById('elongTauOutUnit');
         const elongMInput = document.getElementById('elongMInput');
         const elongPowerFactor = document.getElementById('elongPowerFactor');
+        const elongSourceLabel = document.getElementById('elongSourceLabel');
 
         // Section 3: Fresnel Calculator Elements & Units
         const fresnelN1Input = document.getElementById('fresnelN1Input');
@@ -2046,6 +2160,10 @@
         const fresnelRavgPct = document.getElementById('fresnelRavgPct');
         const fresnelTavgPct = document.getElementById('fresnelTavgPct');
         const tirAlertBadge = document.getElementById('tirAlertBadge');
+        const fresnelTirInfo = document.getElementById('fresnelTirInfo');
+        const fresnelTirPhiS = document.getElementById('fresnelTirPhiS');
+        const fresnelTirDelta = document.getElementById('fresnelTirDelta');
+        const fresnelTirDepth = document.getElementById('fresnelTirDepth');
 
         // Fresnel Visualization Elements
         const visTabRayBtn = document.getElementById('visTabRayBtn');
@@ -2106,6 +2224,9 @@
         const braggWavelengthUnitSelect = document.getElementById('braggWavelengthUnitSelect');
         const braggPeriodInput = document.getElementById('braggPeriodInput');
         const braggPeriodUnitSelect = document.getElementById('braggPeriodUnitSelect');
+        const braggDutyInput = document.getElementById('braggDutyInput');
+        const braggOrderInput = document.getElementById('braggOrderInput');
+        const braggNavgDisplay = document.getElementById('braggNavgDisplay');
 
         // Section 5: Soliton Dynamics Elements & Units
         const solitonBeta2Input = document.getElementById('solitonBeta2Input');
@@ -2126,6 +2247,8 @@
         const solitonFissInput = document.getElementById('solitonFissInput');
         const solitonFundEnergyInput = document.getElementById('solitonFundEnergyInput');
         const solitonFundEnergyUnitSelect = document.getElementById('solitonFundEnergyUnitSelect');
+        const solitonShapeSelect = document.getElementById('solitonShapeSelect');
+        const solitonWarning = document.getElementById('solitonWarning');
 
         // State trackers
         let lastEditedPulseField = 'bw'; // 'bw' or 'pw'
@@ -2331,12 +2454,14 @@
                 else if (Math.abs(nm - 980) < 10) subBand = '980 nm Pump Line';
                 else if (Math.abs(nm - 1064) < 10) subBand = '1064 nm Nd:YAG Line';
                 else if (nm >= 1260 && nm < 1360) subBand = 'Telecom O-Band (1260 – 1360 nm)';
+                else if (nm >= 1360) subBand = 'Telecom E-Band (1360 – 1460 nm)';
                 else subBand = `${nm.toFixed(0)} nm • ${f_thz.toFixed(2)} THz`;
                 dotColor = '#dc2626';
             } else if (nm <= 3000) {
                 band = 'Short-Wavelength Infrared (SWIR)';
                 if (nm >= 1530 && nm <= 1565) subBand = 'Telecom C-Band (1530 – 1565 nm / 193.4 THz)';
                 else if (nm >= 1460 && nm < 1530) subBand = 'Telecom S-Band (1460 – 1530 nm)';
+                else if (nm < 1460) subBand = 'Telecom E-Band (1360 – 1460 nm)';
                 else if (nm > 1565 && nm <= 1625) subBand = 'Telecom L-Band (1565 – 1625 nm)';
                 else if (nm > 1625 && nm <= 1675) subBand = 'Telecom U-Band (1625 – 1675 nm)';
                 else if (Math.abs(nm - 2000) < 100) subBand = '2.0 µm Tm / Ho Band';
@@ -2736,6 +2861,76 @@
             return 0;
         }
 
+        // Exact dispersive broadening of an unchirped sech² pulse. A sech² pulse does
+        // not stay sech² under GDD, so the Gaussian-form expression with TBP = 0.3148
+        // is wrong by up to 33 % near |GDD| ≈ 0.5 τ0². The FWHM factor M and the
+        // peak-power ratio depend only on x = |GDD| / τ0² (τ0 = input FWHM); both were
+        // computed by FFT propagation of sech(t/T0) (2^20 points, converged to 1e-6)
+        // at 33 log-spaced x from 0.01 to 100. PEAK_CORR is M · (P/P0), which is 1
+        // for a shape-preserving pulse.
+        const SECH2_X = [0.01, 0.0133352, 0.0177828, 0.0237137, 0.0316228, 0.0421697, 0.0562341, 0.0749894, 0.1, 0.133352, 0.177828,
+            0.237137, 0.316228, 0.421697, 0.562341, 0.749894, 1, 1.33352, 1.77828, 2.37137, 3.16228, 4.21697, 5.62341, 7.49894, 10,
+            13.3352, 17.7828, 23.7137, 31.6228, 42.1697, 56.2341, 74.9894, 100];
+        const SECH2_M = [1.00135, 1.0024, 1.00424, 1.00749, 1.01314, 1.02286, 1.03921, 1.06581, 1.10717, 1.16835, 1.2547, 1.3721,
+            1.52762, 1.7306, 1.9941, 2.33689, 2.78626, 3.3817, 4.17954, 5.25831, 6.72337, 8.71885, 11.4157, 15.0587, 19.9516,
+            26.5017, 35.2847, 46.9719, 62.5946, 83.4572, 111.283, 148.299, 197.869];
+        const SECH2_PEAK = [0.99904, 0.998301, 0.997003, 0.994742, 0.99086, 0.984328, 0.973659, 0.956895, 0.93178, 0.896155,
+            0.848525, 0.788602, 0.717632, 0.638335, 0.554495, 0.47033, 0.389827, 0.316203, 0.251576, 0.196892, 0.152072, 0.116282,
+            0.0882982, 0.0667159, 0.0502544, 0.0377759, 0.0283704, 0.0212946, 0.015978, 0.0119849, 0.0089878, 0.00674177, 0.00505511];
+        const SECH2_PEAK_CORR = SECH2_M.map((m, i) => m * SECH2_PEAK[i]);
+        const SECH2_FAR_SLOPE = 2 * Math.PI * 0.3148; // M → 2π·TBP·x far from the input
+
+        // Interpolate log(M − 1) linearly in log x; M − 1 ∝ x² below the table and the
+        // far-field line applies above it.
+        function sech2BroadeningM(x) {
+            const n = SECH2_X.length;
+            if (!(x > 0)) return 1;
+            if (x <= SECH2_X[0]) return 1 + (SECH2_M[0] - 1) * (x / SECH2_X[0]) ** 2;
+            if (x >= SECH2_X[n - 1]) return Math.sqrt(1 + (SECH2_FAR_SLOPE * x) ** 2);
+            let i = 0;
+            while (SECH2_X[i + 1] < x) i++;
+            const t = Math.log(x / SECH2_X[i]) / Math.log(SECH2_X[i + 1] / SECH2_X[i]);
+            return 1 + Math.exp((1 - t) * Math.log(SECH2_M[i] - 1) + t * Math.log(SECH2_M[i + 1] - 1));
+        }
+
+        function sech2PeakRatio(x) {
+            const n = SECH2_X.length;
+            const M = sech2BroadeningM(x);
+            if (!(x > 0)) return 1;
+            // The correction also grows as x² from 1 below the table, and is 1 in the far field
+            if (x <= SECH2_X[0]) return (1 + (SECH2_PEAK_CORR[0] - 1) * (x / SECH2_X[0]) ** 2) / M;
+            if (x >= SECH2_X[n - 1]) return 1 / M;
+            let i = 0;
+            while (SECH2_X[i + 1] < x) i++;
+            const t = Math.log(x / SECH2_X[i]) / Math.log(SECH2_X[i + 1] / SECH2_X[i]);
+            return ((1 - t) * SECH2_PEAK_CORR[i] + t * SECH2_PEAK_CORR[i + 1]) / M;
+        }
+
+        // M(x) is monotonic, so invert it by bisection in log x
+        function sech2BroadeningX(M) {
+            if (!(M > 1)) return 0;
+            let lo = -8, hi = 8;
+            for (let k = 0; k < 80; k++) {
+                const mid = (lo + hi) / 2;
+                if (sech2BroadeningM(10 ** mid) < M) lo = mid; else hi = mid;
+            }
+            return 10 ** ((lo + hi) / 2);
+        }
+
+        // Broadening model per pulse shape: M(x), its inverse x(M), and P/P0 given M
+        function broadeningModel(shape, tbp) {
+            if (shape === 'sech2') {
+                return { M: sech2BroadeningM, x: sech2BroadeningX, peak: (M) => sech2PeakRatio(sech2BroadeningX(M)) };
+            }
+            // Gaussian: exact with 4 ln 2 (= 2π·0.4413); custom TBP: same form, approximate
+            const k = shape === 'gaussian' ? 4 * Math.LN2 : 2 * Math.PI * tbp;
+            return {
+                M: (x) => Math.sqrt(1 + (k * x) ** 2),
+                x: (M) => Math.sqrt(Math.max(0, M ** 2 - 1)) / k,
+                peak: (M) => 1 / M
+            };
+        }
+
         function updatePulseElongation(source) {
             if (isSyncing) return;
             isSyncing = true;
@@ -2746,7 +2941,14 @@
             const centerNm = centerVal * (LENGTH_SI[centerUnit] / 1e-9);
 
             const tbp = getTbp() || 0.4413;
-            const factorConstant = 2 * Math.PI * tbp;
+            const shape = pulseShapeSelect.value;
+            const model = broadeningModel(shape, tbp);
+            const shapeName = { sech2: 'sech², exact numerical curve', gaussian: 'Gaussian, exact', custom: 'custom TBP, Gaussian-form approximation' }[shape] || '';
+            elongSourceLabel.textContent = `Uses λ = ${fmt(centerNm)} nm and TBP = ${fmt(tbp, 4)} (${shapeName}) from the Transform-Limited card.`;
+            const showPower = (M) => {
+                const ratio = model.peak(M);
+                elongPowerFactor.textContent = `${fmt(100 * ratio, 3)}% (${fmt(10 * Math.log10(ratio), 3)} dB)`;
+            };
 
             const tau0_val = parseFloat(elongTau0Input.value);
             const tau0_unit = elongTau0Unit.value;
@@ -2772,17 +2974,13 @@
                 }
 
                 const gdd_s2 = parseDispersionToGddSeconds2(disp_val, disp_unit, centerNm);
-                const broadening_term = (factorConstant * Math.abs(gdd_s2)) / (tau0_s ** 2);
-                const M = Math.sqrt(1 + broadening_term ** 2);
+                const M = model.M(Math.abs(gdd_s2) / tau0_s ** 2);
                 const tau_out_s = tau0_s * M;
 
                 const tau_out_unit = elongTauOutUnit.value;
-                elongTauOutInput.value = (tau_out_s / TIME_SI[tau_out_unit]).toFixed(digits);
-                elongMInput.value = M.toFixed(Math.min(digits, 3));
-
-                const powerRatioPct = (100 / M).toFixed(1);
-                const powerDb = (-10 * Math.log10(M)).toFixed(1);
-                elongPowerFactor.textContent = `${powerRatioPct}% (${powerDb} dB)`;
+                elongTauOutInput.value = fmt(tau_out_s / TIME_SI[tau_out_unit]);
+                elongMInput.value = fmt(M);
+                showPower(M);
 
             } else if (source === 'tau_out') {
                 const tau_out_val = parseFloat(elongTauOutInput.value);
@@ -2806,15 +3004,13 @@
                     return;
                 }
 
-                const gdd_mag_s2 = (tau0_s ** 2 / factorConstant) * Math.sqrt(M ** 2 - 1);
+                const gdd_mag_s2 = tau0_s ** 2 * model.x(M);
                 const disp_unit = elongDispUnit.value;
                 const disp_val = convertGddSeconds2ToDispersion(gdd_mag_s2, disp_unit, centerNm);
 
-                elongDispInput.value = disp_val.toFixed(digits);
-                elongMInput.value = M.toFixed(Math.min(digits, 3));
-                const powerRatioPct = (100 / M).toFixed(1);
-                const powerDb = (-10 * Math.log10(M)).toFixed(1);
-                elongPowerFactor.textContent = `${powerRatioPct}% (${powerDb} dB)`;
+                elongDispInput.value = fmt(disp_val);
+                elongMInput.value = fmt(M);
+                showPower(M);
 
             } else { // source === 'm'
                 const M = parseFloat(elongMInput.value);
@@ -2824,13 +3020,10 @@
                 const tau_out_unit = elongTauOutUnit.value;
                 elongTauOutInput.value = fmt(tau_out_s / TIME_SI[tau_out_unit]);
 
-                const gdd_mag_s2 = (tau0_s ** 2 / factorConstant) * Math.sqrt(M ** 2 - 1);
+                const gdd_mag_s2 = tau0_s ** 2 * model.x(M);
                 const disp_unit = elongDispUnit.value;
-                elongDispInput.value = convertGddSeconds2ToDispersion(gdd_mag_s2, disp_unit, centerNm).toFixed(digits);
-
-                const powerRatioPct = (100 / M).toFixed(1);
-                const powerDb = (-10 * Math.log10(M)).toFixed(1);
-                elongPowerFactor.textContent = `${powerRatioPct}% (${powerDb} dB)`;
+                elongDispInput.value = fmt(convertGddSeconds2ToDispersion(gdd_mag_s2, disp_unit, centerNm));
+                showPower(M);
             }
 
             isSyncing = false;
@@ -2857,8 +3050,16 @@
             const theta_b_deg = (Math.atan(n2 / n1) * 180.0) / Math.PI;
 
             if (is_tir) {
+                // |r| = 1; phases for an exp(-iωt) time dependence and the r_p sign
+                // convention used below (r_p = -r_s at normal incidence)
+                const q = Math.sqrt(Math.max(0, (n1 * sin_ti) ** 2 - n2 ** 2));
+                const phi_s = -2 * Math.atan2(q, n1 * cos_ti);
+                const phi_p = -2 * Math.atan2(n1 * q, n2 ** 2 * cos_ti);
                 return {
                     is_tir: true,
+                    phi_s_deg: phi_s * 180 / Math.PI,
+                    phi_p_deg: phi_p * 180 / Math.PI,
+                    depth_over_lambda: q > 0 ? 1 / (2 * Math.PI * q) : Infinity,
                     theta_t_deg: null,
                     theta_b_deg,
                     theta_c_deg,
@@ -2978,13 +3179,23 @@
                 tirAlertBadge.classList.add('hidden');
             }
 
-            fresnelRsAmp.textContent = res.is_tir ? '1.0 ∠ δ' : res.rs.toFixed(digits);
-            fresnelRsPct.textContent = `${(res.Rs * 100).toFixed(Math.min(digits, 2))}%`;
-            fresnelTsPct.textContent = `${(res.Ts * 100).toFixed(Math.min(digits, 2))}%`;
+            if (res.is_tir) {
+                const phaseStr = (deg) => angleUnit === 'rad' ? `${fmt(deg * Math.PI / 180, 4)} rad` : `${fmt(deg, 4)}°`;
+                fresnelTirPhiS.textContent = phaseStr(res.phi_s_deg);
+                fresnelTirDelta.textContent = phaseStr(res.phi_p_deg - res.phi_s_deg);
+                fresnelTirDepth.textContent = isFinite(res.depth_over_lambda) ? fmt(res.depth_over_lambda, 4) : '∞';
+                fresnelTirInfo.classList.remove('hidden');
+            } else {
+                fresnelTirInfo.classList.add('hidden');
+            }
+            const tirAmp = (deg) => `1 ∠ ${angleUnit === 'rad' ? fmt(deg * Math.PI / 180, 4) + ' rad' : fmt(deg, 4) + '°'}`;
+            fresnelRsAmp.textContent = res.is_tir ? tirAmp(res.phi_s_deg) : fmt(res.rs);
+            fresnelRsPct.textContent = `${fmt(res.Rs * 100)}%`;
+            fresnelTsPct.textContent = `${fmt(res.Ts * 100)}%`;
 
-            fresnelRpAmp.textContent = res.is_tir ? '1.0 ∠ δ' : res.rp.toFixed(digits);
-            fresnelRpPct.textContent = `${(res.Rp * 100).toFixed(Math.min(digits, 2))}%`;
-            fresnelTpPct.textContent = `${(res.Tp * 100).toFixed(Math.min(digits, 2))}%`;
+            fresnelRpAmp.textContent = res.is_tir ? tirAmp(res.phi_p_deg) : fmt(res.rp);
+            fresnelRpPct.textContent = `${fmt(res.Rp * 100)}%`;
+            fresnelTpPct.textContent = `${fmt(res.Tp * 100)}%`;
 
             fresnelRavgPct.textContent = `${fmt(res.R_unpol * 100)}%`;
             fresnelTavgPct.textContent = `${fmt(res.T_unpol * 100)}%`;
@@ -3473,21 +3684,26 @@
             const wlUnit = braggWavelengthUnitSelect.value;
             const periodUnit = braggPeriodUnitSelect.value;
 
-            if (isNaN(neff1) || isNaN(neff2) || neff1 <= 0 || neff2 <= 0) {
-                braggPeriodInput.value = '';
-                braggWavelengthInput.value = '';
+            const duty = parseFloat(braggDutyInput.value);
+            const order = parseInt(braggOrderInput.value, 10);
+
+            if (isNaN(neff1) || isNaN(neff2) || neff1 <= 0 || neff2 <= 0
+                || isNaN(duty) || duty < 0 || duty > 1 || isNaN(order) || order < 1) {
+                braggNavgDisplay.textContent = '-';
                 isSyncing = false;
                 return;
             }
 
-            const neff_avg = (neff1 + neff2) / 2.0;
+            // Length-weighted average index over one period
+            const neff_avg = duty * neff1 + (1 - duty) * neff2;
+            braggNavgDisplay.textContent = fmt(neff_avg);
 
             if (fromWavelength) {
                 const val = parseFloat(braggWavelengthInput.value);
                 if (!isNaN(val) && val > 0) {
                     const lambda_m = val * LENGTH_SI[wlUnit];
-                    const period_m = lambda_m / (2 * neff_avg);
-                    braggPeriodInput.value = (period_m / LENGTH_SI[periodUnit]).toFixed(digits);
+                    const period_m = (order * lambda_m) / (2 * neff_avg);
+                    braggPeriodInput.value = fmt(period_m / LENGTH_SI[periodUnit]);
                 } else {
                     braggPeriodInput.value = '';
                 }
@@ -3495,8 +3711,8 @@
                 const val = parseFloat(braggPeriodInput.value);
                 if (!isNaN(val) && val > 0) {
                     const period_m = val * LENGTH_SI[periodUnit];
-                    const lambda_m = period_m * (2 * neff_avg);
-                    braggWavelengthInput.value = (lambda_m / LENGTH_SI[wlUnit]).toFixed(digits);
+                    const lambda_m = (period_m * 2 * neff_avg) / order;
+                    braggWavelengthInput.value = fmt(lambda_m / LENGTH_SI[wlUnit]);
                 } else {
                     braggWavelengthInput.value = '';
                 }
@@ -3522,16 +3738,20 @@
             let energy_val = parseFloat(solitonEnergyInput.value);
             const energy_unit = solitonEnergyUnitSelect.value;
 
-            const shape = pulseShapeSelect.value;
+            // The soliton card has its own shape selector; it used to read the
+            // Transform-Limited card's dropdown without saying so.
+            const shape = solitonShapeSelect.value;
             const shapeFactors = PULSE_SHAPE_FACTORS[shape] || PULSE_SHAPE_FACTORS['sech2'];
 
-            if ([beta2_val, gamma_val, tfwhm_val].some(isNaN) || tfwhm_val <= 0 || gamma_val <= 0) {
+            if ([beta2_val, gamma_val, tfwhm_val].some(isNaN) || tfwhm_val <= 0 || gamma_val <= 0 || beta2_val === 0) {
                 isSyncing = false;
                 return;
             }
 
             let beta2_s2_per_m;
             if (beta2_unit === 'fs2/m') beta2_s2_per_m = beta2_val * 1e-30;
+            else if (beta2_unit === 'fs2/mm') beta2_s2_per_m = beta2_val * 1e-27;
+            else if (beta2_unit === 'fs2/cm') beta2_s2_per_m = beta2_val * 1e-28;
             else if (beta2_unit === 'ps2/cm') beta2_s2_per_m = beta2_val * 1e-22;
             else if (beta2_unit === 'ps2/m') beta2_s2_per_m = beta2_val * 1e-24;
             else beta2_s2_per_m = beta2_val * 1e-27;
@@ -3601,6 +3821,16 @@
                 if (source !== 'lnl') solitonLnlInput.value = fmt(Lnl_m / LENGTH_SI[lnl_unit]);
                 solitonFissInput.value = isFinite(L_fiss_m) ? fmtLen(L_fiss_m) : '∞';
                 solitonFundEnergyInput.value = fmt(fundamentalEnergy_J / ENERGY_SI[fund_unit]);
+
+                if (beta2_s2_per_m > 0) {
+                    solitonWarning.textContent = 'β₂ > 0 (normal dispersion): no bright soliton exists. N only compares L_D with L_NL, and L_fiss / E₁ do not apply.';
+                    solitonWarning.className = 'phys-warning';
+                } else if (N < 1.5) {
+                    solitonWarning.textContent = 'N < 1.5: the pulse relaxes to a fundamental soliton; no fission occurs, so L_fiss is not meaningful.';
+                    solitonWarning.className = 'phys-warning is-info';
+                } else {
+                    solitonWarning.className = 'phys-warning hidden';
+                }
             }
 
             isSyncing = false;
@@ -3650,6 +3880,7 @@
         const gbCausticContainer = document.getElementById('gbCausticContainer');
         const gbIntensityContainer = document.getElementById('gbIntensityContainer');
         const gbLensContainer = document.getElementById('gbLensContainer');
+        const gbWarning = document.getElementById('gbWarning');
         const gbBeamColorDot = document.getElementById('gbBeamColorDot');
         const gbBeamColorLabel = document.getElementById('gbBeamColorLabel');
         const gbSyncWavelengthBtn = document.getElementById('gbSyncWavelengthBtn');
@@ -3839,6 +4070,13 @@
             drawGaussianCausticSvg(w0_m, zR_m, z_m, wz_m, theta_rad, spec ? spec.dotColor : '#ea580c');
             if (gbCurrentTab === 'intensity') drawTransverseProfileCanvas(wz_m, Iz_w_cm2, spec ? spec.dotColor : '#ea580c');
             if (gbCurrentTab === 'lens') updateLensFocusing();
+            // Paraxial validity: the Gaussian-beam formulas assume θ ≪ 1
+            if (theta_rad > 0.3) {
+                gbWarning.textContent = `θ = ${fmt(theta_rad, 3)} rad: w₀ is comparable to λ/n, so the paraxial Gaussian-beam results (z_R, θ, w(z)) are only approximate; a vector (non-paraxial) treatment is needed.`;
+                gbWarning.classList.remove('hidden');
+            } else {
+                gbWarning.classList.add('hidden');
+            }
             } finally {
                 gbIsSyncing = false;
             }
@@ -4385,17 +4623,20 @@
         deltaWavenumberUnitSelect.addEventListener('change', () => updateDelta('nm'));
 
         // Section 2: Ultrafast Listeners
+        // The Pulse Elongation card reads this card's centre λ and TBP, so every
+        // change here (value or unit) must refresh it too.
         pulseCenterNmInput.addEventListener('input', () => {
             updatePulse(lastEditedPulseField);
             updatePulseElongation('disp');
-            updateSolitonParameters('inputs');
         });
-        pulseCenterUnitSelect.addEventListener('change', () => updatePulse(lastEditedPulseField));
+        pulseCenterUnitSelect.addEventListener('change', () => {
+            updatePulse(lastEditedPulseField);
+            updatePulseElongation('disp');
+        });
         pulseShapeSelect.addEventListener('change', () => {
             customTbpInput.classList.toggle('hidden', pulseShapeSelect.value !== 'custom');
             updatePulse(lastEditedPulseField);
             updatePulseElongation('disp');
-            updateSolitonParameters('inputs');
         });
         customTbpInput.addEventListener('input', () => {
             updatePulse(lastEditedPulseField);
@@ -4505,11 +4746,11 @@
         fpLinewidthInput.addEventListener('input', () => updateFpCavity('linewidth'));
         fpLinewidthUnitSelect.addEventListener('change', () => updateFpCavity('forward'));
 
-        neff1Input.addEventListener('input', () => {
-            neff2Input.value = neff1Input.value;
-            updateBraggGrating(true);
+        // n1 and n2 are independent: editing n1 used to overwrite n2, which made a
+        // non-uniform (ridge/slot) grating impossible to enter in the natural order.
+        [neff1Input, neff2Input, braggDutyInput, braggOrderInput].forEach(el => {
+            el.addEventListener('input', () => updateBraggGrating(true));
         });
-        neff2Input.addEventListener('input', () => updateBraggGrating(true));
         braggWavelengthInput.addEventListener('input', () => updateBraggGrating(true));
         braggWavelengthUnitSelect.addEventListener('change', () => updateBraggGrating(false));
         braggPeriodInput.addEventListener('input', () => updateBraggGrating(false));
@@ -4561,6 +4802,7 @@
         solitonLnlInput.addEventListener('input', () => updateSolitonParameters('lnl'));
         solitonLnlUnitSelect.addEventListener('change', () => updateSolitonParameters('inputs'));
         solitonFundEnergyUnitSelect.addEventListener('change', () => updateSolitonParameters('inputs'));
+        solitonShapeSelect.addEventListener('change', () => updateSolitonParameters('inputs'));
 
         // Precision & Window Resize
         precisionInput.addEventListener('input', updateAllCalculations);

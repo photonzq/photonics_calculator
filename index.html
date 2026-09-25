@@ -635,6 +635,17 @@
                                 </div>
                             </div>
                         </div>
+
+                        <details class="phys-note">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>All wavelengths are <strong>vacuum</strong> wavelengths. In air, $\lambda_{\text{air}} = \lambda_0 / n_{\text{air}}$ with $n_{\text{air}} \approx 1.00027$ at 1550 nm (standard air), i.e. about 0.42 nm shorter; spectrometers and wavemeters often report air values.</li>
+                                <li>Inside a medium only $\lambda$ changes ($\lambda = \lambda_0/n$); the frequency $f$ and the photon energy $E = hf$ do not.</li>
+                                <li>Photon energy uses the exact SI constants $h = 6.62607015\times10^{-34}$ J·s and $e = 1.602176634\times10^{-19}$ C, so $E[\text{eV}] \approx 1239.842/\lambda_0[\text{nm}]$. The photon flux is $\Phi = P/(hf)$.</li>
+                                <li>Band boundaries (UV/VIS/NIR/SWIR/…) follow common usage and differ between standards (e.g. ISO 20473, detector-industry conventions). Telecom bands follow ITU-T: O 1260–1360, E 1360–1460, S 1460–1530, C 1530–1565, L 1565–1625, U 1625–1675 nm.</li>
+                                <li>The RGB swatch is an approximate sRGB rendering of a monochromatic line (Bruton's piecewise model), not a colorimetric calculation.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
@@ -790,6 +801,16 @@
                                 </select>
                             </div>
                         </div>
+
+                        <details class="phys-note mt-auto">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>Durations and bandwidths are <strong>FWHM of intensity</strong> (temporal and spectral). TBP $= \Delta t\,\Delta f$: $0.4413$ for Gaussian, $0.3148$ for sech².</li>
+                                <li>The result is the shortest (transform-limited, unchirped) pulse the spectrum supports; any chirp raises $\Delta t\,\Delta f$ above these values.</li>
+                                <li>An autocorrelation FWHM is longer than the pulse: divide by $\sqrt2$ (Gaussian) or $1.543$ (sech²).</li>
+                                <li>The centre λ, pulse shape and TBP chosen here are also used by the Pulse Elongation card.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
@@ -845,6 +866,15 @@
                             <div class="metric-label">GDD in Femtoseconds Squared</div>
                             <div id="gddFs2Display" class="metric-value text-indigo-700 mt-0.5">-1,275,448 fs²</div>
                         </div>
+
+                        <details class="phys-note">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>$D$ here is the <strong>total</strong> (length-integrated) dispersion, e.g. $D_\lambda\,[\text{ps/(nm·km)}] \times L\,[\text{km}]$; GDD $= \beta_2 L = d^2\phi/d\omega^2$.</li>
+                                <li>Sign convention: $D > 0$ (anomalous) ⇔ GDD $< 0$. Standard SMF-28 at 1550 nm: $D_\lambda \approx +17$ ps/(nm·km), $\beta_2 \approx -21.7$ ps²/km.</li>
+                                <li>The relation is exact for the second-order term only; third-order dispersion (TOD) and higher are not included.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
@@ -914,6 +944,17 @@
                         </div>
 
                         <div id="elongSourceLabel" class="text-[11px] text-slate-500 font-inter">Uses λ and TBP from the Transform-Limited card.</div>
+
+                        <details class="phys-note">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>Input pulse assumed <strong>transform-limited</strong>; linear propagation only (no SPM or other nonlinearity), GDD only (no TOD).</li>
+                                <li><strong>Gaussian</strong>: the formula above is exact, since $2\pi\cdot0.4413 = 4\ln 2$, i.e. $\tau = \tau_0\sqrt{1+(4\ln2\,\text{GDD}/\tau_0^2)^2}$, and the pulse stays Gaussian, so $P/P_0 = 1/M$. The sign of GDD does not matter for a transform-limited input.</li>
+                                <li><strong>sech²</strong>: the pulse does not stay sech² under dispersion, and the formula above (with TBP 0.3148) underestimates the FWHM by up to 25 % near $|\text{GDD}| \approx 0.5\,\tau_0^2$. The calculator therefore uses an exact broadening curve $M(|\text{GDD}|/\tau_0^2)$ and peak ratio, tabulated from a numerical (FFT) propagation. The formula is recovered only in the far field, $\tau \to 2\pi\,\text{TBP}\,|\text{GDD}|/\tau_0$, where the temporal profile maps the spectrum. Because the shape changes, $P/P_0$ differs from $1/M$ by up to 11 %.</li>
+                                <li><strong>Custom TBP</strong>: the Gaussian-form formula with that TBP (approximate; correct far-field limit).</li>
+                                <li>When the dispersion is entered as $D$ (ps/nm), it is converted to GDD at the centre λ of the Transform-Limited card.</li>
+                            </ul>
+                        </details>
 
                     </div>
                 </div>
@@ -1074,6 +1115,17 @@
                                     <div id="fresnelTirDepth" class="font-mono font-bold text-sm text-rose-700">-</div>
                                 </div>
                             </div>
+
+                            <details class="phys-note">
+                                <summary>Physics notes &amp; assumptions</summary>
+                                <ul>
+                                    <li>Lossless, isotropic, non-magnetic media with real $n_1, n_2$; a single planar interface (no multilayer interference).</li>
+                                    <li>$R$, $T$ are power (intensity-flux) coefficients; $T = 1 - R$ already contains the $\frac{n_2\cos\theta_t}{n_1\cos\theta_i}$ beam-area factor, so it is not $|t|^2$.</li>
+                                    <li>Sign convention: $r_p$ as written above (the Hecht convention), so $r_p = -r_s$ at normal incidence. Other texts flip the sign of $r_p$; $R_p$ is unaffected.</li>
+                                    <li>Beyond $\theta_c$ both $|r| = 1$ and the reflection acquires phases (for an $e^{-i\omega t}$ time dependence) $\phi_s = -2\arctan\frac{\sqrt{n_1^2\sin^2\theta_i - n_2^2}}{n_1\cos\theta_i}$ and $\phi_p = -2\arctan\frac{n_1\sqrt{n_1^2\sin^2\theta_i - n_2^2}}{n_2^2\cos\theta_i}$, within the $r_p$ convention above. $\Delta = \phi_p - \phi_s$ is what a Fresnel rhomb uses.</li>
+                                    <li>The evanescent field amplitude decays as $e^{-z/d}$ with $d = \lambda_0 / \bigl(2\pi\sqrt{n_1^2\sin^2\theta_i - n_2^2}\bigr)$ (intensity depth $d/2$).</li>
+                                </ul>
+                            </details>
 
                         </div>
 
@@ -1526,6 +1578,16 @@
                                 </div>
                             </div>
                         </div>
+
+                        <details class="phys-note">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>Plane-parallel (or mode-matched) two-mirror cavity; $R_1, R_2$ are <strong>power</strong> reflectivities (values above 1 are read as percent) and $\alpha$ is the power loss coefficient of the intracavity medium, so one round trip multiplies the power by $R_1R_2e^{-2\alpha L}$.</li>
+                                <li>$r_{\text{rt}} = \sqrt{R_1R_2}\,e^{-\alpha L}$ is the round-trip <em>field</em> factor, and $\mathcal F = \pi\sqrt{r_{\text{rt}}}/(1 - r_{\text{rt}})$ is the exact Airy-function finesse (FSR / FWHM). It approaches $2\pi/(\text{fractional round-trip power loss})$ at high finesse.</li>
+                                <li>FSR $= c/(2n_gL)$ uses the group index; the linewidth is FSR$/\mathcal F$ and $Q = f_0/\Delta\nu$.</li>
+                                <li>Mirror-phase (penetration-depth) corrections, diffraction loss and Gouy-phase shifts of curved-mirror cavities are not included.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
@@ -1939,6 +2001,18 @@
                             </div>
                         </div>
                     </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>Scalar nonlinear Schrödinger equation with $\beta_2$ and Kerr $\gamma$ only (no loss, TOD, self-steepening or Raman). $T_0$ is the shape parameter: $|A|^2 \propto \text{sech}^2(t/T_0)$ or $e^{-t^2/T_0^2}$.</li>
+                            <li>Peak power from energy: $P_0 = E_p/(2T_0)$ for sech², $E_p/(\sqrt\pi\,T_0)$ for Gaussian.</li>
+                            <li><strong>Bright solitons need anomalous dispersion</strong> ($\beta_2 < 0$). For $\beta_2 > 0$, $N = \sqrt{L_D/L_{\text{NL}}}$ still measures whether SPM or dispersion dominates, but there is no soliton or fission: the pulse broadens and chirps (optical wave breaking at large $N$).</li>
+                            <li>$E_1 = 2|\beta_2|/(\gamma T_0)$ is the exact fundamental ($N = 1$) sech soliton energy; for a Gaussian input it is the energy at which $N = 1$, not a soliton solution. An input with $N$ sheds energy and settles to the nearest soliton; order-$N$ solitons have energy $N^2E_1$.</li>
+                            <li>$L_{\text{fiss}} \approx L_D/N$ is the usual estimate of the higher-order soliton compression/fission point, valid for $N \gtrsim 3$ (for $N = 1$ nothing happens).</li>
+                            <li>$\gamma = n_2\omega_0/(cA_{\text{eff}})$; typical values: SMF-28 ≈ 1.3 W⁻¹km⁻¹, Si₃N₄ waveguides ≈ 1 W⁻¹m⁻¹, LiNbO₃ nanowaveguides ≈ 1 W⁻¹m⁻¹, Si ≈ 100–300 W⁻¹m⁻¹.</li>
+                        </ul>
+                    </details>
                 </div>
             </div>
 
@@ -2340,6 +2414,16 @@
                                 </div>
                                 <div id="gbWarning" class="phys-warning is-info hidden"></div>
                             </div>
+
+                            <details class="phys-note">
+                                <summary>Physics notes &amp; assumptions</summary>
+                                <ul>
+                                    <li>Paraxial Gaussian beam; $w$ is the $1/e^2$ intensity radius and $\lambda_0$ the vacuum wavelength, so inside a medium $z_R = \pi n w_0^2/(M^2\lambda_0)$. The paraxial result degrades once $\theta \gtrsim 0.3$ rad ($w_0 \lesssim \lambda$).</li>
+                                    <li>$M^2$ uses the embedded-Gaussian picture: $w_0$ and $w(z)$ are second-moment radii of the real beam, and $\theta = M^2\lambda/(\pi n w_0)$. The intensity values assume a TEM₀₀ profile $I = \frac{2P}{\pi w^2}e^{-2r^2/w^2}$ and are only indicative when $M^2 > 1$.</li>
+                                    <li>$R(z) = z + z_R^2/z$ is smallest ($2z_R$) at $|z| = z_R$; the Gouy phase $\zeta = \arctan(z/z_R)$ goes from $-\pi/2$ to $+\pi/2$ across the focus (×$(1 + 2p + |l|)$ for higher-order LG modes).</li>
+                                    <li>Power inside radius $r$: $1 - e^{-2r^2/w^2}$ (86.5 % at $r = w$, 98.9 % at $r = 1.5w$); FWHM of intensity $= 1.1774\,w$.</li>
+                                </ul>
+                            </details>
                         </div>
                     </div>
                 </div>

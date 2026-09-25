@@ -459,7 +459,7 @@
                             <option value="#fresnel-interface">🪞 Fresnel Reflection & Interfaces</option>
                         </optgroup>
                         <optgroup label="4. Cavities & Guided Waves">
-                            <option value="#microresonator">⭕ Microresonator Loss, Linewidth & Q</option>
+                            <option value="#microresonator">⭕ Microresonator Loss, Q & Bus Coupling</option>
                             <option value="#fabry-perot">🪞 Fabry-Pérot (FP) Cavity</option>
                             <option value="#bragg-grating">📐 Waveguide Bragg Grating</option>
                         </optgroup>
@@ -1265,6 +1265,148 @@
                             <input type="text" id="resQfactorInput" value="9.67e6" class="calc-input font-bold text-indigo-700">
                         </div>
                     </div>
+
+                    <!-- Row 4: Bus coupling & loaded response -->
+                    <div class="pt-3 border-t border-slate-100 space-y-3">
+                        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex justify-between items-center flex-wrap gap-2">
+                            <span>Bus Coupling &amp; Loaded Response</span>
+                            <span class="text-[10px] text-slate-400 font-normal normal-case">Intrinsic $\kappa_0$ from the rows above · edit any one coupling field</span>
+                        </div>
+                        <div class="equation-box">$$ \kappa = \kappa_0 + \kappa_{\text{ex}} \qquad Q_L^{-1} = Q_0^{-1} + Q_{\text{ex}}^{-1} \qquad T_0 = \left(\frac{\kappa_0 - \kappa_{\text{ex}}}{\kappa_0 + \kappa_{\text{ex}}}\right)^2 \qquad \frac{P_{\text{circ}}}{P_{\text{in}}} = \frac{4\kappa_{\text{ex}}}{\kappa^2}\,\text{FSR} $$</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="resKexInput" class="input-label">External Coupling $\kappa_{\text{ex}}/2\pi$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="resKexInput" value="20" class="calc-input">
+                                    <select id="resKexUnitSelect" class="calc-unit-select w-18">
+                                        <option value="mhz" selected>MHz</option>
+                                        <option value="khz">kHz</option>
+                                        <option value="ghz">GHz</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="resQexInput" class="input-label">External (Coupling) $Q_{\text{ex}}$</label>
+                                <input type="text" id="resQexInput" class="calc-input">
+                            </div>
+                            <div>
+                                <label for="resEtaInput" class="input-label">Coupling Ratio $\eta = \kappa_{\text{ex}}/\kappa$</label>
+                                <input type="number" id="resEtaInput" step="0.01" min="0" max="0.999" class="calc-input">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div class="metric-badge">
+                                <div class="metric-label">Coupling Regime</div>
+                                <div id="resRegimeDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Loaded Linewidth $\kappa/2\pi$</div>
+                                <div id="resLoadedLwDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Loaded $Q_L$</div>
+                                <div id="resQlDisplay" class="metric-value text-sm text-indigo-700 mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">On-Resonance $T_0$ (Extinction)</div>
+                                <div id="resT0Display" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Build-up $P_{\text{circ}}/P_{\text{in}}$</div>
+                                <div id="resBuildupDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Photon Lifetime $1/\kappa$ ($1/\kappa_0$)</div>
+                                <div id="resLifetimeDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Round-Trip Length $L$</div>
+                                <div id="resLengthDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Ring Radius $R = L/2\pi$</div>
+                                <div id="resRadiusDisplay" class="metric-value text-sm mt-1">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Extract intrinsic / external Q from a measured resonance -->
+                        <details class="phys-note" id="resExtractPanel">
+                            <summary>Extract $Q_0$ and $Q_{\text{ex}}$ from a measured resonance</summary>
+                            <div class="px-3 pb-3 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="resMeasLwInput" class="input-label">Measured Loaded Linewidth $\kappa/2\pi$ (FWHM)</label>
+                                        <div class="flex gap-1.5">
+                                            <input type="number" id="resMeasLwInput" value="40" class="calc-input">
+                                            <select id="resMeasLwUnitSelect" class="calc-unit-select w-18">
+                                                <option value="mhz" selected>MHz</option>
+                                                <option value="khz">kHz</option>
+                                                <option value="ghz">GHz</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="resMeasDipInput" class="input-label">On-Resonance Dip</label>
+                                        <div class="flex gap-1.5">
+                                            <input type="number" id="resMeasDipInput" value="10" class="calc-input">
+                                            <select id="resMeasDipUnitSelect" class="calc-unit-select w-24">
+                                                <option value="db" selected>dB (extinction)</option>
+                                                <option value="pct">% (T_min)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto border border-slate-200 rounded-md">
+                                    <table class="w-full text-xs text-left">
+                                        <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+                                            <tr>
+                                                <th class="p-2">Solution</th>
+                                                <th class="p-2 text-right">$\kappa_0/2\pi$</th>
+                                                <th class="p-2 text-right">$\kappa_{\text{ex}}/2\pi$</th>
+                                                <th class="p-2 text-right">$Q_0$</th>
+                                                <th class="p-2 text-right">$Q_{\text{ex}}$</th>
+                                                <th class="p-2"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 font-mono">
+                                            <tr>
+                                                <td class="p-2 font-sans font-semibold">Under-coupled</td>
+                                                <td id="resExUnderK0" class="p-2 text-right">-</td>
+                                                <td id="resExUnderKex" class="p-2 text-right">-</td>
+                                                <td id="resExUnderQ0" class="p-2 text-right">-</td>
+                                                <td id="resExUnderQex" class="p-2 text-right">-</td>
+                                                <td class="p-2 text-right"><button type="button" id="resExUseUnderBtn" class="text-[11px] font-sans font-semibold text-indigo-600 hover:text-indigo-800 underline">Use</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="p-2 font-sans font-semibold">Over-coupled</td>
+                                                <td id="resExOverK0" class="p-2 text-right">-</td>
+                                                <td id="resExOverKex" class="p-2 text-right">-</td>
+                                                <td id="resExOverQ0" class="p-2 text-right">-</td>
+                                                <td id="resExOverQex" class="p-2 text-right">-</td>
+                                                <td class="p-2 text-right"><button type="button" id="resExUseOverBtn" class="text-[11px] font-sans font-semibold text-indigo-600 hover:text-indigo-800 underline">Use</button></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="text-[11px] text-slate-500">
+                                    $\kappa_0 = \tfrac{\kappa}{2}\bigl(1 \pm \sqrt{T_0}\bigr)$, $\kappa_{\text{ex}} = \tfrac{\kappa}{2}\bigl(1 \mp \sqrt{T_0}\bigr)$. Transmission alone cannot tell the two apart; the phase response, the coupling-gap trend, or the resonance splitting behaviour can. "Use" writes the solution into the intrinsic linewidth and $\kappa_{\text{ex}}$ above (center λ is taken from this card).
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>$\kappa_0$, $\kappa_{\text{ex}}$ and $\kappa$ are <strong>energy</strong> decay rates (angular); the FWHM linewidth in Hz is $\kappa/2\pi$ and $Q = \omega_0/\kappa = f_0/(\kappa/2\pi)$.</li>
+                            <li>$\alpha$ is the <strong>power</strong> attenuation coefficient: $P(z) = P_0 e^{-\alpha z}$, $\alpha[\text{dB/m}] = 4.343\,\alpha[\text{m}^{-1}]$, and $\kappa_0 = \alpha\, v_g = \alpha c/n_g$. Some papers quote a field coefficient ($\alpha/2$) instead.</li>
+                            <li>$\mathcal F = 2\pi/(\alpha L_{\text{rt}})$ and the linewidth formulas assume high finesse ($\alpha L_{\text{rt}} \ll 1$); the round-trip loss field reports the exact $1-e^{-\alpha L}$.</li>
+                            <li>Single-mode, traveling-wave resonator side-coupled to one bus waveguide (all-pass configuration), in the temporal coupled-mode theory picture valid for $\kappa \ll$ FSR. Backscattering (mode splitting) and a drop port are not included; a drop port simply adds another $\kappa_{\text{ex}}$ term to $\kappa$.</li>
+                            <li>Critical coupling ($\kappa_{\text{ex}} = \kappa_0$) gives zero transmission, $Q_L = Q_0/2$ and build-up $\mathcal F_L/\pi = \mathcal F_0/2\pi$ ($\mathcal F_L$ = loaded finesse). Here "≈ critical" means $|\kappa_{\text{ex}} - \kappa_0| < 2\%\,\kappa_0$.</li>
+                            <li>$L$ and $R$ are derived from FSR and $n_g$ ($L = c/(n_g\,\text{FSR})$); $R$ assumes a circular ring.</li>
+                        </ul>
+                    </details>
                 </div>
             </div>
 
@@ -2277,6 +2419,32 @@
         const resFinesseInput = document.getElementById('resFinesseInput');
         const resLossRatioInput = document.getElementById('resLossRatioInput');
         const resQfactorInput = document.getElementById('resQfactorInput');
+        const resKexInput = document.getElementById('resKexInput');
+        const resKexUnitSelect = document.getElementById('resKexUnitSelect');
+        const resQexInput = document.getElementById('resQexInput');
+        const resEtaInput = document.getElementById('resEtaInput');
+        const resRegimeDisplay = document.getElementById('resRegimeDisplay');
+        const resLoadedLwDisplay = document.getElementById('resLoadedLwDisplay');
+        const resQlDisplay = document.getElementById('resQlDisplay');
+        const resT0Display = document.getElementById('resT0Display');
+        const resBuildupDisplay = document.getElementById('resBuildupDisplay');
+        const resLifetimeDisplay = document.getElementById('resLifetimeDisplay');
+        const resLengthDisplay = document.getElementById('resLengthDisplay');
+        const resRadiusDisplay = document.getElementById('resRadiusDisplay');
+        const resMeasLwInput = document.getElementById('resMeasLwInput');
+        const resMeasLwUnitSelect = document.getElementById('resMeasLwUnitSelect');
+        const resMeasDipInput = document.getElementById('resMeasDipInput');
+        const resMeasDipUnitSelect = document.getElementById('resMeasDipUnitSelect');
+        const resExUnderK0 = document.getElementById('resExUnderK0');
+        const resExUnderKex = document.getElementById('resExUnderKex');
+        const resExUnderQ0 = document.getElementById('resExUnderQ0');
+        const resExUnderQex = document.getElementById('resExUnderQex');
+        const resExOverK0 = document.getElementById('resExOverK0');
+        const resExOverKex = document.getElementById('resExOverKex');
+        const resExOverQ0 = document.getElementById('resExOverQ0');
+        const resExOverQex = document.getElementById('resExOverQex');
+        const resExUseUnderBtn = document.getElementById('resExUseUnderBtn');
+        const resExUseOverBtn = document.getElementById('resExUseOverBtn');
 
         const neff1Input = document.getElementById('neff1Input');
         const neff2Input = document.getElementById('neff2Input');
@@ -3757,6 +3925,117 @@
             }
 
             isSyncing = false;
+            updateResonatorCoupling(lastEditedCouplingField);
+        }
+
+        // --- SECTION 4: Bus coupling & loaded response of the microresonator ---
+        // κ0 is read back from the intrinsic-linewidth field, which updateResonator()
+        // keeps current whichever loss field was edited. The coupling field edited last
+        // (κex, Q_ex or η) is held fixed when κ0 changes.
+        let lastEditedCouplingField = 'kex';
+
+        function readResonatorBasics() {
+            const center_m = parseFloat(resCenterNmInput.value) * LENGTH_SI[resCenterUnitSelect.value];
+            const ng = parseFloat(resNgInput.value);
+            const fsr_hz = parseFloat(resFsrInput.value) * FREQ_SI[resFsrUnitSelect.value];
+            const k0_hz = parseFloat(resLinewidthInput.value) * FREQ_SI[resLinewidthUnitSelect.value];
+            if ([center_m, ng, fsr_hz].some(v => isNaN(v) || v <= 0)) return null;
+            return { f0: C / center_m, ng, fsr_hz, k0_hz };
+        }
+
+        function updateResonatorCoupling(source) {
+            if (isSyncing) return;
+            isSyncing = true;
+            try {
+                const base = readResonatorBasics();
+                if (!base || isNaN(base.k0_hz) || base.k0_hz <= 0) return;
+                const { f0, ng, fsr_hz, k0_hz } = base;
+
+                // All rates below are "per 2π" (Hz); the angular rates are 2π times these.
+                let kex_hz;
+                if (source === 'qex') {
+                    const qex = parseFloat(resQexInput.value);
+                    if (isNaN(qex) || qex <= 0) return;
+                    kex_hz = f0 / qex;
+                } else if (source === 'eta') {
+                    const eta = parseFloat(resEtaInput.value);
+                    if (isNaN(eta) || eta < 0 || eta >= 1) return;
+                    kex_hz = eta * k0_hz / (1 - eta);
+                } else {
+                    kex_hz = parseFloat(resKexInput.value) * FREQ_SI[resKexUnitSelect.value];
+                    if (isNaN(kex_hz) || kex_hz < 0) return;
+                }
+
+                const k_hz = k0_hz + kex_hz;
+                const eta = kex_hz / k_hz;
+                const T0 = ((k0_hz - kex_hz) / k_hz) ** 2;
+                const QL = f0 / k_hz;
+                const kappa = 2 * Math.PI * k_hz; // angular, 1/s
+                const buildup = 4 * (2 * Math.PI * kex_hz) * fsr_hz / kappa ** 2;
+                const L_m = C / (ng * fsr_hz);
+
+                if (source !== 'kex') resKexInput.value = fmt(kex_hz / FREQ_SI[resKexUnitSelect.value]);
+                if (source !== 'qex') resQexInput.value = kex_hz > 0 ? fmtExp(f0 / kex_hz) : '∞';
+                if (source !== 'eta') resEtaInput.value = fmt(eta, Math.min(getPrecision(), 4));
+
+                const mismatch = (kex_hz - k0_hz) / k0_hz;
+                let regime, regimeClass;
+                if (Math.abs(mismatch) < 0.02) { regime = '≈ Critical'; regimeClass = 'text-emerald-700'; }
+                else if (mismatch < 0) { regime = 'Under-coupled'; regimeClass = 'text-amber-700'; }
+                else { regime = 'Over-coupled'; regimeClass = 'text-sky-700'; }
+                resRegimeDisplay.textContent = regime;
+                resRegimeDisplay.className = `metric-value text-sm mt-1 ${regimeClass}`;
+
+                resLoadedLwDisplay.textContent = fmtFreq(k_hz);
+                resQlDisplay.textContent = fmtExp(QL);
+                resT0Display.textContent = T0 > 0
+                    ? `${fmt(T0 * 100, 4)} % (${fmt(-10 * Math.log10(T0), 4)} dB)`
+                    : '0 % (∞ dB)';
+                resBuildupDisplay.textContent = `${fmt(buildup, 4)} ×`;
+                resLifetimeDisplay.textContent = `${fmtTime(1 / kappa, 4)} (${fmtTime(1 / (2 * Math.PI * k0_hz), 4)})`;
+                resLengthDisplay.textContent = fmtLen(L_m);
+                resRadiusDisplay.textContent = fmtLen(L_m / (2 * Math.PI));
+            } finally {
+                isSyncing = false;
+            }
+            updateResonatorExtraction();
+        }
+
+        // Invert a measured loaded linewidth and on-resonance dip into (κ0, κex).
+        // Both roots reproduce the same transmission; the table shows both.
+        let resExtractSolutions = null;
+        function updateResonatorExtraction() {
+            const base = readResonatorBasics();
+            const k_hz = parseFloat(resMeasLwInput.value) * FREQ_SI[resMeasLwUnitSelect.value];
+            const dipVal = parseFloat(resMeasDipInput.value);
+            const cells = [resExUnderK0, resExUnderKex, resExUnderQ0, resExUnderQex, resExOverK0, resExOverKex, resExOverQ0, resExOverQex];
+            resExtractSolutions = null;
+            if (!base || isNaN(k_hz) || k_hz <= 0 || isNaN(dipVal)) { cells.forEach(c => c.textContent = '-'); return; }
+            const T0 = resMeasDipUnitSelect.value === 'db' ? Math.pow(10, -dipVal / 10) : dipVal / 100;
+            if (!(T0 >= 0 && T0 < 1)) { cells.forEach(c => c.textContent = '-'); return; }
+            const s = Math.sqrt(T0);
+            const under = { k0: k_hz * (1 + s) / 2, kex: k_hz * (1 - s) / 2 };
+            const over = { k0: k_hz * (1 - s) / 2, kex: k_hz * (1 + s) / 2 };
+            resExtractSolutions = { under, over };
+            const fill = (sol, k0Cell, kexCell, q0Cell, qexCell) => {
+                k0Cell.textContent = fmtFreq(sol.k0, 4);
+                kexCell.textContent = fmtFreq(sol.kex, 4);
+                q0Cell.textContent = sol.k0 > 0 ? fmtExp(base.f0 / sol.k0, 4) : '∞';
+                qexCell.textContent = sol.kex > 0 ? fmtExp(base.f0 / sol.kex, 4) : '∞';
+            };
+            fill(under, resExUnderK0, resExUnderKex, resExUnderQ0, resExUnderQex);
+            fill(over, resExOverK0, resExOverKex, resExOverQ0, resExOverQex);
+        }
+
+        function applyResonatorExtraction(which) {
+            if (!resExtractSolutions) return;
+            const sol = resExtractSolutions[which];
+            if (!(sol.k0 > 0)) return;
+            resLinewidthInput.value = fmt(sol.k0 / FREQ_SI[resLinewidthUnitSelect.value]);
+            resKexInput.value = fmt(sol.kex / FREQ_SI[resKexUnitSelect.value]);
+            lastEditedResonatorField = 'linewidth';
+            lastEditedCouplingField = 'kex';
+            updateResonator('linewidth');
         }
 
         function updateBraggGrating(fromWavelength) {
@@ -4884,6 +5163,16 @@
             lastEditedResonatorField = 'q';
             updateResonator('q');
         });
+
+        // Bus coupling
+        resKexInput.addEventListener('input', () => { lastEditedCouplingField = 'kex'; updateResonatorCoupling('kex'); });
+        resKexUnitSelect.addEventListener('change', () => updateResonatorCoupling(lastEditedCouplingField === 'kex' ? 'qex' : lastEditedCouplingField));
+        resQexInput.addEventListener('input', () => { lastEditedCouplingField = 'qex'; updateResonatorCoupling('qex'); });
+        resEtaInput.addEventListener('input', () => { lastEditedCouplingField = 'eta'; updateResonatorCoupling('eta'); });
+        [resMeasLwInput, resMeasDipInput].forEach(el => el.addEventListener('input', updateResonatorExtraction));
+        [resMeasLwUnitSelect, resMeasDipUnitSelect].forEach(el => el.addEventListener('change', updateResonatorExtraction));
+        resExUseUnderBtn.addEventListener('click', () => applyResonatorExtraction('under'));
+        resExUseOverBtn.addEventListener('click', () => applyResonatorExtraction('over'));
 
         // Section 5: Soliton Listeners
         [solitonBeta2Input, solitonBeta2Unit, solitonGammaInput, solitonGammaUnitSelect, solitonTfwhmInput, solitonTfwhmUnitSelect, solitonEnergyInput, solitonEnergyUnitSelect].forEach(el => {

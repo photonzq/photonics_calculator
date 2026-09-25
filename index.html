@@ -498,9 +498,9 @@
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="equation-box">$$ f = \frac{c}{\lambda} \qquad \tilde{\nu} = \frac{1}{\lambda} = \frac{f}{c} $$</div>
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="equation-box">$$ f = \frac{c}{\lambda} \qquad \tilde{\nu} = \frac{1}{\lambda} = \frac{f}{c} \qquad E = h f = \frac{hc}{\lambda} $$</div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label for="nmInput" class="input-label">Wavelength $\lambda$</label>
                                 <div class="flex gap-1.5">
@@ -539,6 +539,37 @@
                                     </select>
                                 </div>
                             </div>
+                            <div>
+                                <label for="evInput" class="input-label">Photon Energy $E$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="evInput" placeholder="eV" class="calc-input">
+                                    <select id="evUnitSelect" class="calc-unit-select w-16">
+                                        <option value="ev" selected>eV</option>
+                                        <option value="mev">meV</option>
+                                        <option value="kev">keV</option>
+                                        <option value="j">J</option>
+                                        <option value="zj">zJ</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div id="photonFluxLabel" class="font-mono text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-2 py-1">1 mW ≙ – photons/s</div>
+                            <button type="button" id="applyLambdaAllBtn" class="font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 transition" title="Copy this wavelength into every calculator on the page">
+                                ⇉ Apply λ to all calculators
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span class="font-semibold text-slate-500">Presets:</span>
+                            <button type="button" class="lambda-preset" data-nm="532">532</button>
+                            <button type="button" class="lambda-preset" data-nm="633">633</button>
+                            <button type="button" class="lambda-preset" data-nm="780">780</button>
+                            <button type="button" class="lambda-preset" data-nm="1064">1064</button>
+                            <button type="button" class="lambda-preset" data-nm="1310">1310</button>
+                            <button type="button" class="lambda-preset" data-nm="1550">1550</button>
+                            <button type="button" class="lambda-preset" data-nm="2000">2000</button>
+                            <span class="text-slate-400">nm (applies everywhere)</span>
                         </div>
 
                         <!-- Spectral Region & Spectrum Bar -->
@@ -666,6 +697,20 @@
                         <div class="p-3 bg-indigo-50/60 border border-indigo-100 rounded-md text-xs text-indigo-900 font-inter leading-relaxed">
                             💡 <strong>Rule of thumb at 1550 nm:</strong> $1\text{ nm} \approx 124.8\text{ GHz} \approx 4.162\text{ cm}^{-1}$. Select any unit to automatically recalculate!
                         </div>
+
+                        <div class="metric-badge text-left">
+                            <div class="metric-label">Exact band $[\lambda_c - \Delta\lambda/2,\ \lambda_c + \Delta\lambda/2]$</div>
+                            <div id="deltaExactDisplay" class="font-mono text-xs text-slate-700 mt-1">-</div>
+                        </div>
+
+                        <details class="phys-note">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>The three fields use the first-order (linearised) relation $|\Delta f| = c\,\Delta\lambda/\lambda_c^2$, which is what linewidths, FSRs and pulse bandwidths are normally quoted with.</li>
+                                <li>The exact width of a band placed symmetrically in wavelength is $\Delta f = c\left(\frac{1}{\lambda_c - \Delta\lambda/2} - \frac{1}{\lambda_c + \Delta\lambda/2}\right) = \frac{c\,\Delta\lambda}{\lambda_c^2 - \Delta\lambda^2/4}$; the relative error of the linear form is $\approx (\Delta\lambda/2\lambda_c)^2$ (0.1 % for 100 nm at 1550 nm). A band symmetric in wavelength is <em>not</em> symmetric in frequency.</li>
+                                <li>$\Delta\tilde\nu = \Delta f / c$ is exact (wavenumber is linear in frequency); only the conversion to $\Delta\lambda$ is linearised.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
@@ -2022,6 +2067,8 @@
     <script>
         // --- Physical Constants ---
         const C = 299792458; // Speed of light in m/s
+        const H_PLANCK = 6.62607015e-34; // Planck constant in J·s (exact, SI 2019)
+        const E_CHARGE = 1.602176634e-19; // Elementary charge in C (exact, SI 2019)
         const DB_CONVERSION = 10 * Math.log10(Math.E); // Approx 4.342944819
         const TBP_VALUES = {
             'sech2': 0.3148,
@@ -2059,6 +2106,14 @@
             'um-1': 1e6
         };
 
+        const PHOTON_ENERGY_SI = {
+            'j': 1,
+            'zj': 1e-21,
+            'ev': E_CHARGE,
+            'mev': 1e-3 * E_CHARGE,
+            'kev': 1e3 * E_CHARGE
+        };
+
         const TIME_SI = {
             's': 1,
             'ms': 1e-3,
@@ -2094,6 +2149,11 @@
         const thzUnitSelect = document.getElementById('thzUnitSelect');
         const wavenumberInput = document.getElementById('wavenumberInput');
         const wavenumberUnitSelect = document.getElementById('wavenumberUnitSelect');
+        const evInput = document.getElementById('evInput');
+        const evUnitSelect = document.getElementById('evUnitSelect');
+        const photonFluxLabel = document.getElementById('photonFluxLabel');
+        const applyLambdaAllBtn = document.getElementById('applyLambdaAllBtn');
+        const deltaExactDisplay = document.getElementById('deltaExactDisplay');
 
         const colorSwatchDot = document.getElementById('colorSwatchDot');
         const spectralRegionLabel = document.getElementById('spectralRegionLabel');
@@ -2578,6 +2638,13 @@
                     const f_hz = val * FREQ_SI[unit];
                     lambda_m = C / f_hz;
                 }
+            } else if (source === 'ev') {
+                const val = parseFloat(evInput.value);
+                const unit = evUnitSelect.value;
+                if (!isNaN(val) && val > 0) {
+                    const energy_J = val * PHOTON_ENERGY_SI[unit];
+                    lambda_m = (H_PLANCK * C) / energy_J;
+                }
             } else { // source === 'wn'
                 const val = parseFloat(wavenumberInput.value);
                 const unit = wavenumberUnitSelect.value;
@@ -2590,6 +2657,12 @@
             if (!isNaN(lambda_m) && lambda_m > 0) {
                 const f_hz = C / lambda_m;
                 const wn_per_m = 1 / lambda_m;
+                const energy_J = H_PLANCK * f_hz;
+
+                if (source !== 'ev') {
+                    evInput.value = fmt(energy_J / PHOTON_ENERGY_SI[evUnitSelect.value]);
+                }
+                photonFluxLabel.textContent = `hf = ${fmt(energy_J / E_CHARGE)} eV · 1 mW ≙ ${fmtExp(1e-3 / energy_J, Math.min(digits, 4))} photons/s`;
 
                 if (source !== 'nm') {
                     const unit = nmUnitSelect.value;
@@ -2609,6 +2682,8 @@
                 if (source !== 'nm') nmInput.value = '';
                 if (source !== 'thz') thzInput.value = '';
                 if (source !== 'wn') wavenumberInput.value = '';
+                if (source !== 'ev') evInput.value = '';
+                photonFluxLabel.textContent = '1 mW ≙ – photons/s';
                 updateColorDisplay(NaN);
             }
 
@@ -2665,6 +2740,16 @@
                 if (source !== 'wn') {
                     const unit = deltaWavenumberUnitSelect.value;
                     deltaWavenumberInput.value = fmt(deltaWnPerM / WAVENUMBER_SI[unit]);
+                }
+
+                // Exact width of the band placed symmetrically in wavelength about λc
+                const halfBand = Math.abs(deltaLambdaM) / 2;
+                if (halfBand > 0 && halfBand < centerLambdaM) {
+                    const exactHz = C * (1 / (centerLambdaM - halfBand) - 1 / (centerLambdaM + halfBand));
+                    const relErr = (deltaFHz - exactHz) / exactHz;
+                    deltaExactDisplay.textContent = `Δf = ${fmtFreq(exactHz)} · linear form off by ${fmt(relErr * 100, 3)} %`;
+                } else {
+                    deltaExactDisplay.textContent = halfBand > 0 ? 'Δλ/2 exceeds λc: no physical band' : '-';
                 }
             }
 
@@ -4612,6 +4697,17 @@
         thzUnitSelect.addEventListener('change', () => updateNmThzWavenumber('nm'));
         wavenumberInput.addEventListener('input', () => updateNmThzWavenumber('wn'));
         wavenumberUnitSelect.addEventListener('change', () => updateNmThzWavenumber('nm'));
+        evInput.addEventListener('input', () => updateNmThzWavenumber('ev'));
+        evUnitSelect.addEventListener('change', () => updateNmThzWavenumber('nm'));
+
+        // Push one wavelength into every calculator on the page
+        document.querySelectorAll('.lambda-preset').forEach(btn => {
+            btn.addEventListener('click', () => setWavelengthPreset(parseFloat(btn.dataset.nm)));
+        });
+        applyLambdaAllBtn.addEventListener('click', () => {
+            const lambda_m = parseFloat(nmInput.value) * LENGTH_SI[nmUnitSelect.value];
+            if (!isNaN(lambda_m) && lambda_m > 0) setWavelengthPreset(Number(fmt(lambda_m * 1e9, 12)));
+        });
 
         deltaCenterNm.addEventListener('input', () => updateDelta('nm'));
         deltaCenterUnitSelect.addEventListener('change', () => updateDelta('nm'));
@@ -4846,7 +4942,8 @@
             '#caustic': '#gaussian-visualizer',
             '#spectrum': '#spectral',
             '#wavelength': '#wavelength-converter',
-            '#delta': '#differential-bandwidth'
+            '#delta': '#differential-bandwidth',
+            '#ev': '#wavelength-converter',
         };
 
         function resolveHash(hash) {

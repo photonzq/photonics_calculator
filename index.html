@@ -437,7 +437,7 @@
                     <a href="#ultrafast" class="jump-pill" data-section="ultrafast"><span>⏱️</span> Ultrafast</a>
                     <a href="#fresnel" class="jump-pill" data-section="fresnel"><span>🪞</span> Fresnel</a>
                     <a href="#cavities" class="jump-pill" data-section="cavities"><span>🔬</span> Cavities</a>
-                    <a href="#nonlinear" class="jump-pill" data-section="nonlinear"><span>⚡</span> Solitons</a>
+                    <a href="#nonlinear" class="jump-pill" data-section="nonlinear"><span>⚡</span> Solitons &amp; Combs</a>
                     <a href="#gaussian-beam" class="jump-pill" data-section="gaussian-beam"><span>🎯</span> Gaussian Beam</a>
                 </div>
 
@@ -465,6 +465,7 @@
                         </optgroup>
                         <optgroup label="5. Nonlinear Optics">
                             <option value="#solitons">🌀 Soliton Parameters & Characteristic Lengths</option>
+                            <option value="#kerr-comb">🔆 Kerr Microcomb & Dissipative Soliton</option>
                         </optgroup>
                         <optgroup label="6. Gaussian Beam Propagation">
                             <option value="#gaussian-parameters">📐 Gaussian Waist, Rayleigh & Divergence</option>
@@ -1727,6 +1728,185 @@
                     </div>
                 </div>
             </div>
+
+            <!-- CARD 2: Kerr microcomb / dissipative Kerr soliton -->
+            <div id="kerr-comb" class="group-card border-purple-200 shadow-md scroll-mt-28">
+                <div class="card-header bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 flex flex-wrap justify-between items-center gap-2">
+                    <h3 class="group-title text-purple-900">
+                        <span class="text-purple-600">🔆</span> Kerr Microcomb &amp; Dissipative Kerr Soliton
+                    </h3>
+                    <button type="button" id="kcSyncBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 transition" title="Copy λ, n_g, FSR, κ₀ and κ_ex from the Microresonator card">
+                        ⇐ Sync from Microresonator card
+                    </button>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="equation-box text-xs sm:text-sm space-y-1">
+                        <div>$$ D_1 = 2\pi\,\text{FSR} \qquad D_2 = -\frac{c}{n_g}D_1^2\beta_2 \qquad \gamma = \frac{n_2\omega_0}{c A_{\text{eff}}} \qquad P_{\text{th}} = \frac{\kappa^2}{8\eta\,\gamma\,v_g\,\text{FSR}} $$</div>
+                        <div>$$ f^2 = \frac{P_{\text{in}}}{P_{\text{th}}} \qquad \zeta_0 = \frac{2\delta\omega}{\kappa} \le \zeta_{\max} = \frac{\pi^2 f^2}{8} \qquad T_0 = \sqrt{\frac{-\beta_2\, v_g}{2\,\delta\omega}} \qquad P_{\text{sol}} \approx 2\kappa_{\text{ex}}\frac{|\beta_2|}{\gamma\,T_0} $$</div>
+                    </div>
+
+                    <!-- Resonator & dispersion -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label for="kcLambdaInput" class="input-label text-xs">Pump $\lambda_p$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcLambdaInput" value="1550" class="calc-input text-xs">
+                                <select id="kcLambdaUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="nm" selected>nm</option>
+                                    <option value="um">µm</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcNgInput" class="input-label text-xs">Group Index $n_g$</label>
+                            <input type="number" id="kcNgInput" value="2.2" step="0.01" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="kcFsrInput" class="input-label text-xs">FSR ($D_1/2\pi$)</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcFsrInput" value="200" class="calc-input text-xs">
+                                <select id="kcFsrUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="ghz" selected>GHz</option>
+                                    <option value="thz">THz</option>
+                                    <option value="mhz">MHz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcBeta2Input" class="input-label text-xs">GVD $\beta_2$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcBeta2Input" value="-100" class="calc-input text-xs">
+                                <select id="kcBeta2UnitSelect" class="calc-unit-select w-20 text-[11px] p-1">
+                                    <option value="fs2/mm" selected>fs²/mm</option>
+                                    <option value="fs2/m">fs²/m</option>
+                                    <option value="ps2/km">ps²/km</option>
+                                    <option value="ps2/m">ps²/m</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcD2Input" class="input-label text-xs">$D_2/2\pi$ (reversible)</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcD2Input" class="calc-input text-xs">
+                                <select id="kcD2UnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mhz">MHz</option>
+                                    <option value="khz" selected>kHz</option>
+                                    <option value="hz">Hz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcK0Input" class="input-label text-xs">Intrinsic $\kappa_0/2\pi$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcK0Input" value="50" class="calc-input text-xs">
+                                <select id="kcK0UnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mhz" selected>MHz</option>
+                                    <option value="khz">kHz</option>
+                                    <option value="ghz">GHz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcKexInput" class="input-label text-xs">External $\kappa_{\text{ex}}/2\pi$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcKexInput" value="50" class="calc-input text-xs">
+                                <select id="kcKexUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mhz" selected>MHz</option>
+                                    <option value="khz">kHz</option>
+                                    <option value="ghz">GHz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="kcPinInput" class="input-label text-xs font-bold text-purple-900">Pump Power $P_{\text{in}}$ (bus)</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcPinInput" value="100" class="calc-input text-xs border-purple-300 bg-purple-50/40 font-bold text-purple-900">
+                                <select id="kcPinUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mw" selected>mW</option>
+                                    <option value="w">W</option>
+                                    <option value="uw">µW</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nonlinearity & detuning -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="kcN2Input" class="input-label text-xs mb-0">$n_2$ (m²/W)</label>
+                                <select id="kcN2Preset" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                    <option value="">Material…</option>
+                                    <option value="2.2e-20">SiO₂ (2.2e-20)</option>
+                                    <option value="2.4e-19">Si₃N₄ (2.4e-19)</option>
+                                    <option value="1.8e-19">LiNbO₃ (1.8e-19)</option>
+                                    <option value="8.2e-20">Diamond (8.2e-20)</option>
+                                    <option value="2.6e-17">AlGaAs (2.6e-17)</option>
+                                    <option value="4.5e-18">Si @1550 (4.5e-18)</option>
+                                </select>
+                            </div>
+                            <input type="text" id="kcN2Input" value="2.4e-19" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="kcAeffInput" class="input-label text-xs">Mode Area $A_{\text{eff}}$ (µm²)</label>
+                            <input type="number" id="kcAeffInput" value="1" step="0.1" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="kcGammaInput" class="input-label text-xs">$\gamma$ (1/(W·m), reversible)</label>
+                            <input type="number" id="kcGammaInput" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="kcDetuneInput" class="input-label text-xs mb-0">Red Detuning $\delta\omega/2\pi$</label>
+                                <button type="button" id="kcDetuneMaxBtn" class="text-[10px] text-indigo-600 hover:text-indigo-800 underline" title="Set the detuning to 90% of the soliton existence limit">0.9 × max</button>
+                            </div>
+                            <div class="flex gap-1">
+                                <input type="number" id="kcDetuneInput" value="500" class="calc-input text-xs">
+                                <select id="kcDetuneUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mhz" selected>MHz</option>
+                                    <option value="ghz">GHz</option>
+                                    <option value="khz">kHz</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="kcWarning" class="phys-warning hidden"></div>
+
+                    <!-- Outputs -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                        <div class="metric-badge"><div class="metric-label">Loaded $\kappa/2\pi$ · $\eta$</div><div id="kcKappaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Threshold $P_{\text{th}}$</div><div id="kcPthDisplay" class="metric-value text-sm text-purple-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Pump $f^2 = P/P_{\text{th}}$</div><div id="kcF2Display" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Max Detuning $\delta\omega_{\max}/2\pi$</div><div id="kcDetuneMaxDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">$\zeta_0 = 2\delta\omega/\kappa$</div><div id="kcZetaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Primary Sideband $\mu_{\text{th}}$</div><div id="kcMuDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Soliton FWHM</div><div id="kcTauDisplay" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">3-dB Bandwidth</div><div id="kcBwDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Lines within 3 dB</div><div id="kcLinesDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Intracavity Peak $P_0$</div><div id="kcPeakDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Comb Power Out $P_{\text{sol}}$</div><div id="kcCombPowerDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Round Trip $L$ / Radius $R$</div><div id="kcLengthDisplay" class="metric-value text-xs mt-1">-</div></div>
+                    </div>
+
+                    <!-- Single-soliton spectrum -->
+                    <div class="relative w-full h-64 bg-white rounded-md border border-slate-200 p-2">
+                        <canvas id="kcSpectrumCanvas" class="w-full h-full"></canvas>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>Lugiato–Lefever mean-field model of one mode family of an all-pass resonator: $\kappa \ll$ FSR, integrated dispersion truncated at $D_{\text{int}}(\mu) = D_2\mu^2/2$ (no avoided mode crossings, no $D_3$), no thermal effects, Raman self-frequency shift or photorefraction.</li>
+                            <li>$\kappa$ (energy decay rates) as in the Microresonator card; $\eta = \kappa_{\text{ex}}/\kappa$; $v_g = c/n_g$. $P_{\text{th}}$ is the parametric-oscillation threshold at the optimum detuning, equivalent to the familiar $\kappa^2 n^2 V_{\text{eff}}/(8\eta\,\omega_0 c\, n_2)$ with $V_{\text{eff}} = A_{\text{eff}}L$ and $n \to n_g$ (the two forms differ by the choice of $n_{\text{eff}}$ vs $n_g$, an O(10 %) effect).</li>
+                            <li>$\delta\omega = \omega_0 - \omega_p > 0$ is the red detuning of the pump from the cold-cavity resonance. Solitons require anomalous dispersion ($D_2 > 0$), bistability ($\zeta_0 > \sqrt3$), and $\zeta_0 < \pi^2f^2/8$. In practice they are reached by a fast laser scan or power kicking because of the thermal triangle.</li>
+                            <li>The soliton is $\propto \text{sech}(t/T_0)$ with $T_0 = \frac{1}{D_1}\sqrt{\frac{D_2}{2\delta\omega}} = \sqrt{\frac{-\beta_2 v_g}{2\delta\omega}}$ and FWHM $1.763\,T_0$; its spectral envelope is $\text{sech}^2(\pi T_0\,\Omega/2)$ with a 3-dB width $0.315/\tau_{\text{FWHM}}$.</li>
+                            <li>$P_0 = |\beta_2|/(\gamma T_0^2) = 2\delta\omega/(\gamma v_g)$ is the intracavity peak power, and $P_{\text{sol}} \approx \kappa_{\text{ex}}\cdot 2P_0T_0$ is the out-coupled soliton power (pump line excluded, CW background neglected). It is an estimate valid for $f^2 \gg 1$; if it approaches $P_{\text{in}}$ the assumptions have broken down.</li>
+                            <li>$\mu_{\text{th}} \approx \sqrt{\kappa/D_2}$ is the mode number of the first (primary) sidebands at threshold, i.e. the Turing-pattern spacing $\mu_{\text{th}}\cdot$FSR.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
         </section>
 
 
@@ -2587,6 +2767,11 @@
             gbLambdaUnitSelect.value = 'nm';
             gbLambdaInput.value = nm;
             updateGaussianBeam('inputs');
+
+            kcLambdaUnitSelect.value = 'nm';
+            kcLambdaInput.value = nm;
+            updateKerrComb('inputs');
+
         }
 
         // --- Wavelength to Visible RGB Algorithm (CIE 1931 / Bruton) ---
@@ -4202,6 +4387,325 @@
 
 
 
+        // --- SECTION 5: Kerr Microcomb / Dissipative Kerr Soliton ---
+        const kcLambdaInput = document.getElementById('kcLambdaInput');
+        const kcLambdaUnitSelect = document.getElementById('kcLambdaUnitSelect');
+        const kcNgInput = document.getElementById('kcNgInput');
+        const kcFsrInput = document.getElementById('kcFsrInput');
+        const kcFsrUnitSelect = document.getElementById('kcFsrUnitSelect');
+        const kcBeta2Input = document.getElementById('kcBeta2Input');
+        const kcBeta2UnitSelect = document.getElementById('kcBeta2UnitSelect');
+        const kcD2Input = document.getElementById('kcD2Input');
+        const kcD2UnitSelect = document.getElementById('kcD2UnitSelect');
+        const kcK0Input = document.getElementById('kcK0Input');
+        const kcK0UnitSelect = document.getElementById('kcK0UnitSelect');
+        const kcKexInput = document.getElementById('kcKexInput');
+        const kcKexUnitSelect = document.getElementById('kcKexUnitSelect');
+        const kcPinInput = document.getElementById('kcPinInput');
+        const kcPinUnitSelect = document.getElementById('kcPinUnitSelect');
+        const kcN2Input = document.getElementById('kcN2Input');
+        const kcN2Preset = document.getElementById('kcN2Preset');
+        const kcAeffInput = document.getElementById('kcAeffInput');
+        const kcGammaInput = document.getElementById('kcGammaInput');
+        const kcDetuneInput = document.getElementById('kcDetuneInput');
+        const kcDetuneUnitSelect = document.getElementById('kcDetuneUnitSelect');
+        const kcDetuneMaxBtn = document.getElementById('kcDetuneMaxBtn');
+        const kcSyncBtn = document.getElementById('kcSyncBtn');
+        const kcWarning = document.getElementById('kcWarning');
+        const kcSpectrumCanvas = document.getElementById('kcSpectrumCanvas');
+        const KC_OUT = {
+            kappa: document.getElementById('kcKappaDisplay'),
+            pth: document.getElementById('kcPthDisplay'),
+            f2: document.getElementById('kcF2Display'),
+            detuneMax: document.getElementById('kcDetuneMaxDisplay'),
+            zeta: document.getElementById('kcZetaDisplay'),
+            mu: document.getElementById('kcMuDisplay'),
+            tau: document.getElementById('kcTauDisplay'),
+            bw: document.getElementById('kcBwDisplay'),
+            lines: document.getElementById('kcLinesDisplay'),
+            peak: document.getElementById('kcPeakDisplay'),
+            comb: document.getElementById('kcCombPowerDisplay'),
+            length: document.getElementById('kcLengthDisplay')
+        };
+
+        // β2 unit -> s²/m
+        const BETA2_SI = { 'fs2/mm': 1e-27, 'fs2/m': 1e-30, 'ps2/km': 1e-27, 'ps2/m': 1e-24 };
+
+        let kcLastState = null;   // latest results, used by the spectrum plot and the 0.9×max button
+        let kcIsSyncing = false;
+
+        function updateKerrComb(source = 'inputs') {
+            if (kcIsSyncing) return;
+            kcIsSyncing = true;
+            kcLastState = null;
+            try {
+                const lambda_m = parseFloat(kcLambdaInput.value) * LENGTH_SI[kcLambdaUnitSelect.value];
+                const ng = parseFloat(kcNgInput.value);
+                const fsr_hz = parseFloat(kcFsrInput.value) * FREQ_SI[kcFsrUnitSelect.value];
+                const k0_hz = parseFloat(kcK0Input.value) * FREQ_SI[kcK0UnitSelect.value];
+                const kex_hz = parseFloat(kcKexInput.value) * FREQ_SI[kcKexUnitSelect.value];
+                const pin_W = parseFloat(kcPinInput.value) * POWER_SI[kcPinUnitSelect.value];
+                const detune_hz = parseFloat(kcDetuneInput.value) * FREQ_SI[kcDetuneUnitSelect.value];
+
+                if ([lambda_m, ng, fsr_hz, k0_hz, kex_hz].some(v => isNaN(v) || v <= 0)) return;
+
+                const omega0 = 2 * Math.PI * C / lambda_m;
+                const vg = C / ng;
+                const D1 = 2 * Math.PI * fsr_hz;
+
+                // Dispersion: β2 <-> D2 (reversible)
+                let beta2;
+                if (source === 'd2') {
+                    const d2_hz = parseFloat(kcD2Input.value) * FREQ_SI[kcD2UnitSelect.value];
+                    if (isNaN(d2_hz)) return;
+                    beta2 = -(2 * Math.PI * d2_hz) / (vg * D1 ** 2);
+                    kcBeta2Input.value = fmt(beta2 / BETA2_SI[kcBeta2UnitSelect.value]);
+                } else {
+                    beta2 = parseFloat(kcBeta2Input.value) * BETA2_SI[kcBeta2UnitSelect.value];
+                    if (isNaN(beta2)) return;
+                }
+                const D2 = -vg * D1 ** 2 * beta2; // rad/s
+                if (source !== 'd2') kcD2Input.value = fmt(D2 / (2 * Math.PI) / FREQ_SI[kcD2UnitSelect.value]);
+
+                // Nonlinearity: (n2, A_eff) <-> γ (editing γ back-computes A_eff)
+                const n2 = parseFloat(kcN2Input.value);
+                let aeff_m2;
+                if (source === 'gamma') {
+                    const gammaVal = parseFloat(kcGammaInput.value);
+                    if (isNaN(gammaVal) || gammaVal <= 0 || isNaN(n2) || n2 <= 0) return;
+                    aeff_m2 = n2 * omega0 / (C * gammaVal);
+                    kcAeffInput.value = fmt(aeff_m2 * 1e12);
+                } else {
+                    aeff_m2 = parseFloat(kcAeffInput.value) * 1e-12;
+                }
+                if (isNaN(n2) || n2 <= 0 || isNaN(aeff_m2) || aeff_m2 <= 0) return;
+                const gamma = n2 * omega0 / (C * aeff_m2);
+                if (source !== 'gamma') kcGammaInput.value = fmt(gamma);
+
+                // Loaded cavity and parametric threshold
+                const kappa = 2 * Math.PI * (k0_hz + kex_hz);   // angular, 1/s
+                const kex = 2 * Math.PI * kex_hz;
+                const eta = kex / kappa;
+                const pth_W = kappa ** 2 / (8 * eta * gamma * vg * fsr_hz);
+                const f2 = pin_W / pth_W;
+                const zetaMax = Math.PI ** 2 * f2 / 8;
+                const detuneMax_hz = zetaMax * (kappa / 2) / (2 * Math.PI);
+                const dOmega = 2 * Math.PI * detune_hz;
+                const zeta0 = 2 * dOmega / kappa;
+                const L_m = vg / fsr_hz;
+
+                KC_OUT.kappa.textContent = `${fmtFreq(kappa / (2 * Math.PI), 4)} · ${fmt(eta, 3)}`;
+                KC_OUT.pth.textContent = fmtPower(pth_W, 4);
+                KC_OUT.f2.textContent = isNaN(f2) ? '-' : fmt(f2, 4);
+                KC_OUT.detuneMax.textContent = isNaN(f2) ? '-' : fmtFreq(detuneMax_hz, 4);
+                KC_OUT.zeta.textContent = isNaN(zeta0) ? '-' : fmt(zeta0, 4);
+                KC_OUT.mu.textContent = D2 > 0 ? `${fmt(Math.sqrt(kappa / D2), 3)} (${fmtFreq(Math.sqrt(kappa / D2) * fsr_hz, 3)})` : '-';
+                KC_OUT.length.textContent = `${fmtLen(L_m, 4)} / ${fmtLen(L_m / (2 * Math.PI), 4)}`;
+
+                // Validity checks, most fundamental first
+                const warnings = [];
+                if (D2 <= 0) warnings.push('Normal dispersion (β₂ > 0, D₂ < 0): no bright dissipative Kerr solitons. Dark pulses / platicons need a mode crossing or pump modulation.');
+                if (isNaN(pin_W) || pin_W <= 0) warnings.push('Enter a pump power.');
+                else if (f2 < 1) warnings.push(`Below parametric threshold (f² = ${fmt(f2, 3)} < 1): no comb forms.`);
+                else if (zetaMax < Math.sqrt(3)) warnings.push('Pump too weak for a soliton existence range (π²f²/8 < √3, the bistability onset).');
+                if (!(detune_hz > 0)) warnings.push('Solitons need red detuning (δω > 0).');
+                else if (f2 >= 1 && zeta0 > zetaMax) warnings.push(`Detuning ζ₀ = ${fmt(zeta0, 3)} exceeds the soliton existence limit π²f²/8 = ${fmt(zetaMax, 3)}.`);
+                else if (zeta0 < Math.sqrt(3)) warnings.push(`ζ₀ = ${fmt(zeta0, 3)} < √3: the resonance is not bistable, so no soliton coexists with the CW background.`);
+
+                const solitonValid = warnings.length === 0;
+                let tau0 = NaN, peak_W = NaN, psol_W = NaN;
+                if (D2 > 0 && dOmega > 0) {
+                    tau0 = Math.sqrt(-beta2 * vg / (2 * dOmega));
+                    peak_W = 2 * dOmega / (gamma * vg);
+                    psol_W = kex * 2 * peak_W * tau0;
+                    if (solitonValid && psol_W > 0.5 * pin_W) {
+                        warnings.push(`Estimated comb power (${fmtPower(psol_W, 3)}) is a large fraction of the pump: the f² ≫ 1 estimate is no longer reliable.`);
+                    }
+                }
+                const bw_hz = 0.3148 / (1.7627 * tau0);
+
+                const showSol = D2 > 0 && dOmega > 0;
+                KC_OUT.tau.textContent = showSol ? fmtTime(1.7627 * tau0, 4) : '-';
+                KC_OUT.bw.textContent = showSol ? fmtFreq(bw_hz, 4) : '-';
+                KC_OUT.lines.textContent = showSol ? fmt(bw_hz / fsr_hz, 3) : '-';
+                KC_OUT.peak.textContent = showSol ? fmtPower(peak_W, 4) : '-';
+                KC_OUT.comb.textContent = showSol && solitonValid ? fmtPower(psol_W, 4) : '-';
+                [KC_OUT.tau, KC_OUT.bw, KC_OUT.lines, KC_OUT.peak].forEach(el => el.classList.toggle('opacity-40', !solitonValid));
+
+                if (warnings.length) {
+                    kcWarning.innerHTML = warnings.map(w => `• ${w}`).join('<br>');
+                    kcWarning.className = solitonValid ? 'phys-warning is-info' : 'phys-warning';
+                } else {
+                    kcWarning.className = 'phys-warning hidden';
+                }
+
+                kcLastState = { fsr_hz, D1, tau0, psol_W, lambda_m, detuneMax_hz, valid: solitonValid && showSol };
+            } finally {
+                kcIsSyncing = false;
+                // Redraw on every exit so an invalid input clears a stale spectrum
+                drawKerrCombSpectrum();
+            }
+        }
+
+        // Single-soliton comb: line powers P_μ = P_μ0 sech²(π T0 μ D1 / 2), with
+        // P_μ0 = P_sol π T0 D1 / 4 so that Σ P_μ ≈ P_sol. Palette and styling
+        // follow the page's plotting guide (boxed axes, inward ticks, muted colors).
+        function drawKerrCombSpectrum() {
+            const canvas = kcSpectrumCanvas;
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+            ctx.clearRect(0, 0, W, H);
+
+            const padL = 52, padR = 14, padT = 22, padB = 36;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+            ctx.font = '11px Arial, sans-serif';
+            ctx.fillStyle = '#272727';
+
+            const s = kcLastState;
+            if (!s || !s.valid) {
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#767676';
+                ctx.fillText('No single-soliton state for these parameters (see warnings above).', W / 2, H / 2);
+                return;
+            }
+
+            const pMu0 = s.psol_W * Math.PI * s.tau0 * s.D1 / 4;
+            const lineP = (mu) => pMu0 / Math.cosh(Math.PI * s.tau0 * mu * s.D1 / 2) ** 2;
+            const topDbm = 10 * Math.log10(pMu0 / 1e-3);
+            const yMax = Math.ceil((topDbm + 5) / 10) * 10;
+            const yMin = yMax - 70;
+            // Span: where the envelope has fallen by ~60 dB, at least ±10 lines
+            const muSpan = Math.max(10, Math.ceil(2 * Math.acosh(Math.sqrt(1e6)) / (Math.PI * s.tau0 * s.D1)));
+            const xSpanHz = muSpan * s.fsr_hz;
+            const xToPx = (fHz) => padL + (fHz + xSpanHz) / (2 * xSpanHz) * plotW;
+            const yToPx = (dbm) => padT + (yMax - Math.max(yMin, Math.min(yMax, dbm))) / (yMax - yMin) * plotH;
+
+            // Axis unit: THz or GHz offset from the pump
+            const useThz = xSpanHz >= 1e12;
+            const xUnit = useThz ? 1e12 : 1e9;
+
+            // Comb lines (sticks) or, when too dense to resolve, the envelope only
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            if (2 * muSpan + 1 <= plotW / 2) {
+                ctx.beginPath();
+                for (let mu = -muSpan; mu <= muSpan; mu++) {
+                    if (mu === 0) continue;
+                    const x = xToPx(mu * s.fsr_hz);
+                    ctx.moveTo(x, yToPx(yMin));
+                    ctx.lineTo(x, yToPx(10 * Math.log10(lineP(mu) / 1e-3)));
+                }
+                ctx.stroke();
+            }
+            // sech² envelope
+            ctx.strokeStyle = '#9E403D';
+            ctx.setLineDash([5, 2]);
+            ctx.beginPath();
+            for (let i = 0; i <= 300; i++) {
+                const mu = -muSpan + (2 * muSpan * i) / 300;
+                const x = xToPx(mu * s.fsr_hz);
+                const y = yToPx(10 * Math.log10(lineP(mu) / 1e-3));
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Pump position
+            ctx.strokeStyle = '#4D4D4D';
+            ctx.setLineDash([2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(xToPx(0), padT);
+            ctx.lineTo(xToPx(0), padT + plotH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#4D4D4D';
+            ctx.textAlign = 'left';
+            ctx.fillText('pump', xToPx(0) + 4, padT + 12);
+
+            // Box, inward ticks and labels
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 0.8;
+            ctx.strokeRect(padL, padT, plotW, plotH);
+            ctx.fillStyle = '#272727';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let dbm = yMin; dbm <= yMax; dbm += 10) {
+                const y = yToPx(dbm);
+                ctx.beginPath();
+                ctx.moveTo(padL, y); ctx.lineTo(padL + 4, y);
+                ctx.moveTo(padL + plotW, y); ctx.lineTo(padL + plotW - 4, y);
+                ctx.stroke();
+                ctx.fillText(`${dbm}`, padL - 5, y);
+            }
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const niceStep = (range) => {
+                const raw = range / 5;
+                const p = Math.pow(10, Math.floor(Math.log10(raw)));
+                return [1, 2, 5, 10].map(m => m * p).find(v => v >= raw);
+            };
+            const step = niceStep(2 * xSpanHz / xUnit);
+            for (let v = Math.ceil(-xSpanHz / xUnit / step) * step; v <= xSpanHz / xUnit + 1e-9; v += step) {
+                const x = xToPx(v * xUnit);
+                ctx.beginPath();
+                ctx.moveTo(x, padT + plotH); ctx.lineTo(x, padT + plotH - 4);
+                ctx.moveTo(x, padT); ctx.lineTo(x, padT + 4);
+                ctx.stroke();
+                ctx.fillText(`${Math.abs(v) < 1e-9 ? 0 : fmt(v, 3)}`, x, padT + plotH + 4);
+            }
+            ctx.fillText(`Frequency offset from pump (${useThz ? 'THz' : 'GHz'})`, padL + plotW / 2, padT + plotH + 19);
+            ctx.save();
+            ctx.translate(12, padT + plotH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Power per line (dBm)', 0, 0);
+            ctx.restore();
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#767676';
+            ctx.fillText('Single-soliton comb, sech² envelope (pump line omitted)', padL + 6, padT - 7);
+        }
+
+        // Listeners
+        [kcLambdaInput, kcNgInput, kcFsrInput, kcBeta2Input, kcK0Input, kcKexInput, kcPinInput, kcN2Input, kcAeffInput, kcDetuneInput].forEach(el => {
+            el.addEventListener('input', () => updateKerrComb('inputs'));
+        });
+        [kcLambdaUnitSelect, kcFsrUnitSelect, kcBeta2UnitSelect, kcD2UnitSelect, kcK0UnitSelect, kcKexUnitSelect, kcPinUnitSelect, kcDetuneUnitSelect].forEach(el => {
+            el.addEventListener('change', () => updateKerrComb('inputs'));
+        });
+        kcD2Input.addEventListener('input', () => updateKerrComb('d2'));
+        kcGammaInput.addEventListener('input', () => updateKerrComb('gamma'));
+        kcN2Preset.addEventListener('change', () => {
+            if (kcN2Preset.value) kcN2Input.value = kcN2Preset.value;
+            updateKerrComb('inputs');
+        });
+        kcDetuneMaxBtn.addEventListener('click', () => {
+            if (!kcLastState || !isFinite(kcLastState.detuneMax_hz)) return;
+            kcDetuneInput.value = fmt(0.9 * kcLastState.detuneMax_hz / FREQ_SI[kcDetuneUnitSelect.value]);
+            updateKerrComb('inputs');
+        });
+        kcSyncBtn.addEventListener('click', () => {
+            // Carry the Microresonator card's values over, converting units as needed
+            const copy = (srcInput, srcUnitSel, dstInput, dstUnitSel, table) => {
+                const v = parseFloat(srcInput.value) * table[srcUnitSel.value];
+                if (!isNaN(v)) dstInput.value = fmt(v / table[dstUnitSel.value]);
+            };
+            copy(resCenterNmInput, resCenterUnitSelect, kcLambdaInput, kcLambdaUnitSelect, LENGTH_SI);
+            kcNgInput.value = resNgInput.value;
+            copy(resFsrInput, resFsrUnitSelect, kcFsrInput, kcFsrUnitSelect, FREQ_SI);
+            copy(resLinewidthInput, resLinewidthUnitSelect, kcK0Input, kcK0UnitSelect, FREQ_SI);
+            copy(resKexInput, resKexUnitSelect, kcKexInput, kcKexUnitSelect, FREQ_SI);
+            updateKerrComb('inputs');
+        });
+
+
         // ==========================================
         // SECTION 6: GAUSSIAN BEAM PROPAGATION ENGINE
         // ==========================================
@@ -4964,6 +5468,7 @@
             updateBraggGrating(true);
             updateResonator(lastEditedResonatorField);
             updateSolitonParameters('inputs');
+            updateKerrComb('inputs');
             updateGaussianBeam('w0');
         }
 
@@ -5194,6 +5699,7 @@
         window.addEventListener('resize', () => {
             if (currentVisTab === 'curve') updateFresnel('theta_i');
             if (gbCurrentTab === 'intensity') updateGaussianBeam('z');
+            drawKerrCombSpectrum();
         });
 
         // ==========================================
@@ -5233,6 +5739,9 @@
             '#wavelength': '#wavelength-converter',
             '#delta': '#differential-bandwidth',
             '#ev': '#wavelength-converter',
+            '#kerr': '#kerr-comb',
+            '#comb': '#kerr-comb',
+            '#microcomb': '#kerr-comb',
         };
 
         function resolveHash(hash) {

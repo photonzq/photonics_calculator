@@ -470,6 +470,7 @@
                         <optgroup label="6. Gaussian Beam Propagation">
                             <option value="#gaussian-parameters">📐 Gaussian Waist, Rayleigh & Divergence</option>
                             <option value="#gaussian-visualizer">🎯 Caustic, Wavefronts, Intensity & Lens</option>
+                            <option value="#mode-coupling">🔗 Gaussian Mode / Fiber Coupling</option>
                         </optgroup>
                     </select>
                 </div>
@@ -2135,7 +2136,7 @@
                 <div class="xl:col-span-7 space-y-4">
                     <div id="gaussian-visualizer" class="group-card scroll-mt-28">
                         <div class="card-header flex justify-between items-center flex-wrap gap-2">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <button type="button" id="gbTabCausticBtn" class="px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition">
                                     Caustic & Wavefront Profile
                                 </button>
@@ -2144,6 +2145,9 @@
                                 </button>
                                 <button type="button" id="gbTabLensBtn" class="px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                                     Thin Lens Focusing
+                                </button>
+                                <button type="button" id="gbTabCouplingBtn" class="px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                                    Mode Coupling
                                 </button>
                             </div>
                             <div class="flex items-center gap-2" title="Beam Spectral Band">
@@ -2367,6 +2371,171 @@
                                 <div class="p-3 bg-amber-50/50 border border-amber-200 rounded-md text-xs text-amber-900 leading-relaxed">
                                     <strong>Diffraction Limit & Collimation:</strong> When a collimated beam of $1/e^2$ diameter $D$ enters a lens of focal length $f$, the focused spot diameter is $2w_0' \approx \frac{4 M^2 \lambda f}{\pi D}$.
                                 </div>
+
+                                <details class="phys-note">
+                                    <summary>Physics notes &amp; assumptions</summary>
+                                    <ul>
+                                        <li>Ideal thin lens in the paraxial limit (Self's formula); aberrations and lens clipping are ignored, and the lens must be much wider than the beam there (clipping loss at a lens of radius $a$ is $e^{-2a^2/w^2}$).</li>
+                                        <li>$d_1$ is measured from the input waist to the lens and $d_2$ from the lens to the new waist. Because of diffraction the output waist is <em>not</em> at the geometric image point; for a nearly collimated input ($z_{R1} \gg |d_1 - f|$) it sits at $d_2 \approx f$.</li>
+                                        <li>$w_2 = w_1 f / \sqrt{(d_1 - f)^2 + z_{R1}^2}$ is maximal for $d_1 = f$ and the $M^2$ factor carries through unchanged ($M^2$ is invariant under ideal lenses).</li>
+                                        <li>Only converging lenses ($f > 0$) are handled.</li>
+                                    </ul>
+                                </details>
+                            </div>
+
+                            <!-- VIEW 4: Gaussian mode coupling / overlap -->
+                            <div id="gbCouplingContainer" class="hidden space-y-3">
+                                <div class="equation-box text-xs sm:text-sm">$$ \eta = \frac{\left|\iint E_1 E_2^{*}\,dA\right|^2}{\iint |E_1|^2 dA \iint |E_2|^2 dA} \;\xrightarrow{\;\text{size},\,\Delta z\;}\; \frac{4}{\left(\frac{w_1}{w_2} + \frac{w_2}{w_1}\right)^2 + \left(\frac{\lambda\,\Delta z}{\pi n w_1 w_2}\right)^2} $$</div>
+
+                                <div class="p-3 bg-slate-50 rounded-md border border-slate-200 space-y-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label for="cpW1Input" class="input-label text-xs mb-0">Beam 1 Waist Radius $w_1$</label>
+                                                <select id="cpW1Source" class="text-[10px] bg-white border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                                    <option value="beam" selected>= beam w₀</option>
+                                                    <option value="lens">= lens output w₂</option>
+                                                    <option value="custom">custom</option>
+                                                </select>
+                                            </div>
+                                            <div class="flex gap-1">
+                                                <input type="number" id="cpW1Input" value="5" step="any" class="calc-input text-xs">
+                                                <select id="cpW1UnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                                    <option value="um" selected>µm</option>
+                                                    <option value="mm">mm</option>
+                                                    <option value="nm">nm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label for="cpModeSource" class="input-label text-xs mb-0">Mode 2 (target) specified by</label>
+                                            </div>
+                                            <select id="cpModeSource" class="calc-select w-full text-xs py-1.5">
+                                                <option value="w">Gaussian waist radius w₂</option>
+                                                <option value="mfd" selected>Fiber mode-field diameter (MFD)</option>
+                                                <option value="step">Step-index fiber (core radius a, NA)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mode 2 definitions -->
+                                    <div id="cpModeWBox" class="hidden">
+                                        <label for="cpW2Input" class="input-label text-xs">Mode 2 Waist Radius $w_2$</label>
+                                        <div class="flex gap-1">
+                                            <input type="number" id="cpW2Input" value="5.2" step="any" class="calc-input text-xs">
+                                            <select id="cpW2UnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                                <option value="um" selected>µm</option>
+                                                <option value="mm">mm</option>
+                                                <option value="nm">nm</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="cpModeMfdBox" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label for="cpMfdInput" class="input-label text-xs">MFD $= 2w_2$ (µm)</label>
+                                            <input type="number" id="cpMfdInput" value="10.4" step="any" class="calc-input text-xs">
+                                        </div>
+                                        <div>
+                                            <label for="cpFiberPreset" class="input-label text-xs">Fiber preset (datasheet MFD)</label>
+                                            <select id="cpFiberPreset" class="calc-select w-full text-xs py-1.5">
+                                                <option value="">Select…</option>
+                                                <option value="10.4">SMF-28 @ 1550 nm (10.4 µm)</option>
+                                                <option value="9.2">SMF-28 @ 1310 nm (9.2 µm)</option>
+                                                <option value="5.0">780HP @ 850 nm (5.0 µm)</option>
+                                                <option value="3.2">UHNA7 @ 1550 nm (3.2 µm)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="cpModeStepBox" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label for="cpCoreInput" class="input-label text-xs">Core Radius $a$ (µm)</label>
+                                            <input type="number" id="cpCoreInput" value="4.1" step="any" class="calc-input text-xs">
+                                        </div>
+                                        <div>
+                                            <label for="cpNaInput" class="input-label text-xs">Numerical Aperture NA</label>
+                                            <input type="number" id="cpNaInput" value="0.14" step="0.01" class="calc-input text-xs">
+                                        </div>
+                                        <div class="metric-badge">
+                                            <div class="metric-label">$V$ number · Marcuse $w_2$</div>
+                                            <div id="cpVDisplay" class="metric-value text-xs mt-1">-</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Misalignments -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+                                        <div>
+                                            <label for="cpDzInput" class="input-label text-xs">Axial Waist Separation $\Delta z$</label>
+                                            <div class="flex gap-1">
+                                                <input type="number" id="cpDzInput" value="0" step="any" class="calc-input text-xs">
+                                                <select id="cpDzUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                                    <option value="um" selected>µm</option>
+                                                    <option value="mm">mm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="cpDxInput" class="input-label text-xs">Lateral Offset $d$</label>
+                                            <div class="flex gap-1">
+                                                <input type="number" id="cpDxInput" value="0" step="any" class="calc-input text-xs">
+                                                <select id="cpDxUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                                    <option value="um" selected>µm</option>
+                                                    <option value="mm">mm</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="cpTiltInput" class="input-label text-xs">Tilt Angle $\theta_t$</label>
+                                            <div class="flex gap-1">
+                                                <input type="number" id="cpTiltInput" value="0" step="any" class="calc-input text-xs">
+                                                <select id="cpTiltUnitSelect" class="calc-unit-select w-16 text-[11px] p-1">
+                                                    <option value="deg" selected>deg (°)</option>
+                                                    <option value="mrad">mrad</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="cpWarning" class="phys-warning is-info hidden"></div>
+
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                                    <div class="p-2.5 bg-white border border-emerald-300 rounded-md col-span-2 sm:col-span-1">
+                                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Total Coupling $\eta$</span>
+                                        <span id="cpEtaDisplay" class="font-mono text-sm text-emerald-700 font-bold">-</span>
+                                    </div>
+                                    <div class="p-2.5 bg-white border border-slate-200 rounded-md">
+                                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Size Mismatch Only</span>
+                                        <span id="cpEtaSizeDisplay" class="font-mono text-sm text-slate-800 font-bold">-</span>
+                                    </div>
+                                    <div class="p-2.5 bg-white border border-slate-200 rounded-md">
+                                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Size + Axial $\Delta z$</span>
+                                        <span id="cpEtaAxialDisplay" class="font-mono text-sm text-slate-800 font-bold">-</span>
+                                    </div>
+                                    <div class="p-2.5 bg-white border border-slate-200 rounded-md">
+                                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Lateral $d$ (matched $w_2$)</span>
+                                        <span id="cpEtaLateralDisplay" class="font-mono text-sm text-slate-800 font-bold">-</span>
+                                    </div>
+                                    <div class="p-2.5 bg-white border border-slate-200 rounded-md">
+                                        <span class="text-[10px] text-slate-500 font-semibold uppercase block">Tilt $\theta_t$ (matched $w_2$)</span>
+                                        <span id="cpEtaTiltDisplay" class="font-mono text-sm text-slate-800 font-bold">-</span>
+                                    </div>
+                                </div>
+
+                                <div class="relative w-full h-64 bg-white rounded-md border border-slate-200 p-2">
+                                    <canvas id="cpCanvas" class="w-full h-full"></canvas>
+                                </div>
+
+                                <details class="phys-note">
+                                    <summary>Physics notes &amp; assumptions</summary>
+                                    <ul>
+                                        <li>Power coupling between two fundamental (TEM₀₀) Gaussian modes, computed exactly from the complex-$q$ overlap integral at a common plane, in a medium of index $n$ (from the beam inputs) with $\lambda$ the vacuum wavelength. The partial columns isolate each effect: size mismatch alone, size plus axial offset, and lateral offset or tilt alone for a size-matched pair ($w_1 = w_2$), i.e. the alignment tolerances.</li>
+                                        <li>Special cases: equal waists with lateral offset $\eta = e^{-d^2/w^2}$; equal waists with tilt $\eta = e^{-(\pi n w\theta_t/\lambda)^2}$; the axial formula shown above. The combined result is not simply their product when several are present.</li>
+                                        <li>Fresnel reflection at the facet (≈ 3.5 % per air–glass surface without AR coating), polarization mismatch and non-Gaussian mode shapes are not included.</li>
+                                        <li>Beam 1 is taken as a pure Gaussian of waist $w_1$; with $M^2 > 1$ a real beam couples worse into a single-mode fiber (only the TEM₀₀ content couples), so the result is an upper bound.</li>
+                                        <li>Step-index fiber: $V = 2\pi a\,\text{NA}/\lambda$ (single-mode for $V < 2.405$) and Marcuse's fit $w/a \approx 0.65 + 1.619V^{-3/2} + 2.879V^{-6}$, accurate to ~1 % for $1.2 < V < 2.4$. Datasheet MFDs are measured values and are preferred.</li>
+                                    </ul>
+                                </details>
                             </div>
 
                         </div>
@@ -4748,6 +4917,8 @@
         const gbCausticContainer = document.getElementById('gbCausticContainer');
         const gbIntensityContainer = document.getElementById('gbIntensityContainer');
         const gbLensContainer = document.getElementById('gbLensContainer');
+        const gbTabCouplingBtn = document.getElementById('gbTabCouplingBtn');
+        const gbCouplingContainer = document.getElementById('gbCouplingContainer');
         const gbWarning = document.getElementById('gbWarning');
         const gbBeamColorDot = document.getElementById('gbBeamColorDot');
         const gbBeamColorLabel = document.getElementById('gbBeamColorLabel');
@@ -4938,6 +5109,8 @@
             drawGaussianCausticSvg(w0_m, zR_m, z_m, wz_m, theta_rad, spec ? spec.dotColor : '#ea580c');
             if (gbCurrentTab === 'intensity') drawTransverseProfileCanvas(wz_m, Iz_w_cm2, spec ? spec.dotColor : '#ea580c');
             if (gbCurrentTab === 'lens') updateLensFocusing();
+            if (gbCurrentTab === 'coupling') updateModeCoupling();
+
             // Paraxial validity: the Gaussian-beam formulas assume θ ≪ 1
             if (theta_rad > 0.3) {
                 gbWarning.textContent = `θ = ${fmt(theta_rad, 3)} rad: w₀ is comparable to λ/n, so the paraxial Gaussian-beam results (z_R, θ, w(z)) are only approximate; a vector (non-paraxial) treatment is needed.`;
@@ -5269,8 +5442,8 @@
         }
 
         // --- Thin Lens Focusing Calculations ---
-        function updateLensFocusing() {
-            const digits = getPrecision();
+        // Self's thin-lens transformation of the Section-6 beam; null if inputs are invalid
+        function computeLensFocus() {
             const lambda_m = parseFloat(gbLambdaInput.value) * LENGTH_SI[gbLambdaUnitSelect.value];
             const n = parseFloat(gbRefractiveIndexInput.value) || 1.0;
             const M2 = parseFloat(gbM2Input.value) || 1.0;
@@ -5278,24 +5451,283 @@
             const f_m = parseFloat(gbLensFocalInput.value) * LENGTH_SI[gbLensFocalUnitSelect.value];
             const d1_m = parseFloat(gbLensD1Input.value) * LENGTH_SI[gbLensD1UnitSelect.value];
 
-            if ([lambda_m, w1_m, f_m, d1_m].some(isNaN) || w1_m <= 0 || f_m <= 0) return;
+            if ([lambda_m, w1_m, f_m, d1_m].some(isNaN) || lambda_m <= 0 || w1_m <= 0 || f_m <= 0) return null;
 
             const zR1_m = (Math.PI * n * (w1_m ** 2)) / (M2 * lambda_m);
             const denom = (d1_m - f_m) ** 2 + zR1_m ** 2;
-
-            // Output waist radius w2
             const w2_m = w1_m * (f_m / Math.sqrt(denom));
-            // Output waist position d2
             const d2_m = f_m + ((d1_m - f_m) * (f_m ** 2)) / denom;
-            // Output Rayleigh range zR2
             const zR2_m = (Math.PI * n * (w2_m ** 2)) / (M2 * lambda_m);
-            const dof_m = 2 * zR2_m;
-
-            gbLensW2Display.textContent = `${(w2_m * 1e6).toFixed(digits)} µm`;
-            gbLensD2Display.textContent = `${(d2_m * 1e3).toFixed(digits)} mm`;
-            gbLensZr2Display.textContent = `${(zR2_m * 1e6).toFixed(digits)} µm`;
-            gbLensDofDisplay.textContent = `${(dof_m * 1e6).toFixed(digits)} µm`;
+            return { w2_m, d2_m, zR2_m };
         }
+
+        function updateLensFocusing() {
+            const res = computeLensFocus();
+            if (!res) return;
+            // Auto-scaled units: a weak lens can give millimetre waists and metre distances
+            gbLensW2Display.textContent = fmtLen(res.w2_m);
+            gbLensD2Display.textContent = fmtLen(res.d2_m);
+            gbLensZr2Display.textContent = fmtLen(res.zR2_m);
+            gbLensDofDisplay.textContent = fmtLen(2 * res.zR2_m);
+        }
+
+        // --- Gaussian Mode Coupling (overlap integral) ---
+        const cpW1Input = document.getElementById('cpW1Input');
+        const cpW1UnitSelect = document.getElementById('cpW1UnitSelect');
+        const cpW1Source = document.getElementById('cpW1Source');
+        const cpModeSource = document.getElementById('cpModeSource');
+        const cpModeWBox = document.getElementById('cpModeWBox');
+        const cpModeMfdBox = document.getElementById('cpModeMfdBox');
+        const cpModeStepBox = document.getElementById('cpModeStepBox');
+        const cpW2Input = document.getElementById('cpW2Input');
+        const cpW2UnitSelect = document.getElementById('cpW2UnitSelect');
+        const cpMfdInput = document.getElementById('cpMfdInput');
+        const cpFiberPreset = document.getElementById('cpFiberPreset');
+        const cpCoreInput = document.getElementById('cpCoreInput');
+        const cpNaInput = document.getElementById('cpNaInput');
+        const cpVDisplay = document.getElementById('cpVDisplay');
+        const cpDzInput = document.getElementById('cpDzInput');
+        const cpDzUnitSelect = document.getElementById('cpDzUnitSelect');
+        const cpDxInput = document.getElementById('cpDxInput');
+        const cpDxUnitSelect = document.getElementById('cpDxUnitSelect');
+        const cpTiltInput = document.getElementById('cpTiltInput');
+        const cpTiltUnitSelect = document.getElementById('cpTiltUnitSelect');
+        const cpWarning = document.getElementById('cpWarning');
+        const cpCanvas = document.getElementById('cpCanvas');
+        const CP_OUT = {
+            total: document.getElementById('cpEtaDisplay'),
+            size: document.getElementById('cpEtaSizeDisplay'),
+            axial: document.getElementById('cpEtaAxialDisplay'),
+            lateral: document.getElementById('cpEtaLateralDisplay'),
+            tilt: document.getElementById('cpEtaTiltDisplay')
+        };
+
+        // Minimal complex arithmetic for the overlap integral
+        const cx = (re, im = 0) => ({ re, im });
+        const cAdd = (a, b) => cx(a.re + b.re, a.im + b.im);
+        const cSub = (a, b) => cx(a.re - b.re, a.im - b.im);
+        const cMul = (a, b) => cx(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+        const cDiv = (a, b) => {
+            const d = b.re ** 2 + b.im ** 2;
+            return cx((a.re * b.re + a.im * b.im) / d, (a.im * b.re - a.re * b.im) / d);
+        };
+        const cConj = (a) => cx(a.re, -a.im);
+        const cAbs2 = (a) => a.re ** 2 + a.im ** 2;
+
+        // Power overlap of two TEM00 beams evaluated at the waist plane of beam 2.
+        // Beam i: E ∝ exp(-a_i r²), a_i = i k / (2 q_i), q = z + i z_R. Beam 1 has its
+        // waist a distance dz before that plane, is displaced by dx and tilted by
+        // theta (radians, in the medium); k = 2π n / λ0.
+        function gaussianOverlap(w1, w2, dz, dx, theta, k) {
+            const zR1 = k * w1 ** 2 / 2;
+            const a1 = cDiv(cx(0, k / 2), cx(dz, zR1));
+            const a2c = cx(1 / w2 ** 2, 0);           // conj(a2) at its own waist (real)
+            const s = cAdd(a1, a2c);
+            const b = cAdd(cMul(cx(2 * dx, 0), a2c), cx(0, k * theta));
+            // exponent  b²/(4s) − conj(a2) dx²
+            const expo = cSub(cDiv(cMul(b, b), cMul(cx(4, 0), s)), cMul(a2c, cx(dx ** 2, 0)));
+            return 4 * a1.re * a2c.re / cAbs2(s) * Math.exp(2 * expo.re);
+        }
+
+        // Marcuse fit for the LP01 mode radius of a step-index fiber
+        const marcuseW = (a, V) => a * (0.65 + 1.619 * V ** -1.5 + 2.879 * V ** -6);
+
+        let cpLastState = null;
+
+        function updateModeCoupling() {
+            const lambda_m = parseFloat(gbLambdaInput.value) * LENGTH_SI[gbLambdaUnitSelect.value];
+            const n = parseFloat(gbRefractiveIndexInput.value) || 1.0;
+            const M2 = parseFloat(gbM2Input.value) || 1.0;
+            cpLastState = null;
+            if (isNaN(lambda_m) || lambda_m <= 0) return;
+            const k = 2 * Math.PI * n / lambda_m;
+
+            // Beam 1 waist
+            const src = cpW1Source.value;
+            cpW1Input.readOnly = src !== 'custom';
+            let w1 = parseFloat(cpW1Input.value) * LENGTH_SI[cpW1UnitSelect.value];
+            if (src === 'beam') {
+                w1 = parseFloat(gbW0Input.value) * LENGTH_SI[gbW0UnitSelect.value];
+                cpW1Input.value = fmt(w1 / LENGTH_SI[cpW1UnitSelect.value]);
+            } else if (src === 'lens') {
+                const lens = computeLensFocus();
+                w1 = lens ? lens.w2_m : NaN;
+                cpW1Input.value = fmt(w1 / LENGTH_SI[cpW1UnitSelect.value]);
+            }
+
+            // Mode 2
+            const mode = cpModeSource.value;
+            cpModeWBox.classList.toggle('hidden', mode !== 'w');
+            cpModeMfdBox.classList.toggle('hidden', mode !== 'mfd');
+            cpModeStepBox.classList.toggle('hidden', mode !== 'step');
+            const notes = [];
+            let w2;
+            if (mode === 'w') {
+                w2 = parseFloat(cpW2Input.value) * LENGTH_SI[cpW2UnitSelect.value];
+            } else if (mode === 'mfd') {
+                w2 = parseFloat(cpMfdInput.value) * 1e-6 / 2;
+            } else {
+                const a = parseFloat(cpCoreInput.value) * 1e-6;
+                const NA = parseFloat(cpNaInput.value);
+                const V = 2 * Math.PI * a * NA / lambda_m;
+                if (a > 0 && NA > 0) {
+                    w2 = marcuseW(a, V);
+                    cpVDisplay.textContent = `V = ${fmt(V, 4)} · w₂ = ${fmtLen(w2, 4)}`;
+                    if (V > 2.405) notes.push(`V = ${fmt(V, 3)} > 2.405: the fiber is multimode at this λ; only the LP₀₁ coupling is shown.`);
+                    else if (V < 1.2) notes.push(`V = ${fmt(V, 3)} < 1.2: weakly guided, Marcuse's fit loses accuracy (mode extends far into the cladding).`);
+                } else {
+                    cpVDisplay.textContent = '-';
+                }
+            }
+
+            const dz = (parseFloat(cpDzInput.value) || 0) * LENGTH_SI[cpDzUnitSelect.value];
+            const dx = (parseFloat(cpDxInput.value) || 0) * LENGTH_SI[cpDxUnitSelect.value];
+            const tilt = (parseFloat(cpTiltInput.value) || 0) * ANGLE_SI_MAP[cpTiltUnitSelect.value];
+
+            if (!(w1 > 0) || !(w2 > 0)) {
+                Object.values(CP_OUT).forEach(el => el.textContent = '-');
+                cpWarning.className = 'phys-warning is-info hidden';
+                drawCouplingCurve();
+                return;
+            }
+
+            if (M2 > 1.0001) notes.push(`Beam M² = ${fmt(M2, 3)} > 1: the overlap treats beam 1 as a pure TEM₀₀ of waist w₁, so the result is an upper bound.`);
+            if (Math.abs(tilt) > 0.2) notes.push('Tilt above ~0.2 rad (11°) stretches the paraxial overlap model.');
+
+            const pctDb = (eta) => `${fmt(eta * 100, 4)} % (${fmt(-10 * Math.log10(eta), 3)} dB)`;
+            const etaTotal = gaussianOverlap(w1, w2, dz, dx, tilt, k);
+            CP_OUT.total.textContent = pctDb(etaTotal);
+            CP_OUT.size.textContent = pctDb(gaussianOverlap(w1, w2, 0, 0, 0, k));
+            CP_OUT.axial.textContent = pctDb(gaussianOverlap(w1, w2, dz, 0, 0, k));
+            CP_OUT.lateral.textContent = pctDb(gaussianOverlap(w2, w2, 0, dx, 0, k));
+            CP_OUT.tilt.textContent = pctDb(gaussianOverlap(w2, w2, 0, 0, tilt, k));
+
+            if (notes.length) {
+                cpWarning.innerHTML = notes.map(t => `• ${t}`).join('<br>');
+                cpWarning.className = 'phys-warning is-info';
+            } else {
+                cpWarning.className = 'phys-warning is-info hidden';
+            }
+
+            cpLastState = { w1, w2, dz, dx, tilt, k, etaTotal };
+            drawCouplingCurve();
+        }
+
+        // η versus mode-size ratio w2/w1 (log axis): size + Δz only (solid) and with
+        // all current misalignments (dashed), current point marked.
+        function drawCouplingCurve() {
+            const canvas = cpCanvas;
+            if (!canvas) return;
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0) return;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = rect.width, H = rect.height;
+            ctx.clearRect(0, 0, W, H);
+            const padL = 46, padR = 14, padT = 22, padB = 36;
+            const plotW = W - padL - padR, plotH = H - padT - padB;
+            ctx.font = '11px Arial, sans-serif';
+
+            const s = cpLastState;
+            if (!s) {
+                ctx.fillStyle = '#767676';
+                ctx.textAlign = 'center';
+                ctx.fillText('Enter both mode sizes to plot the coupling curve.', W / 2, H / 2);
+                return;
+            }
+
+            const ratioNow = s.w2 / s.w1;
+            const lo = Math.min(0.1, ratioNow / 2), hi = Math.max(10, ratioNow * 2);
+            const lgLo = Math.log10(lo), lgHi = Math.log10(hi);
+            const xToPx = (r) => padL + (Math.log10(r) - lgLo) / (lgHi - lgLo) * plotW;
+            const yToPx = (eta) => padT + (1 - eta) * plotH;
+
+            const curve = (fn, color, dash) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash(dash);
+                ctx.beginPath();
+                for (let i = 0; i <= 240; i++) {
+                    const r = Math.pow(10, lgLo + (lgHi - lgLo) * i / 240);
+                    const x = xToPx(r), y = yToPx(fn(r));
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            };
+            curve((r) => gaussianOverlap(s.w1, s.w1 * r, s.dz, 0, 0, s.k), '#385C9E', []);
+            curve((r) => gaussianOverlap(s.w1, s.w1 * r, s.dz, s.dx, s.tilt, s.k), '#9E403D', [5, 2]);
+
+            // Current operating point
+            ctx.fillStyle = '#9E403D';
+            ctx.beginPath();
+            ctx.arc(xToPx(ratioNow), yToPx(s.etaTotal), 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Box, ticks, labels
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 0.8;
+            ctx.strokeRect(padL, padT, plotW, plotH);
+            ctx.fillStyle = '#272727';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let e = 0; e <= 1.0001; e += 0.2) {
+                const y = yToPx(e);
+                ctx.beginPath();
+                ctx.moveTo(padL, y); ctx.lineTo(padL + 4, y);
+                ctx.moveTo(padL + plotW, y); ctx.lineTo(padL + plotW - 4, y);
+                ctx.stroke();
+                ctx.fillText(`${Math.round(e * 100)}`, padL - 5, y);
+            }
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            for (let p = Math.ceil(lgLo); p <= Math.floor(lgHi); p++) {
+                for (const m of [1, 2, 5]) {
+                    const r = m * Math.pow(10, p);
+                    if (r < lo || r > hi) continue;
+                    const x = xToPx(r);
+                    ctx.beginPath();
+                    ctx.moveTo(x, padT + plotH); ctx.lineTo(x, padT + plotH - (m === 1 ? 5 : 3));
+                    ctx.moveTo(x, padT); ctx.lineTo(x, padT + (m === 1 ? 5 : 3));
+                    ctx.stroke();
+                    ctx.fillText(fmt(r, 2), x, padT + plotH + 4);
+                }
+            }
+            ctx.fillText('Mode-size ratio w₂ / w₁', padL + plotW / 2, padT + plotH + 19);
+            ctx.save();
+            ctx.translate(12, padT + plotH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Coupling η (%)', 0, 0);
+            ctx.restore();
+
+            // Legend
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const legX = padL + 10, legY = padT + 12;
+            ctx.strokeStyle = '#385C9E'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(legX, legY); ctx.lineTo(legX + 18, legY); ctx.stroke();
+            ctx.fillStyle = '#272727';
+            ctx.fillText('size + Δz', legX + 22, legY);
+            ctx.strokeStyle = '#9E403D'; ctx.setLineDash([5, 2]);
+            ctx.beginPath(); ctx.moveTo(legX, legY + 15); ctx.lineTo(legX + 18, legY + 15); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillText('with offset & tilt (current ●)', legX + 22, legY + 15);
+        }
+
+        [cpW1Input, cpW2Input, cpMfdInput, cpCoreInput, cpNaInput, cpDzInput, cpDxInput, cpTiltInput].forEach(el => {
+            el.addEventListener('input', updateModeCoupling);
+        });
+        [cpW1UnitSelect, cpW1Source, cpModeSource, cpW2UnitSelect, cpDzUnitSelect, cpDxUnitSelect, cpTiltUnitSelect].forEach(el => {
+            el.addEventListener('change', updateModeCoupling);
+        });
+        cpFiberPreset.addEventListener('change', () => {
+            if (cpFiberPreset.value) cpMfdInput.value = cpFiberPreset.value;
+            updateModeCoupling();
+        });
 
         // --- Event Listeners for Section 6 ---
         [gbLambdaInput, gbLambdaUnitSelect, gbRefractiveIndexInput, gbM2Input, gbPowerInput, gbPowerUnitSelect].forEach(el => {
@@ -5358,38 +5790,28 @@
         });
 
         // Tabs
-        gbTabCausticBtn.addEventListener('click', () => {
-            gbCurrentTab = 'caustic';
-            gbTabCausticBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition';
-            gbTabIntensityBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbTabLensBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbCausticContainer.classList.remove('hidden');
-            gbIntensityContainer.classList.add('hidden');
-            gbLensContainer.classList.add('hidden');
-            updateGaussianBeam('z');
-        });
-        gbTabIntensityBtn.addEventListener('click', () => {
-            gbCurrentTab = 'intensity';
-            gbTabIntensityBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition';
-            gbTabCausticBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbTabLensBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbIntensityContainer.classList.remove('hidden');
-            gbCausticContainer.classList.add('hidden');
-            gbLensContainer.classList.add('hidden');
-            updateGaussianBeam('z');
-        });
-        gbTabLensBtn.addEventListener('click', () => {
-            gbCurrentTab = 'lens';
-            gbTabLensBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition';
-            gbTabCausticBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbTabIntensityBtn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
-            gbLensContainer.classList.remove('hidden');
-            gbCausticContainer.classList.add('hidden');
-            gbIntensityContainer.classList.add('hidden');
-            updateLensFocusing();
-        });
+        const GB_TABS = {
+            caustic: [gbTabCausticBtn, gbCausticContainer],
+            intensity: [gbTabIntensityBtn, gbIntensityContainer],
+            lens: [gbTabLensBtn, gbLensContainer],
+            coupling: [gbTabCouplingBtn, gbCouplingContainer]
+        };
+        const GB_TAB_ACTIVE = 'px-3 py-1 text-xs font-bold rounded-md bg-indigo-600 text-white shadow-sm transition';
+        const GB_TAB_IDLE = 'px-3 py-1 text-xs font-bold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
 
-        // Lens inputs
+        function setGbTab(name) {
+            gbCurrentTab = name;
+            Object.entries(GB_TABS).forEach(([key, [btn, container]]) => {
+                btn.className = key === name ? GB_TAB_ACTIVE : GB_TAB_IDLE;
+                container.classList.toggle('hidden', key !== name);
+            });
+            if (name === 'lens') updateLensFocusing();
+            else if (name === 'coupling') updateModeCoupling();
+            else updateGaussianBeam('z');
+        }
+        Object.entries(GB_TABS).forEach(([key, [btn]]) => btn.addEventListener('click', () => setGbTab(key)));
+
+        // Lens inputs (the coupling tab can take its beam from the lens output)
         [gbLensFocalInput, gbLensFocalUnitSelect, gbLensD1Input, gbLensD1UnitSelect].forEach(el => {
             el.addEventListener('input', updateLensFocusing);
             el.addEventListener('change', updateLensFocusing);
@@ -5699,6 +6121,7 @@
         window.addEventListener('resize', () => {
             if (currentVisTab === 'curve') updateFresnel('theta_i');
             if (gbCurrentTab === 'intensity') updateGaussianBeam('z');
+            if (gbCurrentTab === 'coupling') drawCouplingCurve();
             drawKerrCombSpectrum();
         });
 
@@ -5742,6 +6165,13 @@
             '#kerr': '#kerr-comb',
             '#comb': '#kerr-comb',
             '#microcomb': '#kerr-comb',
+            '#coupling': '#mode-coupling',
+            '#fiber': '#mode-coupling'
+        };
+
+        // Tools that live inside a tab of another card: [card to scroll to, tab to open]
+        const HASH_TABS = {
+            '#mode-coupling': ['#gaussian-visualizer', () => gbTabCouplingBtn.click()]
         };
 
         function resolveHash(hash) {
@@ -5751,7 +6181,12 @@
 
         function handleHashJump() {
             if (!window.location.hash) return;
-            const targetHash = resolveHash(window.location.hash);
+            let targetHash = resolveHash(window.location.hash);
+            if (HASH_TABS[targetHash]) {
+                const [cardHash, openTab] = HASH_TABS[targetHash];
+                openTab();
+                targetHash = cardHash;
+            }
             const targetEl = document.querySelector(targetHash);
             if (targetEl) {
                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });

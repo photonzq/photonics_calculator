@@ -12,15 +12,16 @@ and equations.
 
 | # | Section | Calculators |
 |---|---------|-------------|
-| 1 | Spectral & Frequency Domain | wavelength ↔ frequency ↔ wavenumber with spectral-band and telecom-band identification; differential bandwidth Δλ ↔ Δf ↔ Δṽ |
-| 2 | Ultrafast Pulses & Dispersion | transform-limited pulses; GDD ↔ total dispersion D; pulse elongation through a dispersive length |
-| 3 | Fresnel Reflection & Interfaces | s- and p-polarized reflection and transmission vs. angle, with Brewster and critical angles |
-| 4 | Cavity Resonators & Guided Waves | microresonator loss, Q and linewidth; Fabry–Pérot cavity; waveguide Bragg grating |
-| 5 | Nonlinear Optics & Soliton Dynamics | soliton parameters and the characteristic lengths L_D and L_NL |
-| 6 | Gaussian Beam Propagation & Focusing | w(z), R(z), Gouy phase and on-axis intensity; thin-lens focusing; draggable caustic diagram, transverse profile and lens views |
+| 1 | Spectral & Frequency Domain | wavelength ↔ frequency ↔ wavenumber ↔ photon energy (eV) with photon flux, spectral-band and telecom-band identification, wavelength presets applied to every calculator; differential bandwidth Δλ ↔ Δf ↔ Δṽ with the exact (non-linearised) band width |
+| 2 | Ultrafast Pulses & Dispersion | transform-limited pulses; GDD ↔ total dispersion D; pulse elongation through a dispersive length (exact for Gaussian, exact numerical curve for sech²) |
+| 3 | Fresnel Reflection & Interfaces | s- and p-polarized reflection and transmission vs. angle, with Brewster and critical angles; TIR phase shifts and evanescent depth |
+| 4 | Cavity Resonators & Guided Waves | microresonator loss, Q and linewidth, bus coupling (κ_ex, Q_ex, loaded Q, regime, extinction, build-up, photon lifetime, ring radius) and Q₀/Q_ex extraction from a measured resonance; Fabry–Pérot cavity; waveguide Bragg grating with duty cycle and order, grating strength κ (from index contrast or entered), peak reflectivity, stop band, FWHM / null bandwidth, effective length and reflection spectrum; grating coupler (period ↔ fiber angle, radiating orders, angular dispersion, 1-/3-dB bandwidth, uniform-grating overlap, optimal scattering strength and CE estimate with spectrum) |
+| 5 | Nonlinear Optics & Soliton Dynamics | soliton parameters and the characteristic lengths L_D and L_NL; Kerr microcomb / dissipative Kerr soliton (D₁, D₂, γ, parametric threshold, soliton existence range, duration, bandwidth, comb power and spectrum) |
+| 6 | Gaussian Beam Propagation & Focusing | w(z), R(z), Gouy phase and on-axis intensity; thin-lens focusing; Gaussian mode / fiber coupling (size, axial, lateral and tilt mismatch; MFD or step-index fiber); draggable caustic diagram, transverse profile and lens views |
 
-A global precision control sets the displayed digits everywhere, and the
-Gaussian beam section can pull its wavelength from Section 1.
+A global control sets the number of significant figures shown everywhere, and
+every calculator has a collapsible "Physics notes & assumptions" panel that
+states its conventions and range of validity.
 
 ## Repository history
 

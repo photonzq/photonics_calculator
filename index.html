@@ -346,8 +346,8 @@
             <!-- Global Precision -->
             <div class="flex items-center gap-4">
                 <div class="flex items-center bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 shadow-sm">
-                    <label for="precisionInput" class="text-xs font-semibold text-slate-600 mr-2 uppercase tracking-wide">Decimals:</label>
-                    <input type="number" id="precisionInput" value="4" min="0" max="10" class="w-12 text-center text-sm font-mono font-bold bg-white border border-slate-300 rounded p-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                    <label for="precisionInput" class="text-xs font-semibold text-slate-600 mr-2 uppercase tracking-wide" title="Significant figures shown in every calculated field">Sig. figs:</label>
+                    <input type="number" id="precisionInput" value="6" min="1" max="15" class="w-12 text-center text-sm font-mono font-bold bg-white border border-slate-300 rounded p-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                 </div>
             </div>
         </div>
@@ -2134,12 +2134,72 @@
         let isSyncing = false; // Prevents recursive event loops
 
         // --- Precision Helper ---
+        // The header control sets significant figures, not decimal places: a fixed
+        // number of decimals rounds 1.55e-6 m to "0.0000", and re-reading that zero
+        // then cleared every sibling field.
         function getPrecision() {
             const digits = parseInt(precisionInput.value, 10);
-            if (isNaN(digits) || digits < 0) return 4;
-            // toFixed()/toExponential() throw a RangeError outside 0-100, and the
-            // input's max="10" does not stop a typed or pasted value, so clamp here.
-            return Math.min(digits, 10);
+            if (isNaN(digits) || digits < 1) return 6;
+            // toPrecision() throws a RangeError outside 1-100, and the input's
+            // max="15" does not stop a typed or pasted value, so clamp here.
+            return Math.min(digits, 15);
+        }
+
+        // Significant-figure formatter shared by every field. Values outside
+        // [1e-3, 1e6) switch to exponent form ("1.55e-6"), which number inputs
+        // accept; integers wider than the requested figures are kept whole rather
+        // than shown as "1.9e5". Trailing zeros are dropped.
+        function fmt(val, sig = getPrecision()) {
+            if (typeof val !== 'number' || !isFinite(val)) return '';
+            if (val === 0) return '0';
+            const a = Math.abs(val);
+            if (a >= 1e6 || a < 1e-3) return fmtExp(val, sig);
+            let s = val.toPrecision(sig);
+            if (s.includes('e')) return String(Math.round(val));
+            if (s.includes('.')) s = s.replace(/\.?0+$/, '');
+            return s;
+        }
+
+        // Always-exponential form, for quantities such as Q that are read as powers of ten
+        function fmtExp(val, sig = getPrecision()) {
+            if (typeof val !== 'number' || !isFinite(val)) return '';
+            return val.toExponential(Math.max(0, sig - 1)).replace(/\.?0+e/, 'e').replace('e+', 'e');
+        }
+
+        // Length with an automatically chosen unit (read-only displays)
+        function fmtLen(m, sig = getPrecision()) {
+            if (typeof m !== 'number' || !isFinite(m)) return '-';
+            const a = Math.abs(m);
+            const [unit, scale] = a >= 1 ? ['m', 1] : a >= 1e-2 ? ['cm', 1e-2] : a >= 1e-3 ? ['mm', 1e-3]
+                : a >= 1e-6 ? ['µm', 1e-6] : ['nm', 1e-9];
+            return `${fmt(m / scale, sig)} ${unit}`;
+        }
+
+        // Frequency with an automatically chosen unit (read-only displays)
+        function fmtFreq(hz, sig = getPrecision()) {
+            if (typeof hz !== 'number' || !isFinite(hz)) return '-';
+            const a = Math.abs(hz);
+            const [unit, scale] = a >= 1e12 ? ['THz', 1e12] : a >= 1e9 ? ['GHz', 1e9] : a >= 1e6 ? ['MHz', 1e6]
+                : a >= 1e3 ? ['kHz', 1e3] : ['Hz', 1];
+            return `${fmt(hz / scale, sig)} ${unit}`;
+        }
+
+        // Power with an automatically chosen unit (read-only displays)
+        function fmtPower(w, sig = getPrecision()) {
+            if (typeof w !== 'number' || !isFinite(w)) return '-';
+            const a = Math.abs(w);
+            const [unit, scale] = a >= 1e3 ? ['kW', 1e3] : a >= 1 ? ['W', 1] : a >= 1e-3 ? ['mW', 1e-3]
+                : a >= 1e-6 ? ['µW', 1e-6] : ['nW', 1e-9];
+            return `${fmt(w / scale, sig)} ${unit}`;
+        }
+
+        // Time with an automatically chosen unit (read-only displays)
+        function fmtTime(s, sig = getPrecision()) {
+            if (typeof s !== 'number' || !isFinite(s)) return '-';
+            const a = Math.abs(s);
+            const [unit, scale] = a >= 1 ? ['s', 1] : a >= 1e-3 ? ['ms', 1e-3] : a >= 1e-6 ? ['µs', 1e-6]
+                : a >= 1e-9 ? ['ns', 1e-9] : a >= 1e-12 ? ['ps', 1e-12] : ['fs', 1e-15];
+            return `${fmt(s / scale, sig)} ${unit}`;
         }
 
         // --- Quick Preset Setter ---
@@ -2408,15 +2468,15 @@
 
                 if (source !== 'nm') {
                     const unit = nmUnitSelect.value;
-                    nmInput.value = (lambda_m / LENGTH_SI[unit]).toFixed(digits);
+                    nmInput.value = fmt(lambda_m / LENGTH_SI[unit]);
                 }
                 if (source !== 'thz') {
                     const unit = thzUnitSelect.value;
-                    thzInput.value = (f_hz / FREQ_SI[unit]).toFixed(digits);
+                    thzInput.value = fmt(f_hz / FREQ_SI[unit]);
                 }
                 if (source !== 'wn') {
                     const unit = wavenumberUnitSelect.value;
-                    wavenumberInput.value = (wn_per_m / WAVENUMBER_SI[unit]).toFixed(digits);
+                    wavenumberInput.value = fmt(wn_per_m / WAVENUMBER_SI[unit]);
                 }
 
                 updateColorDisplay(lambda_m * 1e9);
@@ -2471,15 +2531,15 @@
 
                 if (source !== 'nm') {
                     const unit = deltaNmUnitSelect.value;
-                    deltaNmInput.value = (deltaLambdaM / LENGTH_SI[unit]).toFixed(digits);
+                    deltaNmInput.value = fmt(deltaLambdaM / LENGTH_SI[unit]);
                 }
                 if (source !== 'ghz') {
                     const unit = deltaGhzUnitSelect.value;
-                    deltaGhzInput.value = (deltaFHz / FREQ_SI[unit]).toFixed(digits);
+                    deltaGhzInput.value = fmt(deltaFHz / FREQ_SI[unit]);
                 }
                 if (source !== 'wn') {
                     const unit = deltaWavenumberUnitSelect.value;
-                    deltaWavenumberInput.value = (deltaWnPerM / WAVENUMBER_SI[unit]).toFixed(digits);
+                    deltaWavenumberInput.value = fmt(deltaWnPerM / WAVENUMBER_SI[unit]);
                 }
             }
 
@@ -2537,7 +2597,7 @@
 
                 if (deltaF_hz > 0) {
                     const pulseWidth_s = tbp / deltaF_hz;
-                    pulseWidthInput.value = (pulseWidth_s / TIME_SI[pwUnit]).toFixed(digits);
+                    pulseWidthInput.value = fmt(pulseWidth_s / TIME_SI[pwUnit]);
                 } else {
                     pulseWidthInput.value = '';
                 }
@@ -2554,13 +2614,13 @@
 
                 if (bwUnit === 'nm') {
                     const deltaLambdaM = (centerLambdaM ** 2 / C) * deltaF_hz;
-                    bandwidthInput.value = (deltaLambdaM * 1e9).toFixed(digits);
+                    bandwidthInput.value = fmt(deltaLambdaM * 1e9);
                 } else if (bwUnit === 'thz') {
-                    bandwidthInput.value = (deltaF_hz / 1e12).toFixed(digits);
+                    bandwidthInput.value = fmt(deltaF_hz / 1e12);
                 } else if (bwUnit === 'ghz') {
-                    bandwidthInput.value = (deltaF_hz / 1e9).toFixed(digits);
+                    bandwidthInput.value = fmt(deltaF_hz / 1e9);
                 } else { // cm-1
-                    bandwidthInput.value = (deltaF_hz / (C * 100)).toFixed(digits);
+                    bandwidthInput.value = fmt(deltaF_hz / (C * 100));
                 }
             }
 
@@ -2616,8 +2676,8 @@
                 if (!isNaN(dVal)) {
                     const D_si = parseDToSI(dVal);
                     const gdd_si = -(lambda_m ** 2 / (2 * Math.PI * C)) * D_si;
-                    gddInput.value = formatGddFromSI(gdd_si).toFixed(digits);
-                    gddFs2Display.textContent = `${(gdd_si / 1e-30).toLocaleString(undefined, { maximumFractionDigits: digits })} fs²`;
+                    gddInput.value = fmt(formatGddFromSI(gdd_si));
+                    gddFs2Display.textContent = `${fmt(gdd_si / 1e-30)} fs²`;
                 } else {
                     gddInput.value = '';
                     gddFs2Display.textContent = '-';
@@ -2627,8 +2687,8 @@
                 if (!isNaN(gddVal)) {
                     const gdd_si = parseGddToSI(gddVal);
                     const D_si = -gdd_si * (2 * Math.PI * C) / (lambda_m ** 2);
-                    dInput.value = formatDFromSI(D_si).toFixed(digits);
-                    gddFs2Display.textContent = `${(gdd_si / 1e-30).toLocaleString(undefined, { maximumFractionDigits: digits })} fs²`;
+                    dInput.value = fmt(formatDFromSI(D_si));
+                    gddFs2Display.textContent = `${fmt(gdd_si / 1e-30)} fs²`;
                 } else {
                     dInput.value = '';
                     gddFs2Display.textContent = '-';
@@ -2762,7 +2822,7 @@
 
                 const tau_out_s = tau0_s * M;
                 const tau_out_unit = elongTauOutUnit.value;
-                elongTauOutInput.value = (tau_out_s / TIME_SI[tau_out_unit]).toFixed(digits);
+                elongTauOutInput.value = fmt(tau_out_s / TIME_SI[tau_out_unit]);
 
                 const gdd_mag_s2 = (tau0_s ** 2 / factorConstant) * Math.sqrt(M ** 2 - 1);
                 const disp_unit = elongDispUnit.value;
@@ -2865,7 +2925,7 @@
                     const sin_ti = (n2 / n1) * sin_tt;
                     if (sin_ti <= 1.0) {
                         theta_i_deg = (Math.asin(sin_ti) * 180.0) / Math.PI;
-                        fresnelAngleInput.value = (angleUnit === 'rad' ? (theta_i_deg * Math.PI / 180) : theta_i_deg).toFixed(digits);
+                        fresnelAngleInput.value = fmt(angleUnit === 'rad' ? (theta_i_deg * Math.PI / 180) : theta_i_deg);
                         fresnelAngleSlider.value = theta_i_deg.toFixed(1);
                     } else {
                         theta_i_deg = parseFloat(fresnelAngleSlider.value);
@@ -2879,7 +2939,7 @@
 
                 if (!isNaN(theta_b_deg) && theta_b_deg > 0 && theta_b_deg < 90) {
                     n2 = n1 * Math.tan((theta_b_deg * Math.PI) / 180.0);
-                    fresnelN2Input.value = n2.toFixed(digits);
+                    fresnelN2Input.value = fmt(n2);
                 }
                 theta_i_deg = parseFloat(fresnelAngleSlider.value);
             } else {
@@ -2897,12 +2957,12 @@
 
             if (source !== 'brewster') {
                 const b_disp = angleUnit === 'rad' ? (res.theta_b_deg * Math.PI / 180) : res.theta_b_deg;
-                fresnelBrewsterInput.value = b_disp.toFixed(digits);
+                fresnelBrewsterInput.value = fmt(b_disp);
             }
 
             if (res.theta_c_deg !== null) {
                 const c_disp = angleUnit === 'rad' ? (res.theta_c_deg * Math.PI / 180) : res.theta_c_deg;
-                fresnelCriticalDisplay.textContent = `${c_disp.toFixed(2)}${angleUnit === 'rad' ? ' rad' : '°'}`;
+                fresnelCriticalDisplay.textContent = `${fmt(c_disp, Math.min(digits, 5))}${angleUnit === 'rad' ? ' rad' : '°'}`;
             } else {
                 fresnelCriticalDisplay.textContent = 'None';
             }
@@ -2913,7 +2973,7 @@
             } else {
                 if (source !== 'theta_t') {
                     const t_disp = angleUnit === 'rad' ? (res.theta_t_deg * Math.PI / 180) : res.theta_t_deg;
-                    fresnelThetaTInput.value = t_disp.toFixed(digits);
+                    fresnelThetaTInput.value = fmt(t_disp);
                 }
                 tirAlertBadge.classList.add('hidden');
             }
@@ -2926,8 +2986,8 @@
             fresnelRpPct.textContent = `${(res.Rp * 100).toFixed(Math.min(digits, 2))}%`;
             fresnelTpPct.textContent = `${(res.Tp * 100).toFixed(Math.min(digits, 2))}%`;
 
-            fresnelRavgPct.textContent = `${(res.R_unpol * 100).toFixed(Math.min(digits, 2))}%`;
-            fresnelTavgPct.textContent = `${(res.T_unpol * 100).toFixed(Math.min(digits, 2))}%`;
+            fresnelRavgPct.textContent = `${fmt(res.R_unpol * 100)}%`;
+            fresnelTavgPct.textContent = `${fmt(res.T_unpol * 100)}%`;
 
             updateFresnelRayDiagram(n1, n2, theta_i_deg, res);
             drawFresnelCurves(n1, n2, theta_i_deg, res);
@@ -3233,7 +3293,7 @@
                 else if (loss_unit === 'dB/cm') v = (alpha * DB_CONVERSION) / 100;
                 else if (loss_unit === 'dB/km') v = (alpha * DB_CONVERSION) * 1e3;
                 else if (loss_unit === '1/m') v = alpha;
-                fpLossInput.value = v.toFixed(digits);
+                fpLossInput.value = fmt(v);
             };
 
             let L_m = L_val * LENGTH_SI[L_unit];
@@ -3245,7 +3305,7 @@
                 if (!isNaN(fsrVal) && fsrVal > 0) {
                     const fsr_hz = fsrVal * FREQ_SI[fsrUnit];
                     L_m = C / (2 * ng * fsr_hz);
-                    fpLengthInput.value = (L_m / LENGTH_SI[L_unit]).toFixed(digits);
+                    fpLengthInput.value = fmt(L_m / LENGTH_SI[L_unit]);
                 }
             } else if (source === 'finesse' || source === 'q' || source === 'linewidth') {
                 let targetFinesse;
@@ -3274,8 +3334,8 @@
                         if (solveTarget === 'mirror') {
                             const req_R = target_r_rt * Math.exp(alpha_per_m * L_m);
                             if (req_R > 0 && req_R < 1.0) {
-                                fpR1Input.value = req_R.toFixed(digits);
-                                fpR2Input.value = req_R.toFixed(digits);
+                                fpR1Input.value = fmt(req_R);
+                                fpR2Input.value = fmt(req_R);
                                 R1 = req_R;
                                 R2 = req_R;
                             }
@@ -3289,7 +3349,7 @@
                             const sqrtR = Math.sqrt(Math.min(0.999999, Math.max(1e-6, R1 * R2)));
                             if (sqrtR > target_r_rt && alpha_per_m > 0) {
                                 L_m = Math.log(sqrtR / target_r_rt) / alpha_per_m;
-                                fpLengthInput.value = (L_m / LENGTH_SI[L_unit]).toFixed(digits);
+                                fpLengthInput.value = fmt(L_m / LENGTH_SI[L_unit]);
                             }
                         }
                     }
@@ -3309,10 +3369,10 @@
                 const fsrUnit = fpFsrUnitSelect.value;
                 const lwUnit = fpLinewidthUnitSelect.value;
 
-                if (source !== 'finesse') fpFinesseInput.value = finesse.toFixed(Math.min(digits, 1));
-                if (source !== 'q') fpQfactorInput.value = Q.toExponential(digits);
-                if (source !== 'fsr') fpFsrInput.value = (fsr_hz / FREQ_SI[fsrUnit]).toFixed(digits);
-                if (source !== 'linewidth') fpLinewidthInput.value = (linewidth_hz / FREQ_SI[lwUnit]).toFixed(digits);
+                if (source !== 'finesse') fpFinesseInput.value = fmt(finesse);
+                if (source !== 'q') fpQfactorInput.value = fmtExp(Q);
+                if (source !== 'fsr') fpFsrInput.value = fmt(fsr_hz / FREQ_SI[fsrUnit]);
+                if (source !== 'linewidth') fpLinewidthInput.value = fmt(linewidth_hz / FREQ_SI[lwUnit]);
             }
 
             isSyncing = false;
@@ -3387,17 +3447,17 @@
                 const alphaUnit = resLossPerMUnitSelect.value;
                 const dbUnit = resLossDbMUnitSelect.value;
 
-                if (source !== 'linewidth') resLinewidthInput.value = (linewidth_hz / FREQ_SI[lwUnit]).toFixed(digits);
-                if (source !== 'loss_per_m') resLossPerMInput.value = (alphaUnit === '1/cm' ? alpha_per_m / 100 : alpha_per_m).toFixed(digits);
+                if (source !== 'linewidth') resLinewidthInput.value = fmt(linewidth_hz / FREQ_SI[lwUnit]);
+                if (source !== 'loss_per_m') resLossPerMInput.value = fmt(alphaUnit === '1/cm' ? alpha_per_m / 100 : alpha_per_m);
                 if (source !== 'loss_db_m') {
                     let dbVal = alpha_per_m * DB_CONVERSION;
                     if (dbUnit === 'dB/cm') dbVal = dbVal / 100;
                     else if (dbUnit === 'dB/km') dbVal = dbVal * 1e3;
-                    resLossDbMInput.value = dbVal.toFixed(digits);
+                    resLossDbMInput.value = fmt(dbVal);
                 }
-                if (source !== 'finesse') resFinesseInput.value = finesse.toFixed(Math.min(digits, 1));
-                if (source !== 'loss_ratio') resLossRatioInput.value = loss_ratio.toFixed(Math.min(digits, 4));
-                if (source !== 'q') resQfactorInput.value = Q.toExponential(digits);
+                if (source !== 'finesse') resFinesseInput.value = fmt(finesse);
+                if (source !== 'loss_ratio') resLossRatioInput.value = fmt(loss_ratio);
+                if (source !== 'q') resQfactorInput.value = fmtExp(Q);
             }
 
             isSyncing = false;
@@ -3491,7 +3551,7 @@
                 const N_target = parseFloat(solitonOrderInput.value);
                 if (!isNaN(N_target) && N_target > 0) {
                     energy_J = (N_target ** 2) * fundamentalEnergy_J;
-                    solitonEnergyInput.value = (energy_J / ENERGY_SI[energy_unit]).toFixed(digits);
+                    solitonEnergyInput.value = fmt(energy_J / ENERGY_SI[energy_unit]);
                 }
             } else if (source === 'power') {
                 const p0_val = parseFloat(solitonPeakPowerInput.value);
@@ -3499,7 +3559,7 @@
                 if (!isNaN(p0_val) && p0_val > 0) {
                     const p0_W = p0_val * POWER_SI[p0_unit];
                     energy_J = p0_W * (t0_s * shapeFactors.power_factor);
-                    solitonEnergyInput.value = (energy_J / ENERGY_SI[energy_unit]).toFixed(digits);
+                    solitonEnergyInput.value = fmt(energy_J / ENERGY_SI[energy_unit]);
                 }
             } else if (source === 'ld') {
                 const ld_val = parseFloat(solitonLdInput.value);
@@ -3508,7 +3568,7 @@
                     const ld_m = ld_val * LENGTH_SI[ld_unit];
                     t0_s = Math.sqrt(ld_m * Math.abs(beta2_s2_per_m));
                     tfwhm_s = t0_s * shapeFactors.t0_factor;
-                    solitonTfwhmInput.value = (tfwhm_s / TIME_SI[tfwhm_unit]).toFixed(digits);
+                    solitonTfwhmInput.value = fmt(tfwhm_s / TIME_SI[tfwhm_unit]);
                 }
             } else if (source === 'lnl') {
                 const lnl_val = parseFloat(solitonLnlInput.value);
@@ -3517,7 +3577,7 @@
                     const lnl_m = lnl_val * LENGTH_SI[lnl_unit];
                     const peakPower_W = 1 / (gamma_si * lnl_m);
                     energy_J = peakPower_W * (t0_s * shapeFactors.power_factor);
-                    solitonEnergyInput.value = (energy_J / ENERGY_SI[energy_unit]).toFixed(digits);
+                    solitonEnergyInput.value = fmt(energy_J / ENERGY_SI[energy_unit]);
                 }
             }
 
@@ -3535,12 +3595,12 @@
                 const lnl_unit = solitonLnlUnitSelect.value;
                 const fund_unit = solitonFundEnergyUnitSelect.value;
 
-                if (source !== 'power') solitonPeakPowerInput.value = (peakPower_W / POWER_SI[p0_unit]).toFixed(digits);
-                if (source !== 'order') solitonOrderInput.value = N.toFixed(digits);
-                if (source !== 'ld') solitonLdInput.value = (Ld_m / LENGTH_SI[ld_unit]).toFixed(digits);
-                if (source !== 'lnl') solitonLnlInput.value = (Lnl_m / LENGTH_SI[lnl_unit]).toFixed(digits);
-                solitonFissInput.value = isFinite(L_fiss_m) ? `${(L_fiss_m * 100).toFixed(digits)} cm` : '∞';
-                solitonFundEnergyInput.value = (fundamentalEnergy_J / ENERGY_SI[fund_unit]).toFixed(digits);
+                if (source !== 'power') solitonPeakPowerInput.value = fmt(peakPower_W / POWER_SI[p0_unit]);
+                if (source !== 'order') solitonOrderInput.value = fmt(N);
+                if (source !== 'ld') solitonLdInput.value = fmt(Ld_m / LENGTH_SI[ld_unit]);
+                if (source !== 'lnl') solitonLnlInput.value = fmt(Lnl_m / LENGTH_SI[lnl_unit]);
+                solitonFissInput.value = isFinite(L_fiss_m) ? fmtLen(L_fiss_m) : '∞';
+                solitonFundEnergyInput.value = fmt(fundamentalEnergy_J / ENERGY_SI[fund_unit]);
             }
 
             isSyncing = false;
@@ -3692,12 +3752,12 @@
                 if (source === 'zr') {
                     if (!isNaN(zR_m) && zR_m > 0) {
                         w0_m = Math.sqrt((M2 * lambda_m * zR_m) / (Math.PI * n));
-                        gbW0Input.value = (w0_m / LENGTH_SI[gbW0UnitSelect.value]).toFixed(digits);
+                        gbW0Input.value = fmt(w0_m / LENGTH_SI[gbW0UnitSelect.value]);
                     }
                 } else if (source === 'theta') {
                     if (!isNaN(theta_rad) && theta_rad > 0) {
                         w0_m = (M2 * lambda_m) / (Math.PI * n * theta_rad);
-                        gbW0Input.value = (w0_m / LENGTH_SI[gbW0UnitSelect.value]).toFixed(digits);
+                        gbW0Input.value = fmt(w0_m / LENGTH_SI[gbW0UnitSelect.value]);
                     }
                 } else if (source === 'wz') {
                     // Given target spot size at current distance z, solve for distance z
@@ -3708,7 +3768,7 @@
                         // Stay on whichever side of the waist the cursor is already on
                         const zSign = z_m < 0 ? -1 : 1;
                         z_m = zSign * zR_m * Math.sqrt(Math.max(0, ratio ** 2 - 1));
-                        gbZDistanceInput.value = (z_m / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(digits);
+                        gbZDistanceInput.value = fmt(z_m / LENGTH_SI[gbZDistanceUnitSelect.value]);
                     } else {
                         // No z gives a spot smaller than the waist: refresh w(z) from
                         // the current z instead of leaving an unreachable value on screen
@@ -3725,12 +3785,12 @@
             const full_theta_rad = 2 * theta_rad;
 
             // Update waist & far-field fields
-            if (source !== 'zr') gbZrInput.value = (zR_m / LENGTH_SI[gbZrUnitSelect.value]).toFixed(digits);
-            if (source !== 'theta') gbThetaInput.value = (theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value]).toFixed(digits);
+            if (source !== 'zr') gbZrInput.value = fmt(zR_m / LENGTH_SI[gbZrUnitSelect.value]);
+            if (source !== 'theta') gbThetaInput.value = fmt(theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value]);
 
-            gb2W0Display.textContent = `${((2 * w0_m) / LENGTH_SI[gbW0UnitSelect.value]).toFixed(digits)} ${gbW0UnitSelect.value}`;
-            gbConfocalDisplay.textContent = `${(b_m / LENGTH_SI[gbZrUnitSelect.value]).toFixed(digits)} ${gbZrUnitSelect.value}`;
-            gb2ThetaDisplay.textContent = `${(full_theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value]).toFixed(digits)} ${gbThetaUnitSelect.value}`;
+            gb2W0Display.textContent = `${fmt((2 * w0_m) / LENGTH_SI[gbW0UnitSelect.value])} ${gbW0UnitSelect.value}`;
+            gbConfocalDisplay.textContent = `${fmt(b_m / LENGTH_SI[gbZrUnitSelect.value])} ${gbZrUnitSelect.value}`;
+            gb2ThetaDisplay.textContent = `${fmt(full_theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value])} ${gbThetaUnitSelect.value}`;
 
             // 4. Compute at distance z
             const z_ratio = z_m / zR_m;
@@ -3738,8 +3798,8 @@
             gbZDistanceSlider.value = Math.max(-3.5, Math.min(3.5, z_ratio)).toFixed(2);
 
             const wz_m = w0_m * Math.sqrt(1 + z_ratio ** 2);
-            if (source !== 'wz') gbWzInput.value = (wz_m / LENGTH_SI[gbWzUnitSelect.value]).toFixed(digits);
-            gb2WzDisplay.textContent = `${((2 * wz_m) / LENGTH_SI[gbWzUnitSelect.value]).toFixed(digits)} ${gbWzUnitSelect.value}`;
+            if (source !== 'wz') gbWzInput.value = fmt(wz_m / LENGTH_SI[gbWzUnitSelect.value]);
+            gb2WzDisplay.textContent = `${fmt((2 * wz_m) / LENGTH_SI[gbWzUnitSelect.value])} ${gbWzUnitSelect.value}`;
 
             // Radius of curvature R(z)
             if (Math.abs(z_m) < 1e-12) {
@@ -3752,13 +3812,13 @@
                 if (absR >= 1e3) { rUnit = 'm'; rScale = 1; }
                 else if (absR >= 1e-1) { rUnit = 'cm'; rScale = 1e-2; }
                 else if (absR < 1e-3) { rUnit = 'µm'; rScale = 1e-6; }
-                gbRzInput.value = `${(R_m / rScale).toFixed(digits)} ${rUnit}`;
+                gbRzInput.value = `${fmt(R_m / rScale)} ${rUnit}`;
             }
 
             // Gouy phase
             const gouy_rad = Math.atan(z_ratio);
             const gouy_unit = gbGouyPhaseUnitSelect.value;
-            gbGouyPhaseInput.value = (gouy_unit === 'deg' ? (gouy_rad * 180 / Math.PI) : gouy_rad).toFixed(digits);
+            gbGouyPhaseInput.value = fmt(gouy_unit === 'deg' ? (gouy_rad * 180 / Math.PI) : gouy_rad);
 
             // Intensities (W/cm²)
             const I0_w_cm2 = (2 * power_W) / (Math.PI * ((w0_m * 100) ** 2));
@@ -3786,9 +3846,7 @@
 
         function formatScientific(val, digits) {
             if (isNaN(val)) return '-';
-            if (val === 0) return '0';
-            if (val >= 1e6 || val < 1e-2) return val.toExponential(Math.min(digits, 3));
-            return val.toFixed(Math.min(digits, 2));
+            return fmt(val, digits);
         }
 
         // --- Draw SVG Gaussian Beam Caustic & Wavefronts ---
@@ -3799,7 +3857,8 @@
             const scale_x = span_x / 3.5; // px per zR
             const w0_px = Math.max(12, Math.min(45, 22 * Math.pow(w0_m / 100e-6, 0.3)));
             const digits = getPrecision();
-            const dispDecimals = Math.min(digits, 2);
+            // Diagram labels: at most 4 significant figures so they stay legible
+            const dispDecimals = Math.min(digits, 4);
 
             // 1. Build Caustic Path (hyperbolic envelope from xi = -3.5 to +3.5)
             const steps = 60;
@@ -3860,7 +3919,7 @@
             svgThetaLabel.setAttribute('x', `${(X0 + labelR * Math.cos(midPhi)).toFixed(1)}`);
             svgThetaLabel.setAttribute('y', `${(Y0 - labelR * Math.sin(midPhi) + 4).toFixed(1)}`);
             const thetaUnit = gbThetaUnitSelect.value;
-            const thetaValStr = (theta_rad / ANGLE_SI_MAP[thetaUnit]).toFixed(dispDecimals);
+            const thetaValStr = fmt(theta_rad / ANGLE_SI_MAP[thetaUnit], dispDecimals);
             svgThetaLabel.textContent = `θ = ${thetaValStr} ${thetaUnit}`;
 
             // Update Waist Dimension elements at z = 0
@@ -3877,7 +3936,7 @@
                 svgWaistLabel.setAttribute('x', `${X0}`);
                 svgWaistLabel.setAttribute('y', `${(Y0 - w0_px - 8).toFixed(1)}`);
                 const w0Unit = gbW0UnitSelect.value;
-                svgWaistLabel.textContent = `2w₀ = ${((2 * w0_m) / LENGTH_SI[w0Unit]).toFixed(dispDecimals)} ${w0Unit}`;
+                svgWaistLabel.textContent = `2w₀ = ${fmt((2 * w0_m) / LENGTH_SI[w0Unit], dispDecimals)} ${w0Unit}`;
 
                 if (svgWaistPlanarLabel) {
                     svgWaistPlanarLabel.setAttribute('x', `${X0}`);
@@ -3890,12 +3949,12 @@
                 const zrUnit = gbZrUnitSelect.value;
                 svgRayleighLabel.setAttribute('x', `${(X0 + scale_x / 2).toFixed(1)}`);
                 svgRayleighLabel.setAttribute('y', '56');
-                svgRayleighLabel.textContent = `z_R = ${(zR_m / LENGTH_SI[zrUnit]).toFixed(dispDecimals)} ${zrUnit}`;
+                svgRayleighLabel.textContent = `z_R = ${fmt(zR_m / LENGTH_SI[zrUnit], dispDecimals)} ${zrUnit}`;
                 if (svgConfocalLabel) {
                     const b_m = 2 * zR_m;
                     svgConfocalLabel.setAttribute('x', `${X0}`);
                     svgConfocalLabel.setAttribute('y', '316');
-                    svgConfocalLabel.textContent = `b = 2z_R = ${(b_m / LENGTH_SI[zrUnit]).toFixed(dispDecimals)} ${zrUnit}`;
+                    svgConfocalLabel.textContent = `b = 2z_R = ${fmt(b_m / LENGTH_SI[zrUnit], dispDecimals)} ${zrUnit}`;
                 }
                 if (svgRayleighWzrLabel) {
                     const w_zr_px = w0_px * Math.SQRT2;
@@ -3936,7 +3995,7 @@
             const zUnit = gbZDistanceUnitSelect.value;
             const clampedTextX = Math.max(70, Math.min(690, cursorX));
             svgCursorDistanceText.setAttribute('x', `${clampedTextX.toFixed(1)}`);
-            svgCursorDistanceText.textContent = `z = ${(z_m / LENGTH_SI[zUnit]).toFixed(dispDecimals)} ${zUnit}`;
+            svgCursorDistanceText.textContent = `z = ${fmt(z_m / LENGTH_SI[zUnit], dispDecimals)} ${zUnit}`;
 
             // Spot size dimension arrow at cursor position
             svgWzDimensionLine.setAttribute('x1', `${cursorX.toFixed(1)}`);
@@ -3947,7 +4006,7 @@
             svgWzDimensionLabel.setAttribute('x', `${clampedTextX.toFixed(1)}`);
             svgWzDimensionLabel.setAttribute('y', `${(Y0 + cursorW_px + 18).toFixed(1)}`);
             const wzUnit = gbWzUnitSelect.value;
-            svgWzDimensionLabel.textContent = `2w(z) = ${((2 * wz_m) / LENGTH_SI[wzUnit]).toFixed(dispDecimals)} ${wzUnit}`;
+            svgWzDimensionLabel.textContent = `2w(z) = ${fmt((2 * wz_m) / LENGTH_SI[wzUnit], dispDecimals)} ${wzUnit}`;
 
             // Curved Wavefront Arc at cursor
             if (Math.abs(clamped_ratio) < 0.05) {
@@ -3965,7 +4024,7 @@
                 svgWavefrontArc.setAttribute('d', `M ${cursorX.toFixed(1)} ${(Y0 - cursorW_px).toFixed(1)} Q ${apexX.toFixed(1)} ${Y0} ${cursorX.toFixed(1)} ${(Y0 + cursorW_px).toFixed(1)}`);
                 
                 const R_val_m = Math.abs(z_m) + (zR_m ** 2) / Math.abs(z_m);
-                const R_str = (R_val_m / LENGTH_SI[zUnit]).toFixed(dispDecimals);
+                const R_str = fmt(R_val_m / LENGTH_SI[zUnit], dispDecimals);
                 svgWavefrontLabel.setAttribute('x', `${clampedTextX.toFixed(1)}`);
                 svgWavefrontLabel.setAttribute('y', `${(Y0 - cursorW_px - 20).toFixed(1)}`);
                 svgWavefrontLabel.textContent = `R(z) = ${R_str} ${zUnit}`;
@@ -4095,12 +4154,12 @@
             ctx.fillText(`(86.5% Power Encircled)`, midX, baseY + 32);
 
             ctx.fillStyle = '#6366f1';
-            ctx.fillText(`FWHM = ${(1.1774 * wz_m * 1e6).toFixed(1)} µm`, midX, baseY - 0.5 * plotH - 6);
+            ctx.fillText(`FWHM = ${fmtLen(1.1774 * wz_m, 4)}`, midX, baseY - 0.5 * plotH - 6);
 
             // Update text displays
-            gbTransversePeakDisplay.textContent = `${formatScientific(Iz_w_cm2, 2)} W/cm²`;
-            gbTransverseWzDisplay.textContent = `${(wz_m * 1e6).toFixed(1)} µm`;
-            gbTransverseFwhmDisplay.textContent = `${(1.1774 * wz_m * 1e6).toFixed(1)} µm`;
+            gbTransversePeakDisplay.textContent = `${formatScientific(Iz_w_cm2, getPrecision())} W/cm²`;
+            gbTransverseWzDisplay.textContent = fmtLen(wz_m);
+            gbTransverseFwhmDisplay.textContent = fmtLen(1.1774 * wz_m);
         }
 
         // --- Thin Lens Focusing Calculations ---
@@ -4153,7 +4212,7 @@
             const zR_m = parseFloat(gbZrInput.value) * LENGTH_SI[gbZrUnitSelect.value];
             const ratio = parseFloat(gbZDistanceSlider.value);
             const z_m = ratio * zR_m;
-            gbZDistanceInput.value = (z_m / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(getPrecision());
+            gbZDistanceInput.value = fmt(z_m / LENGTH_SI[gbZDistanceUnitSelect.value]);
             updateGaussianBeam('z');
         });
 
@@ -4168,17 +4227,17 @@
         });
         gbJumpPosZrBtn.addEventListener('click', () => {
             const zR_val = parseFloat(gbZrInput.value) * LENGTH_SI[gbZrUnitSelect.value];
-            gbZDistanceInput.value = (zR_val / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(getPrecision());
+            gbZDistanceInput.value = fmt(zR_val / LENGTH_SI[gbZDistanceUnitSelect.value]);
             updateGaussianBeam('z');
         });
         gbJumpNegZrBtn.addEventListener('click', () => {
             const zR_val = parseFloat(gbZrInput.value) * LENGTH_SI[gbZrUnitSelect.value];
-            gbZDistanceInput.value = ((-zR_val) / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(getPrecision());
+            gbZDistanceInput.value = fmt((-zR_val) / LENGTH_SI[gbZDistanceUnitSelect.value]);
             updateGaussianBeam('z');
         });
         gbJumpFarFieldBtn.addEventListener('click', () => {
             const zR_val = parseFloat(gbZrInput.value) * LENGTH_SI[gbZrUnitSelect.value];
-            gbZDistanceInput.value = ((3 * zR_val) / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(getPrecision());
+            gbZDistanceInput.value = fmt((3 * zR_val) / LENGTH_SI[gbZDistanceUnitSelect.value]);
             updateGaussianBeam('z');
         });
 
@@ -4243,7 +4302,7 @@
 
             const zR_m = parseFloat(gbZrInput.value) * LENGTH_SI[gbZrUnitSelect.value];
             const z_m = clampedRatio * zR_m;
-            gbZDistanceInput.value = (z_m / LENGTH_SI[gbZDistanceUnitSelect.value]).toFixed(getPrecision());
+            gbZDistanceInput.value = fmt(z_m / LENGTH_SI[gbZDistanceUnitSelect.value]);
             updateGaussianBeam('z');
         }
 
@@ -4397,7 +4456,7 @@
         fresnelAngleSlider.addEventListener('input', () => {
             const angleUnit = fresnelAngleUnitSelect.value;
             const deg = parseFloat(fresnelAngleSlider.value);
-            fresnelAngleInput.value = (angleUnit === 'rad' ? (deg * Math.PI / 180) : deg).toFixed(getPrecision());
+            fresnelAngleInput.value = fmt(angleUnit === 'rad' ? (deg * Math.PI / 180) : deg);
             updateFresnel('theta_i');
         });
         fresnelAngleUnitSelect.addEventListener('change', () => {
@@ -4407,7 +4466,7 @@
             const angleUnit = fresnelAngleUnitSelect.value;
             const deg = parseFloat(fresnelAngleSlider.value);
             if (!isNaN(deg)) {
-                fresnelAngleInput.value = (angleUnit === 'rad' ? (deg * Math.PI / 180) : deg).toFixed(getPrecision());
+                fresnelAngleInput.value = fmt(angleUnit === 'rad' ? (deg * Math.PI / 180) : deg);
             }
             // The spinner bounds are unit-dependent too (89.9 deg = 1.569 rad).
             fresnelAngleInput.max = angleUnit === 'rad' ? '1.569' : '89.9';

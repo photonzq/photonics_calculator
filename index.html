@@ -461,7 +461,8 @@
                         <optgroup label="4. Cavities & Guided Waves">
                             <option value="#microresonator">⭕ Microresonator Loss, Q & Bus Coupling</option>
                             <option value="#fabry-perot">🪞 Fabry-Pérot (FP) Cavity</option>
-                            <option value="#bragg-grating">📐 Waveguide Bragg Grating</option>
+                            <option value="#bragg-grating">📐 Waveguide Bragg Grating & Strength</option>
+                            <option value="#grating-coupler">📡 Grating Coupler</option>
                         </optgroup>
                         <optgroup label="5. Nonlinear Optics">
                             <option value="#solitons">🌀 Soliton Parameters & Characteristic Lengths</option>
@@ -1580,9 +1581,220 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Grating strength & reflection spectrum (coupled-mode theory) -->
+                        <div class="pt-3 border-t border-slate-100 space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Grating Strength &amp; Reflection</div>
+                            <div class="equation-box text-xs sm:text-sm space-y-1">
+                                <div>$$ \kappa \approx \frac{2\,|n_1 - n_2|}{m\,\lambda_B}\,|\sin(\pi m d)| \qquad R_{\max} = \tanh^2(\kappa L) $$</div>
+                                <div>$$ \Delta\lambda_{\text{null}} = \frac{\lambda_B^2}{\pi n_g L}\sqrt{(\kappa L)^2 + \pi^2} \qquad L_{\text{eff}} = \frac{\tanh(\kappa L)}{2\kappa} $$</div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label for="braggLengthInput" class="input-label">Grating Length $L$</label>
+                                    <div class="flex gap-1.5">
+                                        <input type="number" id="braggLengthInput" value="500" step="any" class="calc-input">
+                                        <select id="braggLengthUnitSelect" class="calc-unit-select w-16">
+                                            <option value="um" selected>µm</option>
+                                            <option value="mm">mm</option>
+                                            <option value="cm">cm</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="braggNgInput" class="input-label">Group Index $n_g$</label>
+                                    <input type="number" id="braggNgInput" value="2.0" step="0.01" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="braggKappaInput" class="input-label">Coupling Coefficient $\kappa$</label>
+                                    <div class="flex gap-1.5">
+                                        <input type="number" id="braggKappaInput" step="any" class="calc-input">
+                                        <select id="braggKappaUnitSelect" class="calc-unit-select w-20">
+                                            <option value="1/mm" selected>1/mm</option>
+                                            <option value="1/cm">1/cm</option>
+                                            <option value="1/um">1/µm</option>
+                                        </select>
+                                    </div>
+                                    <select id="braggKappaSource" class="mt-1 w-full text-[11px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                        <option value="index" selected>κ computed from n₁, n₂, d, m</option>
+                                        <option value="manual">κ entered (e.g. simulated)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="braggStrengthWarning" class="phys-warning is-info hidden"></div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <div class="metric-badge"><div class="metric-label">Strength $\kappa L$</div><div id="braggKLDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Peak Reflectivity $R_{\max}$</div><div id="braggRmaxDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Stop Band $\lambda_B^2\kappa/\pi n_g$</div><div id="braggGapDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">FWHM Bandwidth</div><div id="braggFwhmDisplay" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Null-to-Null Bandwidth</div><div id="braggNullDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Effective Length $L_{\text{eff}}$</div><div id="braggLeffDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            </div>
+
+                            <div class="relative w-full h-56 bg-white rounded-md border border-slate-200 p-2">
+                                <canvas id="braggSpectrumCanvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <details class="phys-note mt-auto">
+                            <summary>Physics notes &amp; assumptions</summary>
+                            <ul>
+                                <li>Phase-matching (Bragg) condition for contra-directional coupling of a mode to itself: $\beta_{\text{fwd}} + \beta_{\text{bwd}} = 2\pi m/\Lambda$, i.e. $m\lambda_B = 2\bar n_{\text{eff}}\Lambda$.</li>
+                                <li>$\bar n_{\text{eff}}$ is the length-weighted average of the two section indices, a good approximation for weak index contrast. For strong contrast, use the Bloch-mode effective index from a band-structure simulation.</li>
+                                <li>$\kappa$ from the indices: the $m$-th Fourier component of a rectangular effective-index profile is $\Delta n_m = \frac{2|n_1-n_2|}{\pi m}|\sin(\pi m d)|$, and $\kappa = \pi\Delta n_m/\lambda_B$ (so $\kappa = 2\Delta n/\lambda_B$ for $m = 1$, $d = 0.5$). This effective-index estimate ignores the mode-overlap and radiation effects of real corrugations. For strong or deep corrugations, enter $\kappa$ from a simulation (e.g. from the band gap: $\kappa = \pi n_g\,\Delta\lambda_{\text{gap}}/\lambda_B^2$).</li>
+                                <li>Uniform, lossless grating in coupled-mode theory, with detuning $\delta = \beta - m\pi/\Lambda \approx -2\pi n_g(\lambda-\lambda_B)/\lambda_B^2$ (first order in $\lambda - \lambda_B$). The spectrum is $R = \frac{\kappa^2\sinh^2(sL)}{\kappa^2\cosh^2(sL) - \delta^2}$ with $s = \sqrt{\kappa^2-\delta^2}$, which continues analytically outside the stop band.</li>
+                                <li>$\kappa$ is the field coupling coefficient: $R_{\max} = \tanh^2(\kappa L)$; $\kappa L = 1, 2, 3$ gives 58 %, 93 %, 99 %. The stop band (edges at $|\delta| = \kappa$) sets the width for strong gratings; $\lambda_B^2/(n_g L)$ sets it for weak ones.</li>
+                                <li>$L_{\text{eff}} = \tanh(\kappa L)/(2\kappa)$ is the effective (energy-penetration) length of the grating used as a DBR mirror. It enters DBR-cavity FSR as $L_{\text{cav}} + L_{\text{eff},1} + L_{\text{eff},2}$ and tends to $1/(2\kappa)$ for strong gratings.</li>
+                                <li>Duty cycle 0.5 with odd $m$ gives the strongest coupling for a rectangular profile; even orders vanish at $d = 0.5$.</li>
+                            </ul>
+                        </details>
                     </div>
                 </div>
 
+            </div>
+
+            <!-- CARD 4: Grating coupler -->
+            <div id="grating-coupler" class="group-card border-sky-200 shadow-md scroll-mt-28">
+                <div class="card-header bg-gradient-to-r from-sky-50 to-indigo-50 border-b border-sky-100 flex justify-between items-center">
+                    <h3 class="group-title text-sky-900">
+                        <span class="text-sky-600">📡</span> Grating Coupler (Fiber ↔ Waveguide)
+                    </h3>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="equation-box text-xs sm:text-sm space-y-1">
+                        <div>$$ \bar n_{\text{eff}} - n_t \sin\theta = \frac{m\lambda}{\Lambda} \qquad \frac{d\theta}{d\lambda}\Big|_\Lambda = \frac{(\bar n_{\text{eff}} - n_g)/\lambda - m/\Lambda}{n_t\cos\theta} $$</div>
+                        <div>$$ \eta(\Delta\lambda) \approx \eta_0\, \exp\!\left[-\left(\frac{\pi\, w_x\,(n_g - n_t\sin\theta)\,\Delta\lambda}{\lambda^2}\right)^{2}\right] \qquad w_x = \frac{w_f}{\cos\theta} \qquad \alpha_{\text{opt}} \approx \frac{1.36}{w_x} $$</div>
+                    </div>
+
+                    <!-- Phase matching -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label for="gcLambdaInput" class="input-label text-xs">Center Wavelength $\lambda$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="gcLambdaInput" value="1550" class="calc-input text-xs">
+                                <select id="gcLambdaUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="nm" selected>nm</option>
+                                    <option value="um">µm</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gcNeffInput" class="input-label text-xs">Grating Avg. Index $\bar n_{\text{eff}}$</label>
+                            <input type="number" id="gcNeffInput" value="2.75" step="0.01" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="gcNgInput" class="input-label text-xs">Grating Group Index $n_g$</label>
+                            <input type="number" id="gcNgInput" value="3.5" step="0.01" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="gcOrderInput" class="input-label text-xs">Diffraction Order $m$</label>
+                            <input type="number" id="gcOrderInput" value="1" min="1" step="1" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="gcNtopInput" class="input-label text-xs mb-0">Fiber-Side Index $n_t$</label>
+                                <select id="gcNtopPreset" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                    <option value="">Preset…</option>
+                                    <option value="1.0">Air (1.0)</option>
+                                    <option value="1.444">SiO₂ (1.444)</option>
+                                    <option value="1.46">Index gel (1.46)</option>
+                                </select>
+                            </div>
+                            <input type="number" id="gcNtopInput" value="1.0" step="0.001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="gcNsubInput" class="input-label text-xs">Substrate / BOX Index $n_s$</label>
+                            <input type="number" id="gcNsubInput" value="1.444" step="0.001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="gcPeriodInput" class="input-label text-xs font-bold text-sky-900">Period $\Lambda$ (reversible)</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="gcPeriodInput" class="calc-input text-xs font-bold text-sky-800 border-sky-300 bg-sky-50/40">
+                                <select id="gcPeriodUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="nm" selected>nm</option>
+                                    <option value="um">µm</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gcAngleInput" class="input-label text-xs font-bold text-sky-900">Fiber Angle $\theta$ (° from normal)</label>
+                            <input type="number" id="gcAngleInput" value="10" step="0.1" class="calc-input text-xs font-bold text-sky-800 border-sky-300 bg-sky-50/40">
+                        </div>
+                    </div>
+
+                    <!-- Coupling efficiency estimate -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="gcMfdInput" class="input-label text-xs mb-0">Fiber MFD $2w_f$ (µm)</label>
+                                <select id="gcFiberPreset" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                    <option value="">Fiber…</option>
+                                    <option value="10.4">SMF-28 @1550 (10.4)</option>
+                                    <option value="9.2">SMF-28 @1310 (9.2)</option>
+                                    <option value="5.0">780HP @850 (5.0)</option>
+                                    <option value="3.2">UHNA7 @1550 (3.2)</option>
+                                </select>
+                            </div>
+                            <input type="number" id="gcMfdInput" value="10.4" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="gcAlphaInput" class="input-label text-xs mb-0">Scattering Strength $\alpha$ (power)</label>
+                                <button type="button" id="gcAlphaOptBtn" class="text-[10px] text-indigo-600 hover:text-indigo-800 underline" title="Set α to the optimum for a uniform grating">optimum</button>
+                            </div>
+                            <div class="flex gap-1">
+                                <input type="number" id="gcAlphaInput" value="0.2" step="any" class="calc-input text-xs">
+                                <select id="gcAlphaUnitSelect" class="calc-unit-select w-16 text-[11px] p-1">
+                                    <option value="1/um" selected>1/µm</option>
+                                    <option value="db/um">dB/µm</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="gcLengthInput" class="input-label text-xs">Grating Length $L$ (µm)</label>
+                            <input type="number" id="gcLengthInput" value="20" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="gcDirInput" class="input-label text-xs">Upward Directionality (%)</label>
+                            <input type="number" id="gcDirInput" value="70" min="0" max="100" step="1" class="calc-input text-xs">
+                        </div>
+                    </div>
+
+                    <div id="gcWarning" class="phys-warning hidden"></div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                        <div class="metric-badge"><div class="metric-label">Angle in Substrate (m = 1)</div><div id="gcSubAngleDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">$d\theta/d\lambda$ (fixed $\Lambda$)</div><div id="gcDthetaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">$\lambda$ Shift per 1° Tilt</div><div id="gcDlambdaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">1-dB Bandwidth</div><div id="gcBw1Display" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">3-dB Bandwidth</div><div id="gcBw3Display" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Spot on Grating $w_x$</div><div id="gcWxDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Optimal $\alpha_{\text{opt}}$</div><div id="gcAlphaOptDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Mode Overlap $\eta_x$</div><div id="gcOverlapDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Fiber Center from Start</div><div id="gcZ0Display" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Scattered in $L$</div><div id="gcScatterDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Peak CE Estimate</div><div id="gcCeDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Other Radiating Orders</div><div id="gcOrdersDisplay" class="metric-value text-[11px] mt-1 leading-snug">-</div></div>
+                    </div>
+
+                    <div class="relative w-full h-56 bg-white rounded-md border border-slate-200 p-2">
+                        <canvas id="gcSpectrumCanvas" class="w-full h-full"></canvas>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>1D (TE, in-plane) model of a uniform grating. $\bar n_{\text{eff}}$ is the average effective index of the grating region (weighted by the fill factor; Bloch index from simulation if available) and $n_g$ the group index of the grating region. $\theta$ is the fiber angle from the surface normal, measured in the medium of index $n_t$. Because $n\sin\theta$ is conserved across planar layers, a fiber in air above an oxide cladding uses $n_t = 1$ with the angle in air. $\theta > 0$ means the fiber leans toward the propagation direction of the guided wave (forward emission).</li>
+                            <li>Phase matching: order $m$ radiates at $n\sin\theta_m = \bar n_{\text{eff}} - m\lambda/\Lambda$ into any medium with $|n\sin\theta_m| < n$. Near-vertical emission ($\theta \approx 0$, i.e. $\Lambda \approx \lambda/\bar n_{\text{eff}}$) coincides with second-order Bragg reflection back into the waveguide, which is why fibers are usually tilted by 8–15°.</li>
+                            <li>Bandwidth: at fixed fiber angle, a wavelength change $\Delta\lambda$ shifts the grating's in-plane wavevector relative to the fiber's by $\Delta k_x = 2\pi(n_g - n_t\sin\theta)\Delta\lambda/\lambda^2$. For a Gaussian emitted beam matched to the fiber spot $w_x$ this gives the Gaussian roll-off above, so the 1-dB bandwidth is $2\sqrt{0.1\ln10}\,\lambda^2/[\pi w_x(n_g - n_t\sin\theta)]$. This is the phase-matching limit: it ignores the wavelength dependence of $\alpha$, directionality and back-reflection, so measured bandwidths are usually somewhat smaller.</li>
+                            <li>Overlap: a uniform grating emits $|E|^2 \propto e^{-\alpha z}$ from its start ($\alpha$ = power scattering rate). Its best overlap with a Gaussian of radius $w_x$ is 80.1 %, reached at $\alpha w_x \approx 1.36$ with the fiber centred $0.73\,w_x$ from the grating start (for an infinitely long grating; truncating the tail at finite $L$ can raise it slightly, to ≈ 80.5 %, at the cost of unscattered power). The calculator evaluates the overlap numerically for the given $\alpha$ and $L$ and places the fiber optimally. Apodized gratings can exceed 90 %.</li>
+                            <li>Peak CE $\approx \eta_{\text{up}}\,(1 - e^{-\alpha L})\,\eta_x$, i.e. directionality × fraction scattered × longitudinal overlap. It assumes perfect transverse (lateral) mode matching, which a 10–12 µm wide grating and taper give for SMF-28, and no back-reflection or Fresnel loss. Typical 220-nm SOI uniform gratings without a bottom mirror reach 60–70 % directionality and −3 to −5 dB CE.</li>
+                            <li>$\lambda$ shift per degree is $(d\theta/d\lambda)^{-1}$, handy for tuning the center wavelength with the fiber tilt.</li>
+                        </ul>
+                    </details>
+                </div>
             </div>
         </section>
 
@@ -2941,6 +3153,9 @@
             kcLambdaInput.value = nm;
             updateKerrComb('inputs');
 
+            gcLambdaUnitSelect.value = 'nm';
+            gcLambdaInput.value = nm;
+            updateGratingCoupler('inputs');
         }
 
         // --- Wavelength to Visible RGB Algorithm (CIE 1931 / Bruton) ---
@@ -4437,7 +4652,505 @@
             }
 
             isSyncing = false;
+            updateBraggStrength();
         }
+
+        // --- SECTION 4: Bragg grating strength (uniform grating, coupled-mode theory) ---
+        const braggLengthInput = document.getElementById('braggLengthInput');
+        const braggLengthUnitSelect = document.getElementById('braggLengthUnitSelect');
+        const braggNgInput = document.getElementById('braggNgInput');
+        const braggKappaInput = document.getElementById('braggKappaInput');
+        const braggKappaUnitSelect = document.getElementById('braggKappaUnitSelect');
+        const braggKappaSource = document.getElementById('braggKappaSource');
+        const braggStrengthWarning = document.getElementById('braggStrengthWarning');
+        const braggSpectrumCanvas = document.getElementById('braggSpectrumCanvas');
+        const BRAGG_OUT = {
+            kl: document.getElementById('braggKLDisplay'),
+            rmax: document.getElementById('braggRmaxDisplay'),
+            gap: document.getElementById('braggGapDisplay'),
+            fwhm: document.getElementById('braggFwhmDisplay'),
+            nulls: document.getElementById('braggNullDisplay'),
+            leff: document.getElementById('braggLeffDisplay')
+        };
+        const KAPPA_SI = { '1/um': 1e6, '1/mm': 1e3, '1/cm': 1e2 };
+
+        // Power reflectivity of a uniform lossless grating at detuning delta (1/m).
+        // Written with tanh so that strong gratings (κL ≫ 1) do not overflow cosh².
+        function braggReflectivity(kappa, delta, L) {
+            const k2 = kappa * kappa, d2 = delta * delta;
+            if (Math.abs(d2 - k2) <= 1e-12 * k2) return (kappa * L) ** 2 / (1 + (kappa * L) ** 2);
+            if (d2 < k2) {
+                const th = Math.tanh(Math.sqrt(k2 - d2) * L);
+                return k2 * th * th / (k2 - d2 * (1 - th * th));
+            }
+            const q = Math.sqrt(d2 - k2);
+            const sn = Math.sin(q * L), cs = Math.cos(q * L);
+            return k2 * sn * sn / (d2 - k2 * cs * cs);
+        }
+
+        let braggLastState = null;
+
+        function updateBraggStrength() {
+            braggLastState = null;
+            const n1 = parseFloat(neff1Input.value);
+            const n2 = parseFloat(neff2Input.value);
+            const duty = parseFloat(braggDutyInput.value);
+            const order = parseInt(braggOrderInput.value, 10);
+            const lambdaB = parseFloat(braggWavelengthInput.value) * LENGTH_SI[braggWavelengthUnitSelect.value];
+            const L = parseFloat(braggLengthInput.value) * LENGTH_SI[braggLengthUnitSelect.value];
+            const ng = parseFloat(braggNgInput.value);
+
+            const manual = braggKappaSource.value === 'manual';
+            braggKappaInput.readOnly = !manual;
+            const clear = () => {
+                Object.values(BRAGG_OUT).forEach(el => el.textContent = '-');
+                drawBraggSpectrum();
+            };
+            if ([lambdaB, L, ng].some(v => isNaN(v) || v <= 0)) return clear();
+
+            let kappa;
+            if (manual) {
+                kappa = parseFloat(braggKappaInput.value) * KAPPA_SI[braggKappaUnitSelect.value];
+            } else {
+                if ([n1, n2, duty, order].some(isNaN)) return clear();
+                kappa = 2 * Math.abs(n1 - n2) * Math.abs(Math.sin(Math.PI * order * duty)) / (order * lambdaB);
+                braggKappaInput.value = fmt(kappa / KAPPA_SI[braggKappaUnitSelect.value]);
+            }
+
+            const notes = [];
+            if (!(kappa > 0)) {
+                notes.push(manual ? 'Enter a positive κ.' :
+                    (Math.abs(n1 - n2) === 0 ? 'n₁ = n₂: no index contrast, so κ = 0 and there is no reflection.'
+                        : `Order m = ${order} vanishes at duty cycle ${fmt(duty, 3)} (sin(πmd) = 0).`));
+            }
+            if (!manual && kappa > 0 && Math.abs(n1 - n2) / ((n1 + n2) / 2) > 0.05) {
+                notes.push('Index contrast above ~5 %: the effective-index κ estimate becomes unreliable; prefer a simulated κ (e.g. from the band gap).');
+            }
+            if (kappa > 0 && kappa * lambdaB > 0.1 * Math.PI * ng) {
+                notes.push('Very strong grating (stop band > ~10 % of λ_B): coupled-mode theory and the linear detuning are only approximate.');
+            }
+            if (notes.length) {
+                braggStrengthWarning.innerHTML = notes.map(t => `• ${t}`).join('<br>');
+                braggStrengthWarning.classList.remove('hidden');
+            } else {
+                braggStrengthWarning.classList.add('hidden');
+            }
+            if (!(kappa > 0)) return clear();
+
+            const kL = kappa * L;
+            const Rmax = Math.tanh(kL) ** 2;
+            const toDlambda = (delta) => delta * lambdaB ** 2 / (2 * Math.PI * ng); // |δ| -> |λ - λ_B|
+            const deltaNull = Math.sqrt(kappa ** 2 + (Math.PI / L) ** 2);
+
+            // FWHM: the main lobe decreases monotonically from δ = 0 to the first null
+            let lo = 0, hi = deltaNull;
+            for (let k = 0; k < 80; k++) {
+                const mid = (lo + hi) / 2;
+                if (braggReflectivity(kappa, mid, L) > Rmax / 2) lo = mid; else hi = mid;
+            }
+            const fwhm_m = 2 * toDlambda((lo + hi) / 2);
+
+            BRAGG_OUT.kl.textContent = fmt(kL, 4);
+            // Transmission T = 1 − R = sech²(κL), evaluated directly: 1 − tanh² rounds to 0
+            // for strong gratings, and cosh overflows beyond κL ≈ 710
+            const transDb = kL > 20 ? -20 * (kL - Math.LN2) / Math.LN10 : -20 * Math.log10(Math.cosh(kL));
+            BRAGG_OUT.rmax.textContent = Rmax < 0.9999
+                ? `${fmt(100 * Rmax, 4)} %`
+                : `${fmt(100 * Rmax, 6)} % (T = ${fmt(transDb, 3)} dB)`;
+            BRAGG_OUT.gap.textContent = fmtLen(2 * toDlambda(kappa), 4);
+            BRAGG_OUT.fwhm.textContent = fmtLen(fwhm_m, 4);
+            BRAGG_OUT.nulls.textContent = fmtLen(2 * toDlambda(deltaNull), 4);
+            BRAGG_OUT.leff.textContent = fmtLen(Math.tanh(kL) / (2 * kappa), 4);
+
+            braggLastState = { kappa, L, lambdaB, ng, toDlambda, deltaNull };
+            drawBraggSpectrum();
+        }
+
+        // Shared boxed-axes helper for the small spectrum plots (plotting-guide style)
+        function drawPlotFrame(ctx, box, xTicks, yTicks, xLabel, yLabel) {
+            const { padL, padT, plotW, plotH } = box;
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 0.8;
+            ctx.strokeRect(padL, padT, plotW, plotH);
+            ctx.fillStyle = '#272727';
+            ctx.font = '11px Arial, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            yTicks.forEach(([y, label]) => {
+                ctx.beginPath();
+                ctx.moveTo(padL, y); ctx.lineTo(padL + 4, y);
+                ctx.moveTo(padL + plotW, y); ctx.lineTo(padL + plotW - 4, y);
+                ctx.stroke();
+                ctx.fillText(label, padL - 5, y);
+            });
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            xTicks.forEach(([x, label]) => {
+                ctx.beginPath();
+                ctx.moveTo(x, padT + plotH); ctx.lineTo(x, padT + plotH - 4);
+                ctx.moveTo(x, padT); ctx.lineTo(x, padT + 4);
+                ctx.stroke();
+                ctx.fillText(label, x, padT + plotH + 4);
+            });
+            ctx.fillText(xLabel, padL + plotW / 2, padT + plotH + 19);
+            ctx.save();
+            ctx.translate(12, padT + plotH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(yLabel, 0, 0);
+            ctx.restore();
+        }
+
+        // 1-2-5 tick values covering [a, b]
+        function niceTicks(a, b, target = 6) {
+            const raw = (b - a) / target;
+            const p = Math.pow(10, Math.floor(Math.log10(raw)));
+            const step = [1, 2, 5, 10].map(m => m * p).find(v => v >= raw);
+            const ticks = [];
+            for (let v = Math.ceil(a / step) * step; v <= b + 1e-9 * step; v += step) ticks.push(Math.abs(v) < 1e-12 * step ? 0 : v);
+            return ticks;
+        }
+
+        function prepareCanvas(canvas) {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0) return null;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, rect.width, rect.height);
+            return { ctx, W: rect.width, H: rect.height };
+        }
+
+        function drawBraggSpectrum() {
+            if (!braggSpectrumCanvas) return;
+            const prep = prepareCanvas(braggSpectrumCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = braggLastState;
+            if (!s) {
+                ctx.fillStyle = '#767676';
+                ctx.font = '11px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No reflection for these inputs.', W / 2, H / 2);
+                return;
+            }
+            const box = { padL: 46, padR: 12, padT: 12, padB: 36 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            // Span: three null half-widths on either side of λ_B, in nm
+            const spanNm = 3 * s.toDlambda(s.deltaNull) * 1e9;
+            const xToPx = (dnm) => box.padL + (dnm + spanNm) / (2 * spanNm) * box.plotW;
+            const yToPx = (R) => box.padT + (1 - R) * box.plotH;
+
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i <= 600; i++) {
+                const dnm = -spanNm + (2 * spanNm * i) / 600;
+                const delta = -2 * Math.PI * s.ng * (dnm * 1e-9) / s.lambdaB ** 2;
+                const x = xToPx(dnm), y = yToPx(braggReflectivity(s.kappa, delta, s.L));
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Stop-band edges (|δ| = κ)
+            const gapNm = s.toDlambda(s.kappa) * 1e9;
+            ctx.strokeStyle = '#767676';
+            ctx.setLineDash([5, 2]);
+            [-gapNm, gapNm].forEach(d => {
+                ctx.beginPath();
+                ctx.moveTo(xToPx(d), box.padT);
+                ctx.lineTo(xToPx(d), box.padT + box.plotH);
+                ctx.stroke();
+            });
+            ctx.setLineDash([]);
+
+            const xTicks = niceTicks(-spanNm, spanNm).map(v => [xToPx(v), fmt(v, 3)]);
+            const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(r => [yToPx(r), `${Math.round(r * 100)}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, `λ − λ_B (nm), λ_B = ${fmt(s.lambdaB * 1e9, 5)} nm; dashed: stop-band edges`, 'Reflectivity R (%)');
+        }
+
+        [braggLengthInput, braggNgInput, braggKappaInput].forEach(el => el.addEventListener('input', updateBraggStrength));
+        [braggLengthUnitSelect, braggKappaSource].forEach(el => el.addEventListener('change', updateBraggStrength));
+        braggKappaUnitSelect.addEventListener('change', () => {
+            // Keep the physical κ when only its unit changes
+            if (braggKappaSource.value === 'manual' && braggLastState) {
+                braggKappaInput.value = fmt(braggLastState.kappa / KAPPA_SI[braggKappaUnitSelect.value]);
+            }
+            updateBraggStrength();
+        });
+
+        // --- SECTION 4: Grating coupler (phase matching, bandwidth, overlap) ---
+        const gcLambdaInput = document.getElementById('gcLambdaInput');
+        const gcLambdaUnitSelect = document.getElementById('gcLambdaUnitSelect');
+        const gcNeffInput = document.getElementById('gcNeffInput');
+        const gcNgInput = document.getElementById('gcNgInput');
+        const gcOrderInput = document.getElementById('gcOrderInput');
+        const gcNtopInput = document.getElementById('gcNtopInput');
+        const gcNtopPreset = document.getElementById('gcNtopPreset');
+        const gcNsubInput = document.getElementById('gcNsubInput');
+        const gcPeriodInput = document.getElementById('gcPeriodInput');
+        const gcPeriodUnitSelect = document.getElementById('gcPeriodUnitSelect');
+        const gcAngleInput = document.getElementById('gcAngleInput');
+        const gcMfdInput = document.getElementById('gcMfdInput');
+        const gcFiberPreset = document.getElementById('gcFiberPreset');
+        const gcAlphaInput = document.getElementById('gcAlphaInput');
+        const gcAlphaUnitSelect = document.getElementById('gcAlphaUnitSelect');
+        const gcAlphaOptBtn = document.getElementById('gcAlphaOptBtn');
+        const gcLengthInput = document.getElementById('gcLengthInput');
+        const gcDirInput = document.getElementById('gcDirInput');
+        const gcWarning = document.getElementById('gcWarning');
+        const gcSpectrumCanvas = document.getElementById('gcSpectrumCanvas');
+        const GC_OUT = {
+            sub: document.getElementById('gcSubAngleDisplay'),
+            dtheta: document.getElementById('gcDthetaDisplay'),
+            dlambda: document.getElementById('gcDlambdaDisplay'),
+            bw1: document.getElementById('gcBw1Display'),
+            bw3: document.getElementById('gcBw3Display'),
+            wx: document.getElementById('gcWxDisplay'),
+            alphaOpt: document.getElementById('gcAlphaOptDisplay'),
+            overlap: document.getElementById('gcOverlapDisplay'),
+            z0: document.getElementById('gcZ0Display'),
+            scatter: document.getElementById('gcScatterDisplay'),
+            ce: document.getElementById('gcCeDisplay'),
+            orders: document.getElementById('gcOrdersDisplay')
+        };
+
+        // Power decay rate α (1/m) from the chosen unit; dB/µm -> 1/m via 10·log10(e)
+        const gcAlphaToSI = (val, unit) => unit === 'db/um' ? val / DB_CONVERSION * 1e6 : val * 1e6;
+        const gcAlphaFromSI = (alpha, unit) => unit === 'db/um' ? alpha * DB_CONVERSION * 1e-6 : alpha * 1e-6;
+
+        // Longitudinal overlap of the emitted field e^{-αz/2} on [0, L] with a Gaussian
+        // e^{-(z-z0)²/w²}, normalized by the emitted power on [0, L]. Simpson quadrature;
+        // z0 found by golden-section search (the overlap is unimodal in z0).
+        function gcOverlap(alpha, L, w) {
+            const a = alpha / 2;
+            const emitted = a > 0 ? (1 - Math.exp(-2 * a * L)) / (2 * a) : L;
+            const gaussNorm = w * Math.sqrt(Math.PI / 2);
+            const at = (z0) => {
+                const zA = Math.max(0, z0 - 5 * w), zB = Math.min(L, z0 + 5 * w);
+                if (zB <= zA) return 0;
+                const n = 400, h = (zB - zA) / n;
+                let sum = 0;
+                for (let i = 0; i <= n; i++) {
+                    const z = zA + i * h;
+                    const f = Math.exp(-a * z - ((z - z0) / w) ** 2);
+                    sum += f * (i === 0 || i === n ? 1 : (i % 2 ? 4 : 2));
+                }
+                const integral = sum * h / 3;
+                return integral ** 2 / (emitted * gaussNorm);
+            };
+            let lo = -w, hi = L + w;
+            const g = (Math.sqrt(5) - 1) / 2;
+            let x1 = hi - g * (hi - lo), x2 = lo + g * (hi - lo), f1 = at(x1), f2 = at(x2);
+            for (let k = 0; k < 60; k++) {
+                if (f1 < f2) { lo = x1; x1 = x2; f1 = f2; x2 = lo + g * (hi - lo); f2 = at(x2); }
+                else { hi = x2; x2 = x1; f2 = f1; x1 = hi - g * (hi - lo); f1 = at(x1); }
+            }
+            const z0 = (lo + hi) / 2;
+            return { eta: at(z0), z0 };
+        }
+
+        let gcLastState = null;
+        let gcIsSyncing = false;
+        let gcLastEdited = 'angle'; // 'angle' or 'period': which one is held when other inputs change
+
+        function updateGratingCoupler(source = 'inputs') {
+            if (gcIsSyncing) return;
+            gcIsSyncing = true;
+            gcLastState = null;
+            try {
+                const lambda = parseFloat(gcLambdaInput.value) * LENGTH_SI[gcLambdaUnitSelect.value];
+                const neff = parseFloat(gcNeffInput.value);
+                const ng = parseFloat(gcNgInput.value);
+                const m = parseInt(gcOrderInput.value, 10);
+                const nt = parseFloat(gcNtopInput.value);
+                const ns = parseFloat(gcNsubInput.value);
+                if ([lambda, neff, ng, nt, ns].some(v => isNaN(v) || v <= 0) || isNaN(m) || m < 1) return;
+
+                const mode = source === 'period' || source === 'angle' ? source : gcLastEdited;
+                const warnings = [];
+                let period, sinT;
+                if (mode === 'period') {
+                    period = parseFloat(gcPeriodInput.value) * LENGTH_SI[gcPeriodUnitSelect.value];
+                    if (!(period > 0)) return;
+                    sinT = (neff - m * lambda / period) / nt;
+                    if (Math.abs(sinT) < 1) gcAngleInput.value = fmt(Math.asin(sinT) * 180 / Math.PI, Math.min(getPrecision(), 5));
+                    else gcAngleInput.value = '';
+                } else {
+                    const thetaDeg = parseFloat(gcAngleInput.value);
+                    if (isNaN(thetaDeg) || Math.abs(thetaDeg) >= 90) return;
+                    sinT = Math.sin(thetaDeg * Math.PI / 180);
+                    const denom = neff - nt * sinT;
+                    if (!(denom > 0)) {
+                        gcWarning.textContent = 'n̄_eff ≤ n_t sin θ: no period phase-matches this angle.';
+                        gcWarning.className = 'phys-warning';
+                        return;
+                    }
+                    period = m * lambda / denom;
+                    gcPeriodInput.value = fmt(period / LENGTH_SI[gcPeriodUnitSelect.value]);
+                }
+
+                if (Math.abs(sinT) >= 1) {
+                    gcWarning.textContent = `Order m = ${m} does not radiate into the fiber-side medium (|n_t sin θ| would be ${fmt(Math.abs(sinT * nt), 3)} ≥ n_t). Change Λ or n̄_eff.`;
+                    gcWarning.className = 'phys-warning';
+                    Object.values(GC_OUT).forEach(el => el.textContent = '-');
+                    return;
+                }
+                const theta = Math.asin(sinT);
+                const cosT = Math.cos(theta);
+                const K = 2 * Math.PI / period;
+                const beta = 2 * Math.PI * neff / lambda;
+                const k0 = 2 * Math.PI / lambda;
+
+                // First-order emission into the substrate
+                const kx1 = beta - m * K;
+                GC_OUT.sub.textContent = Math.abs(kx1) < k0 * ns ? `${fmt(Math.asin(kx1 / (k0 * ns)) * 180 / Math.PI, 4)}°` : 'evanescent';
+
+                // Other diffraction orders that radiate (top / substrate)
+                const others = [];
+                for (let p = 1; p <= 4; p++) {
+                    if (p === m) continue;
+                    const kx = beta - p * K;
+                    const top = Math.abs(kx) < k0 * nt ? `top ${fmt(Math.asin(kx / (k0 * nt)) * 180 / Math.PI, 3)}°` : null;
+                    const sub = Math.abs(kx) < k0 * ns ? `sub ${fmt(Math.asin(kx / (k0 * ns)) * 180 / Math.PI, 3)}°` : null;
+                    if (top || sub) others.push(`m=${p}: ${[top, sub].filter(Boolean).join(', ')}`);
+                }
+                GC_OUT.orders.textContent = others.length ? others.join(' · ') : 'none';
+
+                // Angular and spectral dispersion at fixed period
+                const dThetaDl = ((neff - ng) / lambda - m / period) / (nt * cosT); // rad/m
+                GC_OUT.dtheta.textContent = `${fmt(dThetaDl * 180 / Math.PI * 1e-9, 4)} °/nm`;
+                GC_OUT.dlambda.textContent = `${fmt(1 / (dThetaDl * 180 / Math.PI) * 1e9, 4)} nm/°`;
+
+                // Mode-matching bandwidth for a Gaussian emitted beam matched to the fiber spot
+                const wf = parseFloat(gcMfdInput.value) * 1e-6 / 2;
+                const wx = wf / cosT;
+                const slope = ng - nt * sinT;
+                const halfBw = (dB) => Math.sqrt(dB * Math.LN10 / 10) * lambda ** 2 / (Math.PI * wx * slope);
+                if (wf > 0 && slope > 0) {
+                    GC_OUT.bw1.textContent = fmtLen(2 * halfBw(1), 4);
+                    GC_OUT.bw3.textContent = fmtLen(2 * halfBw(3), 4);
+                    GC_OUT.wx.textContent = fmtLen(wx, 4);
+                } else {
+                    ['bw1', 'bw3', 'wx'].forEach(k => GC_OUT[k].textContent = '-');
+                }
+
+                // Uniform-grating overlap and CE estimate
+                const alpha = gcAlphaToSI(parseFloat(gcAlphaInput.value), gcAlphaUnitSelect.value);
+                const L = parseFloat(gcLengthInput.value) * 1e-6;
+                const dir = parseFloat(gcDirInput.value) / 100;
+                const alphaOpt = 1.36 / wx;
+                const alphaUnitLabel = gcAlphaUnitSelect.value === 'db/um' ? 'dB/µm' : '/µm';
+                GC_OUT.alphaOpt.textContent = wf > 0
+                    ? `${fmt(gcAlphaFromSI(alphaOpt, gcAlphaUnitSelect.value), 3)} ${alphaUnitLabel}`
+                    : '-';
+                let ce0 = NaN;
+                if (wf > 0 && alpha > 0 && L > 0 && dir >= 0) {
+                    const { eta, z0 } = gcOverlap(alpha, L, wx);
+                    const scattered = 1 - Math.exp(-alpha * L);
+                    ce0 = dir * scattered * eta;
+                    GC_OUT.overlap.textContent = `${fmt(100 * eta, 4)} %`;
+                    GC_OUT.z0.textContent = fmtLen(z0, 4);
+                    GC_OUT.scatter.textContent = `${fmt(100 * scattered, 4)} %`;
+                    GC_OUT.ce.textContent = ce0 > 0 ? `${fmt(100 * ce0, 3)} % (${fmt(10 * Math.log10(ce0), 3)} dB)` : '0';
+                    if (alpha * L < 2) warnings.push(`αL = ${fmt(alpha * L, 3)}: ${fmt(100 * Math.exp(-alpha * L), 3)} % of the guided power passes the grating unscattered; lengthen the grating or raise α.`);
+                } else {
+                    ['overlap', 'z0', 'scatter', 'ce'].forEach(k => GC_OUT[k].textContent = '-');
+                }
+
+                if (Math.abs(theta) * 180 / Math.PI < 3) warnings.push('Near-vertical emission (|θ| < 3°): the second diffraction order back-reflects into the waveguide (second-order Bragg condition Λ ≈ λ/n̄_eff), lowering CE and adding ripple.');
+                if (others.some(t => t.includes('top'))) warnings.push('A second diffraction order also radiates toward the fiber side and takes power.');
+                if (warnings.length) {
+                    gcWarning.innerHTML = warnings.map(t => `• ${t}`).join('<br>');
+                    gcWarning.className = 'phys-warning is-info';
+                } else {
+                    gcWarning.className = 'phys-warning hidden';
+                }
+
+                gcLastState = (wf > 0 && slope > 0) ? { lambda, wx, slope, ce0, halfBw1: halfBw(1) } : null;
+            } finally {
+                gcIsSyncing = false;
+                drawGratingCouplerSpectrum();
+            }
+        }
+
+        function drawGratingCouplerSpectrum() {
+            if (!gcSpectrumCanvas) return;
+            const prep = prepareCanvas(gcSpectrumCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = gcLastState;
+            if (!s) {
+                ctx.fillStyle = '#767676';
+                ctx.font = '11px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No phase-matched emission for these inputs.', W / 2, H / 2);
+                return;
+            }
+            const box = { padL: 46, padR: 12, padT: 12, padB: 36 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            // Plot in dB relative to the peak when no CE estimate is available
+            const peakDb = s.ce0 > 0 ? 10 * Math.log10(s.ce0) : 0;
+            const spanNm = 4 * s.halfBw1 * 1e9;
+            const yMax = Math.ceil(peakDb), yMin = yMax - 10;
+            const xToPx = (dnm) => box.padL + (dnm + spanNm) / (2 * spanNm) * box.plotW;
+            const yToPx = (db) => box.padT + (yMax - Math.max(yMin, Math.min(yMax, db))) / (yMax - yMin) * box.plotH;
+            const k = Math.PI * s.wx * s.slope / s.lambda ** 2; // 1/m
+
+            // 1-dB band
+            ctx.fillStyle = 'rgba(238, 214, 113, 0.24)';
+            ctx.fillRect(xToPx(-s.halfBw1 * 1e9), box.padT, xToPx(s.halfBw1 * 1e9) - xToPx(-s.halfBw1 * 1e9), box.plotH);
+
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i <= 300; i++) {
+                const dnm = -spanNm + (2 * spanNm * i) / 300;
+                const db = peakDb - 10 * Math.log10(Math.E) * (k * dnm * 1e-9) ** 2;
+                if (i === 0) ctx.moveTo(xToPx(dnm), yToPx(db)); else ctx.lineTo(xToPx(dnm), yToPx(db));
+            }
+            ctx.stroke();
+
+            const xTicks = niceTicks(-spanNm, spanNm).map(v => [xToPx(v), fmt(v, 3)]);
+            const yTicks = niceTicks(yMin, yMax, 5).map(v => [yToPx(v), fmt(v, 3)]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, `λ − λ₀ (nm), λ₀ = ${fmt(s.lambda * 1e9, 5)} nm; shaded: 1-dB band`,
+                s.ce0 > 0 ? 'Coupling efficiency (dB)' : 'Relative coupling (dB)');
+        }
+
+        [gcLambdaInput, gcNeffInput, gcNgInput, gcOrderInput, gcNtopInput, gcNsubInput, gcMfdInput, gcAlphaInput, gcLengthInput, gcDirInput].forEach(el => {
+            el.addEventListener('input', () => updateGratingCoupler('inputs'));
+        });
+        gcLambdaUnitSelect.addEventListener('change', () => updateGratingCoupler('inputs'));
+        gcPeriodInput.addEventListener('input', () => { gcLastEdited = 'period'; updateGratingCoupler('period'); });
+        gcAngleInput.addEventListener('input', () => { gcLastEdited = 'angle'; updateGratingCoupler('angle'); });
+        gcPeriodUnitSelect.addEventListener('change', () => updateGratingCoupler('angle'));
+        gcAlphaUnitSelect.addEventListener('change', () => {
+            // Re-express α in the new unit (the old number is in the previous unit)
+            const prev = gcAlphaUnitSelect.value === 'db/um' ? '1/um' : 'db/um';
+            const a = gcAlphaToSI(parseFloat(gcAlphaInput.value), prev);
+            if (a > 0) gcAlphaInput.value = fmt(gcAlphaFromSI(a, gcAlphaUnitSelect.value));
+            updateGratingCoupler('inputs');
+        });
+        gcNtopPreset.addEventListener('change', () => {
+            if (gcNtopPreset.value) gcNtopInput.value = gcNtopPreset.value;
+            updateGratingCoupler('inputs');
+        });
+        gcFiberPreset.addEventListener('change', () => {
+            if (gcFiberPreset.value) gcMfdInput.value = gcFiberPreset.value;
+            updateGratingCoupler('inputs');
+        });
+        gcAlphaOptBtn.addEventListener('click', () => {
+            const wf = parseFloat(gcMfdInput.value) * 1e-6 / 2;
+            const thetaDeg = parseFloat(gcAngleInput.value) || 0;
+            if (!(wf > 0)) return;
+            const wx = wf / Math.cos(thetaDeg * Math.PI / 180);
+            gcAlphaInput.value = fmt(gcAlphaFromSI(1.36 / wx, gcAlphaUnitSelect.value));
+            updateGratingCoupler('inputs');
+        });
 
 
         // --- SECTION 5: Reversible Soliton Dynamics Logic ---
@@ -5891,6 +6604,7 @@
             updateResonator(lastEditedResonatorField);
             updateSolitonParameters('inputs');
             updateKerrComb('inputs');
+            updateGratingCoupler('inputs');
             updateGaussianBeam('w0');
         }
 
@@ -6123,6 +6837,8 @@
             if (gbCurrentTab === 'intensity') updateGaussianBeam('z');
             if (gbCurrentTab === 'coupling') drawCouplingCurve();
             drawKerrCombSpectrum();
+            drawBraggSpectrum();
+            drawGratingCouplerSpectrum();
         });
 
         // ==========================================
@@ -6166,6 +6882,8 @@
             '#comb': '#kerr-comb',
             '#microcomb': '#kerr-comb',
             '#coupling': '#mode-coupling',
+            '#gc': '#grating-coupler',
+            '#grating-coupler': '#grating-coupler',
             '#fiber': '#mode-coupling'
         };
 

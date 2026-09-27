@@ -411,7 +411,7 @@
                     <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight" style="font-family: 'Lato', sans-serif;">
                         Optical & Ultrafast Calculator
                     </h1>
-                    <p class="text-xs sm:text-sm text-slate-500 font-medium font-inter">Lasers, dispersion, Fresnel interface, optical cavities, nonlinear optics, and Gaussian beam propagation</p>
+                    <p class="text-xs sm:text-sm text-slate-500 font-medium font-inter">Lasers, dispersion, Fresnel interface, optical cavities, nonlinear optics, Gaussian beams and modulators</p>
                 </div>
             </div>
 
@@ -439,6 +439,7 @@
                     <a href="#cavities" class="jump-pill" data-section="cavities"><span>🔬</span> Cavities</a>
                     <a href="#nonlinear" class="jump-pill" data-section="nonlinear"><span>⚡</span> Solitons &amp; Combs</a>
                     <a href="#gaussian-beam" class="jump-pill" data-section="gaussian-beam"><span>🎯</span> Gaussian Beam</a>
+                    <a href="#modulators" class="jump-pill" data-section="modulators"><span>🎛️</span> Modulators</a>
                 </div>
 
                 <!-- Specific Tool Dropdown -->
@@ -474,6 +475,9 @@
                             <option value="#gaussian-parameters">📐 Gaussian Waist, Rayleigh & Divergence</option>
                             <option value="#gaussian-visualizer">🎯 Caustic, Wavefronts, Intensity & Lens</option>
                             <option value="#mode-coupling">🔗 Gaussian Mode / Fiber Coupling</option>
+                        </optgroup>
+                        <optgroup label="7. Modulators & Tuning">
+                            <option value="#eo-modulator">⚡ Pockels Modulator, Sidebands &amp; Thermal Tuning</option>
                         </optgroup>
                     </select>
                 </div>
@@ -3157,6 +3161,178 @@
             </div>
         </section>
 
+
+        <!-- ========================================== -->
+        <!-- SECTION 7: MODULATORS & TUNING -->
+        <!-- ========================================== -->
+        <section id="modulators" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
+                <span class="text-xl">🎛️</span>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Electro-Optic Modulators &amp; Tuning</h2>
+            </div>
+
+            <div id="eo-modulator" class="group-card border-rose-200 shadow-md scroll-mt-28">
+                <div class="card-header bg-gradient-to-r from-rose-50 to-amber-50 border-b border-rose-100">
+                    <h3 class="group-title text-rose-900">
+                        <span class="text-rose-600">⚡</span> Pockels Modulator: $V_\pi$, Sidebands, Bandwidth &amp; Thermal Tuning
+                    </h3>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="equation-box text-xs sm:text-sm space-y-1">
+                        <div>$$ \Delta\phi = \frac{\pi n^3 r\,\Gamma\,V L}{\lambda\,g} \qquad V_\pi^{\text{PM}} = \frac{\lambda\,g}{n^3 r\,\Gamma\,L} \qquad V_\pi^{\text{MZM, push-pull}} = \frac{V_\pi^{\text{PM}}}{2} \qquad \beta = \frac{\pi V_0}{V_\pi^{\text{PM}}} $$</div>
+                        <div>$$ |E_n|^2 = J_n^2(\beta) \qquad H(f) = \frac{1 - e^{-\gamma L}}{\gamma L},\ \gamma = \alpha(f) + i\,\frac{2\pi f}{c}(n_{\text{RF}} - n_g) \qquad \frac{d\lambda_{\text{res}}}{dT} = \frac{\lambda}{n_g}\frac{dn_{\text{eff}}}{dT} $$</div>
+                    </div>
+
+                    <!-- Pockels efficiency -->
+                    <div class="space-y-3">
+                        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Half-Wave Voltage</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <label for="eoMaterialPreset" class="input-label text-xs">Material preset (≈1550 nm)</label>
+                                <select id="eoMaterialPreset" class="calc-select w-full text-xs py-1.5">
+                                    <option value="">Custom…</option>
+                                    <option value="2.138,30.9" selected>LiNbO₃, n_e, r₃₃ = 30.9 pm/V</option>
+                                    <option value="2.12,30.5">LiTaO₃, n_e, r₃₃ ≈ 30.5 pm/V</option>
+                                    <option value="1.816,35">KTP, n_z, r₃₃ ≈ 35 pm/V</option>
+                                    <option value="3.37,1.5">GaAs, r₄₁ ≈ 1.5 pm/V</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="eoLambdaInput" class="input-label text-xs">Wavelength $\lambda$ (nm)</label>
+                                <input type="number" id="eoLambdaInput" value="1550" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoNInput" class="input-label text-xs">Optical Index $n$</label>
+                                <input type="number" id="eoNInput" value="2.138" step="0.001" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoRInput" class="input-label text-xs">EO Coefficient $r$ (pm/V)</label>
+                                <input type="number" id="eoRInput" value="30.9" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoGapInput" class="input-label text-xs">Electrode Gap $g$ (µm)</label>
+                                <input type="number" id="eoGapInput" value="5" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoGammaInput" class="input-label text-xs">EO Overlap $\Gamma$</label>
+                                <input type="number" id="eoGammaInput" value="0.5" step="0.01" min="0" max="1" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoConfigSelect" class="input-label text-xs">Configuration</label>
+                                <select id="eoConfigSelect" class="calc-select w-full text-xs py-1.5">
+                                    <option value="pm">Phase modulator</option>
+                                    <option value="mzm1">MZM, one arm driven</option>
+                                    <option value="mzmpp" selected>MZM, push-pull</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="eoLengthInput" class="input-label text-xs">Electrode Length $L$ (mm, reversible)</label>
+                                <input type="number" id="eoLengthInput" value="10" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoVpiInput" class="input-label text-xs font-bold text-rose-900">$V_\pi$ of this configuration (V, reversible)</label>
+                                <input type="number" id="eoVpiInput" step="any" class="calc-input text-xs font-bold text-rose-800 border-rose-300 bg-rose-50/40">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div class="metric-badge"><div class="metric-label">$V_\pi L$</div><div id="eoVpiLDisplay" class="metric-value text-sm text-rose-700 mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">$V_\pi$ Phase Shifter (one arm)</div><div id="eoVpiPmDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">Index Change $\Delta n$ per Volt</div><div id="eoDnDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">Field per Volt $1/g$</div><div id="eoFieldDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-slate-100">
+                        <!-- Phase-modulation sidebands -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Phase-Modulation Sidebands</div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label for="eoV0Input" class="input-label text-xs">Drive Amplitude $V_0$ (V peak)</label>
+                                    <input type="number" id="eoV0Input" value="1" step="any" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="eoPrfInput" class="input-label text-xs">RF Power into 50 Ω (dBm)</label>
+                                    <input type="number" id="eoPrfInput" step="any" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="eoBetaInput" class="input-label text-xs">Modulation Index $\beta$ (rad)</label>
+                                    <input type="number" id="eoBetaInput" step="any" class="calc-input text-xs">
+                                </div>
+                            </div>
+                            <div class="relative w-full h-48 bg-white rounded-md border border-slate-200 p-2">
+                                <canvas id="eoSidebandCanvas" class="w-full h-full"></canvas>
+                            </div>
+                            <div id="eoSidebandText" class="text-[11px] font-mono text-slate-600">-</div>
+                        </div>
+
+                        <!-- Traveling-wave bandwidth -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Traveling-Wave EO Bandwidth</div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label for="eoNrfInput" class="input-label text-xs">Microwave Index $n_{\text{RF}}$</label>
+                                    <input type="number" id="eoNrfInput" value="2.25" step="0.01" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="eoNgInput" class="input-label text-xs">Optical Group Index $n_g$</label>
+                                    <input type="number" id="eoNgInput" value="2.21" step="0.01" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="eoLossInput" class="input-label text-xs">RF Loss (dB/cm/√GHz)</label>
+                                    <input type="number" id="eoLossInput" value="0.3" step="any" class="calc-input text-xs">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="metric-badge"><div class="metric-label">3-dB EO Bandwidth</div><div id="eoF3dbDisplay" class="metric-value text-sm text-rose-700 mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Velocity-Mismatch Limit Only</div><div id="eoF3dbVmDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            </div>
+                            <div class="relative w-full h-48 bg-white rounded-md border border-slate-200 p-2">
+                                <canvas id="eoResponseCanvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thermo-optic tuning -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Thermo-Optic Tuning</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="eoDndtInput" class="input-label text-xs mb-0">$dn_{\text{eff}}/dT$ (1/K)</label>
+                                    <select id="eoDndtPreset" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                        <option value="">Bulk value…</option>
+                                        <option value="3.3e-5">LiNbO₃ n_e (≈3.3e-5)</option>
+                                        <option value="1.86e-4">Si (1.86e-4)</option>
+                                        <option value="2.45e-5">Si₃N₄ (2.45e-5)</option>
+                                        <option value="0.95e-5">SiO₂ (0.95e-5)</option>
+                                    </select>
+                                </div>
+                                <input type="text" id="eoDndtInput" value="3.3e-5" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="eoHeaterInput" class="input-label text-xs">Heated Length (mm)</label>
+                                <input type="number" id="eoHeaterInput" value="1" step="any" class="calc-input text-xs">
+                            </div>
+                            <div class="metric-badge"><div class="metric-label">$\Delta T$ for a $\pi$ Phase Shift</div><div id="eoDtPiDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">Resonance Shift $d\lambda/dT$</div><div id="eoDldtDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        </div>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>Linear (Pockels) effect with the RF field along the crystal axis that gives $r$ (e.g. $r_{33}$ with TE light and a lateral field in x-cut LN): $\Delta n = \tfrac12 n^3 r E$ with $E = V/g$ between coplanar electrodes. $\Gamma$ is the normalized overlap of the optical mode intensity with the RF field (it absorbs the non-uniform field and partial mode confinement in the EO material).</li>
+                            <li>$V_\pi^{\text{PM}}$ is for a single phase shifter. An MZM with one arm driven needs the same voltage for a π phase difference; push-pull (both arms driven with opposite field, as in a GSG electrode on x-cut LN) halves it. The $V_\pi L$ shown is for the selected configuration.</li>
+                            <li>Sidebands: a pure phase modulation $e^{i\beta\sin\Omega t}$ puts a fraction $J_n^2(\beta)$ of the power into the $n$-th sideband (carrier suppressed at $\beta = 2.405$, first sidebands maximal at $\beta = 1.84$). $\beta$ uses the phase-shifter $V_\pi^{\text{PM}}$; the drive voltage is the peak amplitude across the electrode, and for a matched 50 Ω line $V_0 = \sqrt{2 \cdot 50\,\Omega \cdot P_{\text{RF}}}$.</li>
+                            <li>Bandwidth: traveling-wave electrode, impedance-matched and terminated, with RF loss $\alpha(f) = \alpha_0\sqrt f$ (skin effect) and velocity mismatch $n_{\text{RF}} - n_g$. The response is $|H(f)|$ and the 3-dB EO bandwidth is where $20\log_{10}|H| = -3$ dB (electrical, as measured by $S_{21}$ with a photodiode). Without loss it is $1.39\,c/(\pi L\,|n_{\text{RF}} - n_g|)$.</li>
+                            <li>Thermal tuning: $\Delta T_\pi = \lambda/(2L\,dn_{\text{eff}}/dT)$ for a phase shifter; a resonance moves by $\frac{\lambda}{n_g}\frac{dn_{\text{eff}}}{dT}$ (thermal expansion neglected). The presets are bulk-material values; a waveguide mode's $dn_{\text{eff}}/dT$ is a weighted mix of core and cladding values.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -3563,6 +3739,9 @@
 
             pwLambdaInput.value = nm;
             updatePulsedSource('inputs');
+
+            eoLambdaInput.value = nm;
+            updateEoModulator('inputs');
         }
 
         // --- Wavelength to Visible RGB Algorithm (CIE 1931 / Bruton) ---
@@ -7463,6 +7642,214 @@
         });
 
 
+        // --- SECTION 7: Pockels modulator, sidebands, TW bandwidth, thermal tuning ---
+        const eoLambdaInput = document.getElementById('eoLambdaInput');
+        const eoIds = ['MaterialPreset', 'LambdaInput', 'NInput', 'RInput', 'GapInput', 'GammaInput', 'ConfigSelect', 'LengthInput', 'VpiInput',
+            'VpiLDisplay', 'VpiPmDisplay', 'DnDisplay', 'FieldDisplay', 'V0Input', 'PrfInput', 'BetaInput', 'SidebandCanvas', 'SidebandText',
+            'NrfInput', 'NgInput', 'LossInput', 'F3dbDisplay', 'F3dbVmDisplay', 'ResponseCanvas', 'DndtPreset', 'DndtInput', 'HeaterInput',
+            'DtPiDisplay', 'DldtDisplay'];
+        const EO = Object.fromEntries(eoIds.map(id => [id, document.getElementById('eo' + id)]));
+        const EO_CONFIG_FACTOR = { pm: 1, mzm1: 1, mzmpp: 0.5 }; // V_pi(config) = factor × V_pi(phase shifter)
+        let eoIsSyncing = false;
+        let eoLastLengthField = 'length'; // 'length' or 'vpi'
+        let eoLastDriveField = 'v0';      // 'v0', 'prf' or 'beta'
+        let eoState = null;
+
+        // Bessel J_n(x) from its integral representation; the trapezoid rule is spectrally
+        // accurate for this periodic integrand once N exceeds |x| + n comfortably
+        function besselJ(n, x) {
+            const N = 64 + 2 * Math.ceil(Math.abs(x) + Math.abs(n));
+            let s = 0;
+            for (let k = 0; k < N; k++) {
+                const t = 2 * Math.PI * k / N;
+                s += Math.cos(n * t - x * Math.sin(t));
+            }
+            return s / N;
+        }
+
+        function updateEoModulator(source = 'inputs') {
+            if (eoIsSyncing) return;
+            eoIsSyncing = true;
+            eoState = null;
+            try {
+                const lambda = qpNum(EO.LambdaInput) * 1e-9;
+                const n = qpNum(EO.NInput), r = qpNum(EO.RInput) * 1e-12;
+                const g = qpNum(EO.GapInput) * 1e-6, Gamma = qpNum(EO.GammaInput);
+                const f = EO_CONFIG_FACTOR[EO.ConfigSelect.value] || 1;
+                if (![lambda, n, r, g, Gamma].every(v => v > 0)) return;
+                const vpiLpm = lambda * g / (n ** 3 * r * Gamma); // V·m, phase shifter
+
+                const held = source === 'length' || source === 'vpi' ? source : eoLastLengthField;
+                let L;
+                if (held === 'vpi') {
+                    const vpi = qpNum(EO.VpiInput);
+                    if (!(vpi > 0)) return;
+                    L = f * vpiLpm / vpi;
+                    EO.LengthInput.value = fmt(L * 1e3);
+                } else {
+                    L = qpNum(EO.LengthInput) * 1e-3;
+                    if (!(L > 0)) return;
+                    EO.VpiInput.value = fmt(f * vpiLpm / L);
+                }
+                const vpiPm = vpiLpm / L;
+                EO.VpiLDisplay.textContent = `${fmt(f * vpiLpm * 100, 4)} V·cm`;
+                EO.VpiPmDisplay.textContent = `${fmt(vpiPm, 4)} V`;
+                EO.DnDisplay.textContent = `${fmtExp(0.5 * n ** 3 * r * Gamma / g, 3)} /V`;
+                EO.FieldDisplay.textContent = `${fmt(1 / g * 1e-5, 4)} kV/cm per V`;
+
+                // Drive: V0 (peak) <-> RF power into 50 Ω <-> β, holding the last edited one
+                const drive = source === 'v0' || source === 'prf' || source === 'beta' ? source : eoLastDriveField;
+                let V0;
+                if (drive === 'prf') V0 = Math.sqrt(2 * 50 * 1e-3 * Math.pow(10, qpNum(EO.PrfInput) / 10));
+                else if (drive === 'beta') V0 = qpNum(EO.BetaInput) * vpiPm / Math.PI;
+                else V0 = qpNum(EO.V0Input);
+                if (V0 > 0) {
+                    const beta = Math.PI * V0 / vpiPm;
+                    if (drive !== 'v0') EO.V0Input.value = fmt(V0);
+                    if (drive !== 'prf') EO.PrfInput.value = fmt(10 * Math.log10(V0 ** 2 / (2 * 50) / 1e-3));
+                    if (drive !== 'beta') EO.BetaInput.value = fmt(beta);
+                    const nMax = Math.min(25, Math.max(5, Math.ceil(beta) + 4));
+                    const side = [];
+                    for (let k = -nMax; k <= nMax; k++) side.push([k, besselJ(Math.abs(k), beta) ** 2]);
+                    const pct = (k) => fmt(100 * side.find(([kk]) => kk === k)[1], 3);
+                    EO.SidebandText.textContent = `β = ${fmt(beta, 4)} rad · carrier J₀² = ${pct(0)} % · ±1: ${pct(1)} % each · ±2: ${pct(2)} % each`;
+                    eoState = { side, beta };
+                }
+
+                // Traveling-wave response with skin-effect loss and velocity mismatch
+                const nrf = qpNum(EO.NrfInput), ng = qpNum(EO.NgInput), a0 = qpNum(EO.LossInput);
+                if (!isNaN(nrf) && !isNaN(ng) && a0 >= 0) {
+                    const dn = nrf - ng;
+                    const H = (fHz) => {
+                        const alpha = a0 * Math.sqrt(fHz / 1e9) / DB_CONVERSION * 100 / 2; // field Np/m (dB is power)
+                        const b = 2 * Math.PI * fHz * dn / C;
+                        const gr = alpha * L, gi = b * L;
+                        if (Math.hypot(gr, gi) < 1e-9) return 1;
+                        // |1 - e^{-(gr + i gi)}| / |gr + i gi|
+                        const er = 1 - Math.exp(-gr) * Math.cos(gi), ei = Math.exp(-gr) * Math.sin(gi);
+                        return Math.hypot(er, ei) / Math.hypot(gr, gi);
+                    };
+                    const dB = (fHz) => 20 * Math.log10(H(fHz));
+                    let f3 = Infinity, lo = 1e7;
+                    for (let fHz = 1e7; fHz <= 5e12; fHz *= 1.05) {
+                        if (dB(fHz) < -3) {
+                            let hi = fHz;
+                            for (let k = 0; k < 60; k++) { const mid = Math.sqrt(lo * hi); if (dB(mid) < -3) hi = mid; else lo = mid; }
+                            f3 = Math.sqrt(lo * hi);
+                            break;
+                        }
+                        lo = fHz;
+                    }
+                    const fVm = Math.abs(dn) > 0 ? 1.39156 * C / (Math.PI * L * Math.abs(dn)) : Infinity;
+                    EO.F3dbDisplay.textContent = isFinite(f3) ? fmtFreq(f3, 4) : '> 5 THz';
+                    EO.F3dbVmDisplay.textContent = isFinite(fVm) ? fmtFreq(fVm, 4) : '∞ (matched)';
+                    if (eoState) Object.assign(eoState, { H: dB, f3 }); else eoState = { H: dB, f3 };
+                }
+
+                // Thermo-optic tuning
+                const dndt = qpNum(EO.DndtInput), Lh = qpNum(EO.HeaterInput) * 1e-3;
+                if (dndt > 0 && Lh > 0) {
+                    EO.DtPiDisplay.textContent = `${fmt(lambda / (2 * Lh * dndt), 4)} K`;
+                    EO.DldtDisplay.textContent = ng > 0 ? `${fmt(lambda * dndt / ng * 1e12, 4)} pm/K` : '-';
+                } else {
+                    EO.DtPiDisplay.textContent = EO.DldtDisplay.textContent = '-';
+                }
+            } finally {
+                eoIsSyncing = false;
+                drawEoSidebands();
+                drawEoResponse();
+            }
+        }
+
+        function drawEoSidebands() {
+            if (!EO.SidebandCanvas) return;
+            const prep = prepareCanvas(EO.SidebandCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = eoState;
+            if (!s || !s.side) return;
+            const box = { padL: 40, padR: 10, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const nMax = (s.side.length - 1) / 2;
+            const floor = -40;
+            const xToPx = (k) => box.padL + (k + nMax + 0.5) / (2 * nMax + 1) * box.plotW;
+            const yToPx = (db) => box.padT + (0 - Math.max(floor, db)) / (0 - floor) * box.plotH;
+            const barW = Math.max(2, 0.6 * box.plotW / (2 * nMax + 1));
+            s.side.forEach(([k, p]) => {
+                const db = p > 0 ? 10 * Math.log10(p) : floor;
+                ctx.fillStyle = k === 0 ? '#9E403D' : '#385C9E';
+                const y = yToPx(db);
+                ctx.fillRect(xToPx(k) - barW / 2, y, barW, box.padT + box.plotH - y);
+            });
+            const step = nMax > 12 ? 5 : nMax > 6 ? 2 : 1;
+            const xTicks = [];
+            for (let k = -nMax; k <= nMax; k++) if (k % step === 0) xTicks.push([xToPx(k), `${k}`]);
+            const yTicks = [0, -10, -20, -30, -40].map(v => [yToPx(v), `${v}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, 'Sideband order n (carrier in red)', 'Jₙ²(β) (dB)');
+        }
+
+        function drawEoResponse() {
+            if (!EO.ResponseCanvas) return;
+            const prep = prepareCanvas(EO.ResponseCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = eoState;
+            if (!s || !s.H) return;
+            const box = { padL: 40, padR: 10, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const fMaxGHz = isFinite(s.f3) ? Math.min(2000, Math.max(10, 2 * s.f3 / 1e9)) : 500;
+            const yMin = -10;
+            const xToPx = (fg) => box.padL + fg / fMaxGHz * box.plotW;
+            const yToPx = (db) => box.padT + (0 - db) / (0 - yMin) * box.plotH;
+            // −3 dB guide and 3-dB frequency
+            ctx.strokeStyle = '#767676';
+            ctx.setLineDash([5, 2]);
+            ctx.beginPath();
+            ctx.moveTo(box.padL, yToPx(-3)); ctx.lineTo(box.padL + box.plotW, yToPx(-3));
+            if (isFinite(s.f3) && s.f3 / 1e9 <= fMaxGHz) { ctx.moveTo(xToPx(s.f3 / 1e9), box.padT); ctx.lineTo(xToPx(s.f3 / 1e9), box.padT + box.plotH); }
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(box.padL, box.padT, box.plotW, box.plotH);
+            ctx.clip();
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i <= 400; i++) {
+                const fg = fMaxGHz * i / 400;
+                const db = i === 0 ? 0 : s.H(fg * 1e9);
+                if (i === 0) ctx.moveTo(xToPx(fg), yToPx(db)); else ctx.lineTo(xToPx(fg), yToPx(db));
+            }
+            ctx.stroke();
+            ctx.restore();
+            const xTicks = niceTicks(0, fMaxGHz, 5).map(v => [xToPx(v), fmt(v, 3)]);
+            const yTicks = [0, -2, -4, -6, -8, -10].map(v => [yToPx(v), `${v}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, 'Modulation frequency (GHz); dashed: −3 dB', 'EO response (dB)');
+        }
+
+        EO.MaterialPreset.addEventListener('change', () => {
+            if (EO.MaterialPreset.value) {
+                const [nv, rv] = EO.MaterialPreset.value.split(',');
+                EO.NInput.value = nv; EO.RInput.value = rv;
+            }
+            updateEoModulator('inputs');
+        });
+        [EO.LambdaInput, EO.NInput, EO.RInput, EO.GapInput, EO.GammaInput, EO.NrfInput, EO.NgInput, EO.LossInput, EO.DndtInput, EO.HeaterInput]
+            .forEach(el => el.addEventListener('input', () => updateEoModulator('inputs')));
+        EO.ConfigSelect.addEventListener('change', () => updateEoModulator('inputs'));
+        EO.LengthInput.addEventListener('input', () => { eoLastLengthField = 'length'; updateEoModulator('length'); });
+        EO.VpiInput.addEventListener('input', () => { eoLastLengthField = 'vpi'; updateEoModulator('vpi'); });
+        EO.V0Input.addEventListener('input', () => { eoLastDriveField = 'v0'; updateEoModulator('v0'); });
+        EO.PrfInput.addEventListener('input', () => { eoLastDriveField = 'prf'; updateEoModulator('prf'); });
+        EO.BetaInput.addEventListener('input', () => { eoLastDriveField = 'beta'; updateEoModulator('beta'); });
+        EO.DndtPreset.addEventListener('change', () => {
+            if (EO.DndtPreset.value) EO.DndtInput.value = EO.DndtPreset.value;
+            updateEoModulator('inputs');
+        });
+
         // --- Safety Net for the Shared isSyncing Latch ---
         // Each section sets isSyncing while it writes its sibling fields and clears
         // it again at every exit point. If one of them ever throws in between, the
@@ -7503,6 +7890,7 @@
             updatePowerRatio('ratio');
             updatePulsedSource('inputs');
             updateQpm('inputs');
+            updateEoModulator('inputs');
             updateGaussianBeam('w0');
         }
 
@@ -7738,6 +8126,8 @@
             drawBraggSpectrum();
             drawGratingCouplerSpectrum();
             drawQpmSpectrum();
+            drawEoSidebands();
+            drawEoResponse();
         });
 
         // ==========================================
@@ -7787,6 +8177,9 @@
             '#dbm': '#power-energy',
             '#shg': '#qpm',
             '#chi2': '#qpm',
+            '#eo': '#eo-modulator',
+            '#vpi': '#eo-modulator',
+            '#modulator': '#eo-modulator',
             '#grating-coupler': '#grating-coupler',
             '#fiber': '#mode-coupling'
         };

@@ -454,6 +454,7 @@
                             <option value="#transform-limited">⌛ Transform-Limited Pulses</option>
                             <option value="#dispersion-gdd">📊 GDD ↔ Total Dispersion (D)</option>
                             <option value="#pulse-elongation">📈 Pulse Elongation (Broadening)</option>
+                            <option value="#power-energy">🔋 Power, Pulse Energy &amp; dB</option>
                         </optgroup>
                         <optgroup label="3. Fresnel Interfaces">
                             <option value="#fresnel-interface">🪞 Fresnel Reflection & Interfaces</option>
@@ -937,6 +938,168 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- CARD 4: Power, energy & decibels -->
+            <div id="power-energy" class="group-card scroll-mt-28">
+                <div class="card-header">
+                    <h3 class="group-title">
+                        <span class="text-cyan-600">🔋</span> Power, Pulse Energy &amp; Decibels
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="equation-box text-xs sm:text-sm">$$ P_{\text{dBm}} = 10\log_{10}\frac{P}{1\,\text{mW}} \qquad E_p = \frac{\bar P}{f_{\text{rep}}} \qquad P_{\text{pk}} = \frac{E_p}{k\,\tau_{\text{fwhm}}} \qquad N_{\text{ph}} = \frac{E_p\,\lambda}{hc} $$</div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Power and ratios -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Power &amp; Ratios (all fields reversible)</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label for="pwPowerInput" class="input-label">Power $P$</label>
+                                    <div class="flex gap-1.5">
+                                        <input type="number" id="pwPowerInput" value="1" step="any" class="calc-input">
+                                        <select id="pwPowerUnitSelect" class="calc-unit-select w-16">
+                                            <option value="w">W</option>
+                                            <option value="mw" selected>mW</option>
+                                            <option value="uw">µW</option>
+                                            <option value="nw">nW</option>
+                                            <option value="kw">kW</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pwDbmInput" class="input-label">dBm</label>
+                                    <input type="number" id="pwDbmInput" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwDbwInput" class="input-label">dBW</label>
+                                    <input type="number" id="pwDbwInput" step="any" class="calc-input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <label for="pwRatioInput" class="input-label">Power Ratio</label>
+                                    <input type="number" id="pwRatioInput" value="0.5" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwRatioDbInput" class="input-label">dB ($10\log$)</label>
+                                    <input type="number" id="pwRatioDbInput" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwRatioPctInput" class="input-label">Percent</label>
+                                    <input type="number" id="pwRatioPctInput" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwFieldRatioInput" class="input-label">Field Ratio</label>
+                                    <input type="number" id="pwFieldRatioInput" step="any" class="calc-input">
+                                </div>
+                            </div>
+                            <div class="text-[11px] text-slate-500 font-inter">A loss of $x$ dB is a ratio of $-x$ dB; the field (amplitude) ratio is $\sqrt{\text{power ratio}}$, i.e. dB $= 20\log_{10}$ of the field ratio.</div>
+                        </div>
+
+                        <!-- Pulsed source -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Pulsed Source (edit average power, energy or peak power)</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label for="pwAvgInput" class="input-label">Average Power $\bar P$</label>
+                                    <div class="flex gap-1">
+                                        <input type="number" id="pwAvgInput" value="100" step="any" class="calc-input">
+                                        <select id="pwAvgUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                            <option value="w">W</option>
+                                            <option value="mw" selected>mW</option>
+                                            <option value="uw">µW</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pwRepInput" class="input-label">Rep. Rate $f_{\text{rep}}$</label>
+                                    <div class="flex gap-1">
+                                        <input type="number" id="pwRepInput" value="100" step="any" class="calc-input">
+                                        <select id="pwRepUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                            <option value="mhz" selected>MHz</option>
+                                            <option value="ghz">GHz</option>
+                                            <option value="khz">kHz</option>
+                                            <option value="hz">Hz</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pwTauInput" class="input-label">Duration $\tau_{\text{fwhm}}$</label>
+                                    <div class="flex gap-1">
+                                        <input type="number" id="pwTauInput" value="100" step="any" class="calc-input">
+                                        <select id="pwTauUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                            <option value="fs" selected>fs</option>
+                                            <option value="ps">ps</option>
+                                            <option value="ns">ns</option>
+                                            <option value="us">µs</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pwShapeSelect" class="input-label">Pulse Shape</label>
+                                    <select id="pwShapeSelect" class="calc-select w-full">
+                                        <option value="sech2" selected>sech² (k = 1.135)</option>
+                                        <option value="gaussian">Gaussian (k = 1.064)</option>
+                                        <option value="square">Square (k = 1)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="pwLambdaInput" class="input-label">Wavelength $\lambda$ (nm)</label>
+                                    <input type="number" id="pwLambdaInput" value="1550" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwBeamInput" class="input-label">Beam Radius $w$ (µm, 1/e²)</label>
+                                    <input type="number" id="pwBeamInput" value="50" step="any" class="calc-input">
+                                </div>
+                                <div>
+                                    <label for="pwEnergyInput" class="input-label font-bold text-cyan-900">Pulse Energy $E_p$</label>
+                                    <div class="flex gap-1">
+                                        <input type="number" id="pwEnergyInput" step="any" class="calc-input font-bold text-cyan-800 bg-cyan-50/50 border-cyan-300">
+                                        <select id="pwEnergyUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                            <option value="mj">mJ</option>
+                                            <option value="uj">µJ</option>
+                                            <option value="nj" selected>nJ</option>
+                                            <option value="pj">pJ</option>
+                                            <option value="fj">fJ</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="pwPeakInput" class="input-label font-bold text-cyan-900">Peak Power $P_{\text{pk}}$</label>
+                                    <div class="flex gap-1">
+                                        <input type="number" id="pwPeakInput" step="any" class="calc-input font-bold text-cyan-800 bg-cyan-50/50 border-cyan-300">
+                                        <select id="pwPeakUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                            <option value="megw">MW</option>
+                                            <option value="kw" selected>kW</option>
+                                            <option value="w">W</option>
+                                            <option value="mw">mW</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <div class="metric-badge"><div class="metric-label">Period $1/f_{\text{rep}}$</div><div id="pwPeriodDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Duty Cycle $\tau f_{\text{rep}}$</div><div id="pwDutyDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Photons / Pulse</div><div id="pwPhotonsDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Photon Flux (avg)</div><div id="pwFluxDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Peak Intensity $2P_{\text{pk}}/\pi w^2$</div><div id="pwIntensityDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Peak Fluence $2E_p/\pi w^2$</div><div id="pwFluenceDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>dBm is referred to 1 mW and dBW to 1 W ($0\text{ dBW} = 30\text{ dBm}$). Decibels express <strong>power</strong> ratios, $10\log_{10}(P_2/P_1)$; for field quantities the same dB value is $20\log_{10}(E_2/E_1)$.</li>
+                            <li>$k$ is the ratio of the pulse energy to peak power × FWHM: $\int P\,dt = k\,P_{\text{pk}}\,\tau_{\text{fwhm}}$ with $k = 2/1.7627 = 1.1346$ (sech²), $\sqrt{\pi/(4\ln 2)} = 1.0645$ (Gaussian) and 1 (square). $\tau$ is the intensity FWHM.</li>
+                            <li>Peak intensity and fluence are the on-axis values of a TEM₀₀ beam with $1/e^2$ radius $w$ ($I_{\text{pk}} = 2P_{\text{pk}}/\pi w^2$, twice the average over the $1/e^2$ disc).</li>
+                            <li>Average power, energy and peak power are linked by $f_{\text{rep}}$ and $k\tau$. The one you edited last is held fixed when the repetition rate, duration or shape change.</li>
+                        </ul>
+                    </details>
+                </div>
             </div>
         </section>
 
@@ -2891,6 +3054,7 @@
 
         const ENERGY_SI = {
             'j': 1,
+            'mj': 1e-3,
             'uj': 1e-6,
             'nj': 1e-9,
             'pj': 1e-12,
@@ -2899,7 +3063,10 @@
 
         const POWER_SI = {
             'w': 1,
+            'gw': 1e9,
+            'megw': 1e6,
             'kw': 1e3,
+            'nw': 1e-9,
             'mw': 1e-3,
             'uw': 1e-6
         };
@@ -3218,6 +3385,9 @@
             gcLambdaUnitSelect.value = 'nm';
             gcLambdaInput.value = nm;
             updateGratingCoupler('inputs');
+
+            pwLambdaInput.value = nm;
+            updatePulsedSource('inputs');
         }
 
         // --- Wavelength to Visible RGB Algorithm (CIE 1931 / Bruton) ---
@@ -3964,6 +4134,141 @@
             isSyncing = false;
         }
 
+
+        // --- SECTION 2: Power, pulse energy & decibels ---
+        const pwPowerInput = document.getElementById('pwPowerInput');
+        const pwPowerUnitSelect = document.getElementById('pwPowerUnitSelect');
+        const pwDbmInput = document.getElementById('pwDbmInput');
+        const pwDbwInput = document.getElementById('pwDbwInput');
+        const pwRatioInput = document.getElementById('pwRatioInput');
+        const pwRatioDbInput = document.getElementById('pwRatioDbInput');
+        const pwRatioPctInput = document.getElementById('pwRatioPctInput');
+        const pwFieldRatioInput = document.getElementById('pwFieldRatioInput');
+        const pwAvgInput = document.getElementById('pwAvgInput');
+        const pwAvgUnitSelect = document.getElementById('pwAvgUnitSelect');
+        const pwRepInput = document.getElementById('pwRepInput');
+        const pwRepUnitSelect = document.getElementById('pwRepUnitSelect');
+        const pwTauInput = document.getElementById('pwTauInput');
+        const pwTauUnitSelect = document.getElementById('pwTauUnitSelect');
+        const pwShapeSelect = document.getElementById('pwShapeSelect');
+        const pwLambdaInput = document.getElementById('pwLambdaInput');
+        const pwBeamInput = document.getElementById('pwBeamInput');
+        const pwEnergyInput = document.getElementById('pwEnergyInput');
+        const pwEnergyUnitSelect = document.getElementById('pwEnergyUnitSelect');
+        const pwPeakInput = document.getElementById('pwPeakInput');
+        const pwPeakUnitSelect = document.getElementById('pwPeakUnitSelect');
+        const PW_OUT = {
+            period: document.getElementById('pwPeriodDisplay'),
+            duty: document.getElementById('pwDutyDisplay'),
+            photons: document.getElementById('pwPhotonsDisplay'),
+            flux: document.getElementById('pwFluxDisplay'),
+            intensity: document.getElementById('pwIntensityDisplay'),
+            fluence: document.getElementById('pwFluenceDisplay')
+        };
+        // ∫P dt = k · P_pk · τ_fwhm for each pulse shape
+        const PULSE_ENERGY_K = { sech2: 2 / 1.7627, gaussian: Math.sqrt(Math.PI / (4 * Math.LN2)), square: 1 };
+        let pwIsSyncing = false;
+        let pwLastPulseField = 'avg'; // 'avg', 'energy' or 'peak': held fixed when f_rep, τ or shape change
+
+        function updatePowerDb(source) {
+            if (pwIsSyncing) return;
+            pwIsSyncing = true;
+            try {
+                let P;
+                if (source === 'dbm') P = 1e-3 * Math.pow(10, parseFloat(pwDbmInput.value) / 10);
+                else if (source === 'dbw') P = Math.pow(10, parseFloat(pwDbwInput.value) / 10);
+                else P = parseFloat(pwPowerInput.value) * POWER_SI[pwPowerUnitSelect.value];
+                if (!(P > 0)) return;
+                if (source !== 'p') pwPowerInput.value = fmt(P / POWER_SI[pwPowerUnitSelect.value]);
+                if (source !== 'dbm') pwDbmInput.value = fmt(10 * Math.log10(P / 1e-3));
+                if (source !== 'dbw') pwDbwInput.value = fmt(10 * Math.log10(P));
+            } finally {
+                pwIsSyncing = false;
+            }
+        }
+
+        function updatePowerRatio(source) {
+            if (pwIsSyncing) return;
+            pwIsSyncing = true;
+            try {
+                let r;
+                if (source === 'db') r = Math.pow(10, parseFloat(pwRatioDbInput.value) / 10);
+                else if (source === 'pct') r = parseFloat(pwRatioPctInput.value) / 100;
+                else if (source === 'field') r = parseFloat(pwFieldRatioInput.value) ** 2;
+                else r = parseFloat(pwRatioInput.value);
+                if (!(r > 0)) return;
+                if (source !== 'ratio') pwRatioInput.value = fmt(r);
+                if (source !== 'db') pwRatioDbInput.value = fmt(10 * Math.log10(r));
+                if (source !== 'pct') pwRatioPctInput.value = fmt(100 * r);
+                if (source !== 'field') pwFieldRatioInput.value = fmt(Math.sqrt(r));
+            } finally {
+                pwIsSyncing = false;
+            }
+        }
+
+        function updatePulsedSource(source = 'inputs') {
+            if (pwIsSyncing) return;
+            pwIsSyncing = true;
+            try {
+                const frep = parseFloat(pwRepInput.value) * FREQ_SI[pwRepUnitSelect.value];
+                const tau = parseFloat(pwTauInput.value) * TIME_SI[pwTauUnitSelect.value];
+                const k = PULSE_ENERGY_K[pwShapeSelect.value] || 1;
+                if (!(frep > 0) || !(tau > 0)) return;
+                const held = source === 'avg' || source === 'energy' || source === 'peak' ? source : pwLastPulseField;
+
+                let E;
+                if (held === 'energy') E = parseFloat(pwEnergyInput.value) * ENERGY_SI[pwEnergyUnitSelect.value];
+                else if (held === 'peak') E = parseFloat(pwPeakInput.value) * POWER_SI[pwPeakUnitSelect.value] * k * tau;
+                else E = parseFloat(pwAvgInput.value) * POWER_SI[pwAvgUnitSelect.value] / frep;
+                if (!(E > 0)) return;
+                const Pavg = E * frep;
+                const Ppk = E / (k * tau);
+
+                if (held !== 'avg') pwAvgInput.value = fmt(Pavg / POWER_SI[pwAvgUnitSelect.value]);
+                if (held !== 'energy') pwEnergyInput.value = fmt(E / ENERGY_SI[pwEnergyUnitSelect.value]);
+                if (held !== 'peak') pwPeakInput.value = fmt(Ppk / POWER_SI[pwPeakUnitSelect.value]);
+
+                const duty = tau * frep;
+                PW_OUT.period.textContent = fmtTime(1 / frep, 4);
+                PW_OUT.duty.textContent = duty < 1 ? fmtExp(duty, 3) : 'τ ≥ period';
+                const lambda = parseFloat(pwLambdaInput.value) * 1e-9;
+                if (lambda > 0) {
+                    const Eph = H_PLANCK * C / lambda;
+                    PW_OUT.photons.textContent = fmtExp(E / Eph, 4);
+                    PW_OUT.flux.textContent = `${fmtExp(Pavg / Eph, 4)} /s`;
+                } else {
+                    PW_OUT.photons.textContent = PW_OUT.flux.textContent = '-';
+                }
+                const w = parseFloat(pwBeamInput.value) * 1e-6;
+                if (w > 0) {
+                    const area_cm2 = Math.PI * (w * 100) ** 2;
+                    PW_OUT.intensity.textContent = `${fmtExp(2 * Ppk / area_cm2, 4)} W/cm²`;
+                    PW_OUT.fluence.textContent = `${fmtExp(2 * E / area_cm2, 4)} J/cm²`;
+                } else {
+                    PW_OUT.intensity.textContent = PW_OUT.fluence.textContent = '-';
+                }
+            } finally {
+                pwIsSyncing = false;
+            }
+        }
+
+        pwPowerInput.addEventListener('input', () => updatePowerDb('p'));
+        pwPowerUnitSelect.addEventListener('change', () => updatePowerDb('dbm'));
+        pwDbmInput.addEventListener('input', () => updatePowerDb('dbm'));
+        pwDbwInput.addEventListener('input', () => updatePowerDb('dbw'));
+        pwRatioInput.addEventListener('input', () => updatePowerRatio('ratio'));
+        pwRatioDbInput.addEventListener('input', () => updatePowerRatio('db'));
+        pwRatioPctInput.addEventListener('input', () => updatePowerRatio('pct'));
+        pwFieldRatioInput.addEventListener('input', () => updatePowerRatio('field'));
+        pwAvgInput.addEventListener('input', () => { pwLastPulseField = 'avg'; updatePulsedSource('avg'); });
+        pwEnergyInput.addEventListener('input', () => { pwLastPulseField = 'energy'; updatePulsedSource('energy'); });
+        pwPeakInput.addEventListener('input', () => { pwLastPulseField = 'peak'; updatePulsedSource('peak'); });
+        // A unit change re-expresses the held quantity instead of reinterpreting its number
+        pwAvgUnitSelect.addEventListener('change', () => updatePulsedSource(pwLastPulseField === 'avg' ? 'energy' : pwLastPulseField));
+        pwEnergyUnitSelect.addEventListener('change', () => updatePulsedSource(pwLastPulseField === 'energy' ? 'avg' : pwLastPulseField));
+        pwPeakUnitSelect.addEventListener('change', () => updatePulsedSource(pwLastPulseField === 'peak' ? 'avg' : pwLastPulseField));
+        [pwRepInput, pwTauInput, pwLambdaInput, pwBeamInput].forEach(el => el.addEventListener('input', () => updatePulsedSource('inputs')));
+        [pwRepUnitSelect, pwTauUnitSelect, pwShapeSelect].forEach(el => el.addEventListener('change', () => updatePulsedSource('inputs')));
 
         // --- SECTION 3: Fresnel Calculator Engine & Visualizations ---
         function calculateFresnel(n1, n2, theta_i_deg) {
@@ -6775,6 +7080,9 @@
             updateSolitonParameters('inputs');
             updateKerrComb('inputs');
             updateGratingCoupler('inputs');
+            updatePowerDb('p');
+            updatePowerRatio('ratio');
+            updatePulsedSource('inputs');
             updateGaussianBeam('w0');
         }
 
@@ -7053,6 +7361,9 @@
             '#microcomb': '#kerr-comb',
             '#coupling': '#mode-coupling',
             '#gc': '#grating-coupler',
+            '#power': '#power-energy',
+            '#db': '#power-energy',
+            '#dbm': '#power-energy',
             '#grating-coupler': '#grating-coupler',
             '#fiber': '#mode-coupling'
         };

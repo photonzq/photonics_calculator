@@ -1913,7 +1913,7 @@
                             <input type="number" id="gcNtopInput" value="1.0" step="0.001" class="calc-input text-xs">
                         </div>
                         <div>
-                            <label for="gcNsubInput" class="input-label text-xs">Substrate / BOX Index $n_s$</label>
+                            <label for="gcNsubInput" class="input-label text-xs">BOX / Lower Cladding $n_s$</label>
                             <input type="number" id="gcNsubInput" value="1.444" step="0.001" class="calc-input text-xs">
                         </div>
                         <div>
@@ -1965,7 +1965,13 @@
                             <input type="number" id="gcLengthInput" value="20" step="any" class="calc-input text-xs">
                         </div>
                         <div>
-                            <label for="gcDirInput" class="input-label text-xs">Upward Directionality (%)</label>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="gcDirInput" class="input-label text-xs mb-0">Upward Directionality (%)</label>
+                                <select id="gcDirSource" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                    <option value="manual" selected>entered</option>
+                                    <option value="box">from BOX model</option>
+                                </select>
+                            </div>
                             <input type="number" id="gcDirInput" value="70" min="0" max="100" step="1" class="calc-input text-xs">
                         </div>
                     </div>
@@ -1991,6 +1997,68 @@
                         <canvas id="gcSpectrumCanvas" class="w-full h-full"></canvas>
                     </div>
 
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-slate-100">
+                        <!-- Directionality from BOX thickness -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Directionality vs BOX Thickness (interference estimate)</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label for="gcBoxInput" class="input-label text-xs">BOX Thickness (µm)</label>
+                                    <input type="number" id="gcBoxInput" value="2" step="0.01" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="gcHandleInput" class="input-label text-xs mb-0">Handle Index</label>
+                                        <select id="gcHandlePreset" class="text-[10px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-600">
+                                            <option value="">Preset…</option>
+                                            <option value="3.476">Si (3.476)</option>
+                                            <option value="2.21">LiNbO₃ (≈2.21)</option>
+                                            <option value="1.746">Sapphire (1.746)</option>
+                                            <option value="box">none (= BOX)</option>
+                                        </select>
+                                    </div>
+                                    <input type="number" id="gcHandleInput" value="3.476" step="0.001" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="gcCoreIdxInput" class="input-label text-xs">Core Index $n_c$</label>
+                                    <input type="number" id="gcCoreIdxInput" value="3.476" step="0.001" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="gcCoreTInput" class="input-label text-xs">Core Thickness (µm)</label>
+                                    <input type="number" id="gcCoreTInput" value="0.22" step="0.01" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="gcEtchInput" class="input-label text-xs">Etch Depth (µm)</label>
+                                    <input type="number" id="gcEtchInput" value="0.07" step="0.01" class="calc-input text-xs">
+                                </div>
+                                <div class="metric-badge"><div class="metric-label">Directionality</div><div id="gcDirModelDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                            </div>
+                            <div id="gcBoxOptDisplay" class="text-[11px] font-mono text-slate-600">-</div>
+                            <div class="relative w-full h-44 bg-white rounded-md border border-slate-200 p-2">
+                                <canvas id="gcBoxCanvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Gaussian apodization -->
+                        <div class="space-y-3">
+                            <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Apodization for a Gaussian Output Beam</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label for="gcAlphaMaxInput" class="input-label text-xs">Max. Achievable $\alpha$ (1/µm)</label>
+                                    <input type="number" id="gcAlphaMaxInput" value="0.6" step="any" class="calc-input text-xs">
+                                </div>
+                                <div class="metric-badge"><div class="metric-label">Overlap × Scattered</div><div id="gcApoEtaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Apodized CE</div><div id="gcApoCeDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Fiber Center from Start</div><div id="gcApoZ0Display" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Peak $\alpha$ Needed (uncapped)</div><div id="gcApoPeakDisplay" class="metric-value text-sm mt-1">-</div></div>
+                                <div class="metric-badge"><div class="metric-label">Uniform Grating (same L)</div><div id="gcApoUniformDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            </div>
+                            <div class="relative w-full h-44 bg-white rounded-md border border-slate-200 p-2">
+                                <canvas id="gcApoCanvas" class="w-full h-full"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
                     <details class="phys-note">
                         <summary>Physics notes &amp; assumptions</summary>
                         <ul>
@@ -2000,6 +2068,8 @@
                             <li>Overlap: a uniform grating emits $|E|^2 \propto e^{-\alpha z}$ from its start ($\alpha$ = power scattering rate). Its best overlap with a Gaussian of radius $w_x$ is 80.1 %, reached at $\alpha w_x \approx 1.36$ with the fiber centred $0.73\,w_x$ from the grating start (for an infinitely long grating; truncating the tail at finite $L$ can raise it slightly, to ≈ 80.5 %, at the cost of unscattered power). The calculator evaluates the overlap numerically for the given $\alpha$ and $L$ and places the fiber optimally. Apodized gratings can exceed 90 %.</li>
                             <li>Peak CE $\approx \eta_{\text{up}}\,(1 - e^{-\alpha L})\,\eta_x$, i.e. directionality × fraction scattered × longitudinal overlap. It assumes perfect transverse (lateral) mode matching, which a 10–12 µm wide grating and taper give for SMF-28, and no back-reflection or Fresnel loss. Typical 220-nm SOI uniform gratings without a bottom mirror reach 60–70 % directionality and −3 to −5 dB CE.</li>
                             <li>$\lambda$ shift per degree is $(d\theta/d\lambda)^{-1}$, handy for tuning the center wavelength with the fiber tilt.</li>
+                            <li>Directionality model: the grating emits equally up and down from a plane in the middle of the etched layer. The downward TE wave reflects from the BOX/handle interface with $r = \frac{n_s\cos\theta_s - n_h\cos\theta_h}{n_s\cos\theta_s + n_h\cos\theta_h}$ and returns with round-trip phase $\phi = 2k_0[n_s t_{\text{BOX}}\cos\theta_s + n_c(t_c - t_e/2)\cos\theta_c]$, so $D = \frac{|1 + re^{i\phi}|^2}{|1 + re^{i\phi}|^2 + 1 - r^2}$. It oscillates with period $\lambda/(2n_s\cos\theta_s)$ between $\frac{(1-|r|)^2}{(1-|r|)^2 + 1 - r^2}$ and $\frac{(1+|r|)^2}{(1+|r|)^2 + 1 - r^2}$ (≈ 29 % and 71 % for SiO₂ on Si). Reflections at the core and the top cladding, and the etch profile, are neglected, so treat the positions of the optima as indicative (±λ/(8n_s)) and confirm with a simulation; a bottom mirror or a dual-layer grating goes beyond this model.</li>
+                            <li>Apodization: the ideal local scattering rate for a Gaussian output is $\alpha(z) = \frac{G^2(z)}{1 - \int_0^z G^2}$ (power rate, $G^2$ the normalized fiber-mode intensity). It diverges toward the grating end, so it is capped at the largest $\alpha$ your process can make; the capped profile is propagated and its overlap × scattered fraction reported, with the fiber position optimized. Mapping $\alpha$ to fill factor or etch width needs your own simulation of $\alpha$ versus geometry, and the local $\bar n_{\text{eff}}$ change with fill factor (which chirps the period) is not included.</li>
                         </ul>
                     </details>
                 </div>
@@ -5698,6 +5768,75 @@
         const gcAlphaOptBtn = document.getElementById('gcAlphaOptBtn');
         const gcLengthInput = document.getElementById('gcLengthInput');
         const gcDirInput = document.getElementById('gcDirInput');
+        const GCX = Object.fromEntries(['DirSource', 'BoxInput', 'HandleInput', 'HandlePreset', 'CoreIdxInput', 'CoreTInput', 'EtchInput',
+            'DirModelDisplay', 'BoxOptDisplay', 'BoxCanvas', 'AlphaMaxInput', 'ApoEtaDisplay', 'ApoCeDisplay', 'ApoZ0Display',
+            'ApoPeakDisplay', 'ApoUniformDisplay', 'ApoCanvas'].map(id => [id, document.getElementById('gc' + id)]));
+
+        // Upward directionality of a grating layer above a BOX on a reflecting handle.
+        // The grating emits equally up and down from a plane in the middle of the etched
+        // layer; the downward TE (s-pol) wave reflects at the BOX/handle interface and
+        // interferes with the upward one: D = |1 + r e^{iφ}|² / (|1 + r e^{iφ}|² + 1 − r²).
+        // Core and top-cladding reflections are neglected, so the absolute optimum BOX is
+        // only indicative (about ±λ/(8 n_BOX)).
+        function gcBoxParams(p) {
+            const cb = Math.sqrt(1 - (p.inv / p.ns) ** 2);
+            const chArg = 1 - (p.inv / p.nh) ** 2;
+            const cc = Math.sqrt(Math.max(0, 1 - (p.inv / p.nc) ** 2));
+            if (!(chArg > 0) || !(cb > 0)) return null;
+            const ch = Math.sqrt(chArg);
+            const r = (p.ns * cb - p.nh * ch) / (p.ns * cb + p.nh * ch);
+            const phiCore = 2 * p.k0 * p.nc * Math.max(0, p.tc - p.te / 2) * cc;
+            return { r, cb, phiCore, k0: p.k0, ns: p.ns };
+        }
+        function gcDirectionality(tBox, q) {
+            const phi = 2 * q.k0 * q.ns * tBox * q.cb + q.phiCore;
+            const up = 1 + q.r * q.r + 2 * q.r * Math.cos(phi);
+            return up / (up + 1 - q.r * q.r);
+        }
+
+        // Gaussian apodization with a cap on the achievable scattering strength. The target
+        // emission is the Gaussian fiber-mode intensity g(z); the local power scattering rate
+        // that produces it is α_t(z) = S(z) / (1 − ∫₀^z S), S = g / ∫g. α is capped at α_max,
+        // the guided power is propagated with the capped α, and the result is
+        // (∫√(S_emitted g))² / ∫g = overlap × scattered fraction. The fiber position z0 is optimized.
+        function gcApodize(L, wx, alphaMax) {
+            const N = 1000, dz = L / N;
+            const gn = wx * Math.sqrt(Math.PI / 2);
+            const run = (z0, keep) => {
+                let C = 0, A = 0, num = 0, peak = 0, prevS = 0, prevA = 0, prevF = 0;
+                const prof = keep ? [] : null;
+                for (let i = 0; i <= N; i++) {
+                    const z = i * dz;
+                    const g = Math.exp(-2 * ((z - z0) / wx) ** 2);
+                    const S = g / gn;
+                    if (i > 0) C += 0.5 * (S + prevS) * dz;          // ∫₀^z S (trapezoid)
+                    const at = S / Math.max(1 - C, 1e-12);
+                    if (at > peak) peak = at;
+                    const a = Math.min(at, alphaMax);
+                    if (i > 0) A += 0.5 * (a + prevA) * dz;          // ∫₀^z α (trapezoid)
+                    const Sr = a * Math.exp(-A);
+                    const F = Math.sqrt(Sr * g);
+                    if (i > 0) num += 0.5 * (F + prevF) * dz;
+                    if (keep) prof.push([z, a, at, Sr, g]);
+                    prevS = S; prevA = a; prevF = F;
+                }
+                return { eta: num * num / gn, peak, scattered: 1 - Math.exp(-A), prof, z0 };
+            };
+            let best = run(0, false);
+            for (let k = 1; k <= 100; k++) {
+                const trial = run(L * k / 100, false);
+                if (trial.eta > best.eta) best = trial;
+            }
+            // Golden-section refinement around the best scan point
+            let lo = Math.max(0, best.z0 - L / 100), hi = Math.min(L, best.z0 + L / 100);
+            const gr = (Math.sqrt(5) - 1) / 2;
+            let x1 = hi - gr * (hi - lo), x2 = lo + gr * (hi - lo), f1 = run(x1, false).eta, f2 = run(x2, false).eta;
+            for (let k = 0; k < 40; k++) {
+                if (f1 < f2) { lo = x1; x1 = x2; f1 = f2; x2 = lo + gr * (hi - lo); f2 = run(x2, false).eta; }
+                else { hi = x2; x2 = x1; f2 = f1; x1 = hi - gr * (hi - lo); f1 = run(x1, false).eta; }
+            }
+            return run((lo + hi) / 2, true);
+        }
         const gcWarning = document.getElementById('gcWarning');
         const gcSpectrumCanvas = document.getElementById('gcSpectrumCanvas');
         const GC_OUT = {
@@ -5758,6 +5897,7 @@
             if (gcIsSyncing) return;
             gcIsSyncing = true;
             gcLastState = null;
+            gcExtraState = null;
             try {
                 const lambda = parseFloat(gcLambdaInput.value) * LENGTH_SI[gcLambdaUnitSelect.value];
                 const neff = parseFloat(gcNeffInput.value);
@@ -5838,6 +5978,32 @@
                 // Uniform-grating overlap and CE estimate
                 const alpha = gcAlphaToSI(parseFloat(gcAlphaInput.value), gcAlphaUnitSelect.value);
                 const L = parseFloat(gcLengthInput.value) * 1e-6;
+                // Directionality from the BOX interference model (always shown), or as entered
+                const boxQ = gcBoxParams({
+                    inv: nt * sinT, ns, nh: parseFloat(GCX.HandleInput.value), nc: parseFloat(GCX.CoreIdxInput.value),
+                    tc: parseFloat(GCX.CoreTInput.value) * 1e-6, te: parseFloat(GCX.EtchInput.value) * 1e-6, k0
+                });
+                const tBox = parseFloat(GCX.BoxInput.value) * 1e-6;
+                const dModel = boxQ && tBox >= 0 ? gcDirectionality(tBox, boxQ) : NaN;
+                GCX.DirModelDisplay.textContent = isFinite(dModel) ? `${fmt(100 * dModel, 4)} %` : '-';
+                if (boxQ) {
+                    const argR = boxQ.r < 0 ? Math.PI : 0;
+                    // Maxima where the round-trip phase is a multiple of 2π; they repeat every λ/(2 n_s cos θ_s)
+                    const periodBox = Math.PI / (boxQ.k0 * boxQ.ns * boxQ.cb);
+                    let tFirst = (-argR - boxQ.phiCore) / (2 * boxQ.k0 * boxQ.ns * boxQ.cb);
+                    tFirst = ((tFirst % periodBox) + periodBox) % periodBox;
+                    const tNear = isFinite(tBox) ? tFirst + Math.round((tBox - tFirst) / periodBox) * periodBox : tFirst;
+                    const dMax = (1 + Math.abs(boxQ.r)) ** 2 / ((1 + Math.abs(boxQ.r)) ** 2 + 1 - boxQ.r ** 2);
+                    GCX.BoxOptDisplay.textContent = Math.abs(boxQ.r) < 1e-6
+                        ? 'No handle reflection (handle index = BOX): directionality is 50 % for any BOX.'
+                        : `Nearest maximum (${fmt(100 * dMax, 3)} %) at BOX ≈ ${fmt(Math.max(tNear, tFirst) * 1e6, 3)} µm; maxima repeat every ${fmt(periodBox * 1e6, 3)} µm (first at ${fmt(tFirst * 1e6, 3)} µm).`;
+                } else {
+                    GCX.BoxOptDisplay.textContent = 'The emission angle does not propagate in the BOX or handle.';
+                }
+                const fromBox = GCX.DirSource.value === 'box';
+                gcDirInput.readOnly = fromBox;
+                gcDirInput.classList.toggle('bg-slate-100', fromBox);
+                if (fromBox && isFinite(dModel)) gcDirInput.value = fmt(100 * dModel, 4);
                 const dir = parseFloat(gcDirInput.value) / 100;
                 const alphaOpt = 1.36 / wx;
                 const alphaUnitLabel = gcAlphaUnitSelect.value === 'db/um' ? 'dB/µm' : '/µm';
@@ -5858,6 +6024,26 @@
                     ['overlap', 'z0', 'scatter', 'ce'].forEach(k => GC_OUT[k].textContent = '-');
                 }
 
+                // Gaussian apodization (capped α) and the optimal uniform grating of the same length
+                const alphaMax = parseFloat(GCX.AlphaMaxInput.value) * 1e6;
+                let apo = null, ceApo = NaN;
+                if (wf > 0 && L > 0 && alphaMax > 0) {
+                    apo = gcApodize(L, wx, alphaMax);
+                    ceApo = dir >= 0 ? dir * apo.eta : NaN;
+                    const uni = gcOverlap(alphaOpt, L, wx);
+                    const uniTot = uni.eta * (1 - Math.exp(-alphaOpt * L));
+                    GCX.ApoEtaDisplay.textContent = `${fmt(100 * apo.eta, 4)} %`;
+                    GCX.ApoEtaDisplay.title = `scattered fraction ${fmt(100 * apo.scattered, 3)} %`;
+                    GCX.ApoCeDisplay.textContent = ceApo > 0 ? `${fmt(100 * ceApo, 3)} % (${fmt(10 * Math.log10(ceApo), 3)} dB)` : '-';
+                    GCX.ApoZ0Display.textContent = fmtLen(apo.z0, 4);
+                    GCX.ApoPeakDisplay.textContent = `${fmt(apo.peak * 1e-6, 3)} /µm`;
+                    GCX.ApoUniformDisplay.textContent = `${fmt(100 * uniTot, 4)} % at α_opt`;
+                    if (apo.peak > alphaMax) warnings.push(`Apodization is limited by α_max: the ideal profile would need ${fmt(apo.peak * 1e-6, 3)} /µm near the grating end.`);
+                } else {
+                    ['ApoEtaDisplay', 'ApoCeDisplay', 'ApoZ0Display', 'ApoPeakDisplay', 'ApoUniformDisplay'].forEach(k => GCX[k].textContent = '-');
+                }
+                gcExtraState = { boxQ, tBox, dModel, apo, alphaMax, L };
+
                 if (Math.abs(theta) * 180 / Math.PI < 3) warnings.push('Near-vertical emission (|θ| < 3°): the second diffraction order back-reflects into the waveguide (second-order Bragg condition Λ ≈ λ/n̄_eff), lowering CE and adding ripple.');
                 if (others.some(t => t.includes('top'))) warnings.push('A second diffraction order also radiates toward the fiber side and takes power.');
                 if (warnings.length) {
@@ -5867,11 +6053,105 @@
                     gcWarning.className = 'phys-warning hidden';
                 }
 
-                gcLastState = (wf > 0 && slope > 0) ? { lambda, wx, slope, ce0, halfBw1: halfBw(1) } : null;
+                gcLastState = (wf > 0 && slope > 0) ? { lambda, wx, slope, ce0, ceApo, halfBw1: halfBw(1) } : null;
             } finally {
                 gcIsSyncing = false;
                 drawGratingCouplerSpectrum();
+                drawGcBoxPlot();
+                drawGcApoPlot();
             }
+        }
+
+        let gcExtraState = null;
+
+        function drawGcBoxPlot() {
+            if (!GCX.BoxCanvas) return;
+            const prep = prepareCanvas(GCX.BoxCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = gcExtraState;
+            if (!s || !s.boxQ) return;
+            const box = { padL: 40, padR: 10, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const tMax = Math.max(4, isFinite(s.tBox) ? s.tBox * 1e6 * 1.25 : 4);
+            const xToPx = (t) => box.padL + t / tMax * box.plotW;
+            const yToPx = (d) => box.padT + (1 - d) * box.plotH;
+            ctx.strokeStyle = '#767676';
+            ctx.setLineDash([5, 2]);
+            ctx.beginPath();
+            ctx.moveTo(box.padL, yToPx(0.5)); ctx.lineTo(box.padL + box.plotW, yToPx(0.5));
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i <= 400; i++) {
+                const t = tMax * i / 400;
+                const d = gcDirectionality(t * 1e-6, s.boxQ);
+                if (i === 0) ctx.moveTo(xToPx(t), yToPx(d)); else ctx.lineTo(xToPx(t), yToPx(d));
+            }
+            ctx.stroke();
+            if (isFinite(s.dModel)) {
+                ctx.fillStyle = '#9E403D';
+                ctx.beginPath();
+                ctx.arc(xToPx(s.tBox * 1e6), yToPx(s.dModel), 4, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            const xTicks = niceTicks(0, tMax, 5).map(v => [xToPx(v), fmt(v, 3)]);
+            const yTicks = [0, 0.25, 0.5, 0.75, 1].map(v => [yToPx(v), `${v * 100}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, 'BOX thickness (µm); ● = current', 'Directionality (%)');
+        }
+
+        function drawGcApoPlot() {
+            if (!GCX.ApoCanvas) return;
+            const prep = prepareCanvas(GCX.ApoCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = gcExtraState;
+            if (!s || !s.apo) return;
+            const box = { padL: 40, padR: 10, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const Lum = s.L * 1e6;
+            const prof = s.apo.prof;
+            const srMax = Math.max(...prof.map(p => p[3])) || 1;
+            const xToPx = (zum) => box.padL + zum / Lum * box.plotW;
+            const yToPx = (v) => box.padT + (1 - v) * box.plotH;
+            const line = (fn, color, dash) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash(dash);
+                ctx.beginPath();
+                prof.forEach((p, i) => {
+                    const x = xToPx(p[0] * 1e6), y = yToPx(fn(p));
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                ctx.setLineDash([]);
+            };
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(box.padL, box.padT, box.plotW, box.plotH);
+            ctx.clip();
+            line(p => p[2] / s.alphaMax, '#767676', [2, 3]);      // uncapped target α
+            line(p => p[1] / s.alphaMax, '#385C9E', []);          // α used (capped)
+            line(p => p[4], '#9E403D', [5, 2]);                   // Gaussian target (normalized)
+            line(p => p[3] / srMax, '#9E403D', []);               // emitted profile (normalized)
+            ctx.restore();
+            ctx.font = '10px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            [['α(z)/α_max', '#385C9E', []], ['target α (uncapped)', '#767676', [2, 3]], ['emitted', '#9E403D', []], ['Gaussian target', '#9E403D', [5, 2]]]
+                .forEach(([t, c, d], i) => {
+                    const lx = box.padL + 8, ly = box.padT + 10 + 13 * i;
+                    ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.setLineDash(d);
+                    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 16, ly); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.fillStyle = '#272727'; ctx.fillText(t, lx + 20, ly);
+                });
+            const xTicks = niceTicks(0, Lum, 5).map(v => [xToPx(v), fmt(v, 3)]);
+            const yTicks = [0, 0.5, 1].map(v => [yToPx(v), fmt(v, 2)]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, 'Position along the grating z (µm)', 'Normalized');
         }
 
         function drawGratingCouplerSpectrum() {
@@ -5892,8 +6172,9 @@
             box.plotH = H - box.padT - box.padB;
             // Plot in dB relative to the peak when no CE estimate is available
             const peakDb = s.ce0 > 0 ? 10 * Math.log10(s.ce0) : 0;
+            const apoDb = s.ceApo > 0 ? 10 * Math.log10(s.ceApo) : NaN;
             const spanNm = 4 * s.halfBw1 * 1e9;
-            const yMax = Math.ceil(peakDb), yMin = yMax - 10;
+            const yMax = Math.ceil(isFinite(apoDb) ? Math.max(peakDb, apoDb) : peakDb), yMin = yMax - 10;
             const xToPx = (dnm) => box.padL + (dnm + spanNm) / (2 * spanNm) * box.plotW;
             // No clamping: the curve is clipped at the plot edge instead of running along a false floor
             const yToPx = (db) => box.padT + (yMax - db) / (yMax - yMin) * box.plotH;
@@ -5916,11 +6197,24 @@
                 if (i === 0) ctx.moveTo(xToPx(dnm), yToPx(db)); else ctx.lineTo(xToPx(dnm), yToPx(db));
             }
             ctx.stroke();
+            if (isFinite(apoDb)) {
+                // Same phase-matching roll-off, higher peak
+                ctx.strokeStyle = '#9E403D';
+                ctx.setLineDash([5, 2]);
+                ctx.beginPath();
+                for (let i = 0; i <= 300; i++) {
+                    const dnm = -spanNm + (2 * spanNm * i) / 300;
+                    const db = apoDb - 10 * Math.log10(Math.E) * (k * dnm * 1e-9) ** 2;
+                    if (i === 0) ctx.moveTo(xToPx(dnm), yToPx(db)); else ctx.lineTo(xToPx(dnm), yToPx(db));
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
             ctx.restore();
 
             const xTicks = niceTicks(-spanNm, spanNm).map(v => [xToPx(v), fmt(v, 3)]);
             const yTicks = niceTicks(yMin, yMax, 5).map(v => [yToPx(v), fmt(v, 3)]);
-            drawPlotFrame(ctx, box, xTicks, yTicks, `λ − λ₀ (nm), λ₀ = ${fmt(s.lambda * 1e9, 5)} nm; shaded: 1-dB band`,
+            drawPlotFrame(ctx, box, xTicks, yTicks, `λ − λ₀ (nm), λ₀ = ${fmt(s.lambda * 1e9, 5)} nm; shaded: 1-dB band; solid: uniform α, dashed: apodized`,
                 s.ce0 > 0 ? 'Coupling efficiency (dB)' : 'Relative coupling (dB)');
         }
 
@@ -5944,6 +6238,15 @@
         });
         gcFiberPreset.addEventListener('change', () => {
             if (gcFiberPreset.value) gcMfdInput.value = gcFiberPreset.value;
+            updateGratingCoupler('inputs');
+        });
+        ['BoxInput', 'HandleInput', 'CoreIdxInput', 'CoreTInput', 'EtchInput', 'AlphaMaxInput']
+            .forEach(id => GCX[id].addEventListener('input', () => updateGratingCoupler('inputs')));
+        GCX.DirSource.addEventListener('change', () => updateGratingCoupler('inputs'));
+        GCX.HandlePreset.addEventListener('change', () => {
+            const v = GCX.HandlePreset.value;
+            if (v === 'box') GCX.HandleInput.value = gcNsubInput.value;
+            else if (v) GCX.HandleInput.value = v;
             updateGratingCoupler('inputs');
         });
         gcAlphaOptBtn.addEventListener('click', () => {
@@ -8125,6 +8428,8 @@
             drawKerrCombSpectrum();
             drawBraggSpectrum();
             drawGratingCouplerSpectrum();
+            drawGcBoxPlot();
+            drawGcApoPlot();
             drawQpmSpectrum();
             drawEoSidebands();
             drawEoResponse();

@@ -468,6 +468,7 @@
                         <optgroup label="5. Nonlinear Optics">
                             <option value="#solitons">🌀 Soliton Parameters & Characteristic Lengths</option>
                             <option value="#kerr-comb">🔆 Kerr Microcomb & Dissipative Soliton</option>
+                            <option value="#qpm">🔀 χ⁽²⁾ Phase Matching &amp; QPM</option>
                         </optgroup>
                         <optgroup label="6. Gaussian Beam Propagation">
                             <option value="#gaussian-parameters">📐 Gaussian Waist, Rayleigh & Divergence</option>
@@ -2331,6 +2332,180 @@
                             <li>The soliton is $\propto \text{sech}(t/T_0)$ with $T_0 = \frac{1}{D_1}\sqrt{\frac{D_2}{2\delta\omega}} = \sqrt{\frac{-\beta_2 v_g}{2\delta\omega}}$ and FWHM $1.763\,T_0$; its spectral envelope is $\text{sech}^2(\pi T_0\,\Omega/2)$ with a 3-dB width $0.315/\tau_{\text{FWHM}}$.</li>
                             <li>$P_0 = |\beta_2|/(\gamma T_0^2) = 2\delta\omega/(\gamma v_g)$ is the intracavity peak power, and $P_{\text{sol}} \approx \kappa_{\text{ex}}\cdot 2P_0T_0$ is the out-coupled soliton power (pump line excluded, CW background neglected). It is an estimate valid for $f^2 \gg 1$; if it approaches $P_{\text{in}}$ the assumptions have broken down.</li>
                             <li>$\mu_{\text{th}} \approx \sqrt{\kappa/D_2}$ is the mode number of the first (primary) sidebands at threshold, i.e. the Turing-pattern spacing $\mu_{\text{th}}\cdot$FSR.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+
+            <!-- CARD 3: χ(2) phase matching / QPM for waveguides -->
+            <div id="qpm" class="group-card border-indigo-200 shadow-md scroll-mt-28">
+                <div class="card-header bg-gradient-to-r from-indigo-50 to-violet-50 border-b border-indigo-100">
+                    <h3 class="group-title text-indigo-900">
+                        <span class="text-indigo-600">🔀</span> χ⁽²⁾ Phase Matching &amp; Quasi-Phase Matching (Waveguide)
+                    </h3>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="equation-box text-xs sm:text-sm space-y-1">
+                        <div>$$ \omega_3 = \omega_1 + \omega_2 \qquad \Delta k = 2\pi\left(\frac{n_3}{\lambda_3} - \frac{n_1}{\lambda_1} - \frac{n_2}{\lambda_2}\right) \qquad \Lambda_m = \frac{2\pi m}{|\Delta k|} \qquad L_c = \frac{\pi}{|\Delta k|} $$</div>
+                        <div>$$ \eta \propto \text{sinc}^2\!\left(\frac{\Delta k_r L}{2}\right),\ \ \Delta k_r = \Delta k - \frac{2\pi m}{\Lambda} \qquad \Delta\lambda_{\text{fwhm}} = \frac{0.8859\,\lambda^2}{L\,|\Delta n_g|} \qquad P_3^{\text{SHG}} = \eta_{\text{norm}} P_1^2 L^2 $$</div>
+                    </div>
+
+                    <!-- Process & wavelengths -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label for="qpProcessSelect" class="input-label text-xs">Process</label>
+                            <select id="qpProcessSelect" class="calc-select w-full text-xs py-1.5">
+                                <option value="shg" selected>SHG (ω + ω → 2ω)</option>
+                                <option value="sfg">SFG (ω₁ + ω₂ → ω₃)</option>
+                                <option value="dfg">DFG (ω₃ − ω₁ → ω₂)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="qpL1Input" id="qpL1Label" class="input-label text-xs">λ₁ (nm)</label>
+                            <input type="number" id="qpL1Input" value="1550" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpL2Input" id="qpL2Label" class="input-label text-xs">λ₂ (nm)</label>
+                            <input type="number" id="qpL2Input" value="1550" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpL3Input" id="qpL3Label" class="input-label text-xs">λ₃ (nm)</label>
+                            <input type="number" id="qpL3Input" value="775" step="any" class="calc-input text-xs">
+                        </div>
+                    </div>
+
+                    <!-- Mode indices (user-supplied, from mode solving) -->
+                    <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                        <div>
+                            <label for="qpN1Input" class="input-label text-xs">$n_{\text{eff},1}$</label>
+                            <input type="number" id="qpN1Input" value="1.88" step="0.0001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpN2Input" class="input-label text-xs">$n_{\text{eff},2}$</label>
+                            <input type="number" id="qpN2Input" value="1.88" step="0.0001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpN3Input" class="input-label text-xs">$n_{\text{eff},3}$</label>
+                            <input type="number" id="qpN3Input" value="2.07" step="0.0001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpNg1Input" class="input-label text-xs">$n_{g,1}$</label>
+                            <input type="number" id="qpNg1Input" value="2.30" step="0.001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpNg2Input" class="input-label text-xs">$n_{g,2}$</label>
+                            <input type="number" id="qpNg2Input" value="2.30" step="0.001" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpNg3Input" class="input-label text-xs">$n_{g,3}$</label>
+                            <input type="number" id="qpNg3Input" value="2.45" step="0.001" class="calc-input text-xs">
+                        </div>
+                    </div>
+
+                    <!-- Device -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label for="qpLengthInput" class="input-label text-xs">Poled Length $L$</label>
+                            <div class="flex gap-1">
+                                <input type="number" id="qpLengthInput" value="5" step="any" class="calc-input text-xs">
+                                <select id="qpLengthUnitSelect" class="calc-unit-select w-14 text-[11px] p-1">
+                                    <option value="mm" selected>mm</option>
+                                    <option value="cm">cm</option>
+                                    <option value="um">µm</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="qpOrderInput" class="input-label text-xs">QPM Order $m$</label>
+                            <input type="number" id="qpOrderInput" value="1" min="1" step="1" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpDutyInput" class="input-label text-xs">Poling Duty Cycle $D$</label>
+                            <input type="number" id="qpDutyInput" value="0.5" min="0" max="1" step="0.05" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="qpPeriodInput" class="input-label text-xs mb-0 font-bold text-indigo-900">Poling Period $\Lambda$ (µm)</label>
+                                <button type="button" id="qpPeriodIdealBtn" class="text-[10px] text-indigo-600 hover:text-indigo-800 underline" title="Set the period to the ideal first-order value for these indices">ideal</button>
+                            </div>
+                            <input type="number" id="qpPeriodInput" step="any" class="calc-input text-xs font-bold text-indigo-800 border-indigo-300 bg-indigo-50/40">
+                        </div>
+                    </div>
+
+                    <!-- Nonlinearity & powers -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+                        <div>
+                            <label for="qpD33Input" class="input-label text-xs">$d_{33}$ (pm/V)</label>
+                            <input type="number" id="qpD33Input" value="25" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpAeffInput" class="input-label text-xs">Overlap Area $A_{\text{eff}}$ (µm²)</label>
+                            <input type="number" id="qpAeffInput" value="2" step="any" class="calc-input text-xs">
+                        </div>
+                        <div>
+                            <label for="qpPaInput" id="qpPaLabel" class="input-label text-xs">Input Power (mW)</label>
+                            <input type="number" id="qpPaInput" value="10" step="any" class="calc-input text-xs">
+                        </div>
+                        <div id="qpPbBox">
+                            <label for="qpPbInput" id="qpPbLabel" class="input-label text-xs">Input Power 2 (mW)</label>
+                            <input type="number" id="qpPbInput" value="10" step="any" class="calc-input text-xs">
+                        </div>
+                    </div>
+
+                    <!-- Optional temperature tuning -->
+                    <details class="phys-note">
+                        <summary>Temperature tuning (optional: enter the thermo-optic coefficients of your modes)</summary>
+                        <div class="px-3 pb-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <label for="qpDn1Input" class="input-label text-xs">$dn_{\text{eff},1}/dT$ (1/K)</label>
+                                <input type="text" id="qpDn1Input" placeholder="e.g. 3.3e-5" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpDn2Input" class="input-label text-xs">$dn_{\text{eff},2}/dT$ (1/K)</label>
+                                <input type="text" id="qpDn2Input" placeholder="e.g. 3.3e-5" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpDn3Input" class="input-label text-xs">$dn_{\text{eff},3}/dT$ (1/K)</label>
+                                <input type="text" id="qpDn3Input" placeholder="e.g. 4.0e-5" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpExpInput" class="input-label text-xs">Period Expansion $\alpha_T$ (1/K)</label>
+                                <input type="text" id="qpExpInput" placeholder="e.g. 1.5e-5" class="calc-input text-xs">
+                            </div>
+                        </div>
+                    </details>
+
+                    <div id="qpWarning" class="phys-warning is-info hidden"></div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                        <div class="metric-badge"><div class="metric-label">Mismatch $\Delta k$</div><div id="qpDkDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Ideal Period $\Lambda_m$</div><div id="qpIdealDisplay" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Coherence Length $L_c$</div><div id="qpLcDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Residual $\Delta k_r L/2$ · sinc²</div><div id="qpResidualDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" id="qpPmLabel">Phase-Matched $\lambda$ for $\Lambda$</div><div id="qpPmDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Effective $d_{\text{eff}}$</div><div id="qpDeffDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" id="qpBw1Label">Acceptance (FWHM)</div><div id="qpBw1Display" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" id="qpBw2Label">Acceptance 2 (FWHM)</div><div id="qpBw2Display" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Period Tolerance $\Delta\Lambda$ (FWHM)</div><div id="qpPeriodTolDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Temperature FWHM · $d\lambda/dT$</div><div id="qpTempDisplay" class="metric-value text-xs mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Normalized $\eta_{\text{norm}}$</div><div id="qpEtaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" id="qpPgenLabel">Generated Power</div><div id="qpPgenDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label">Conversion</div><div id="qpConvDisplay" class="metric-value text-sm mt-1">-</div></div>
+                    </div>
+
+                    <div class="relative w-full h-56 bg-white rounded-md border border-slate-200 p-2">
+                        <canvas id="qpSpectrumCanvas" class="w-full h-full"></canvas>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; assumptions</summary>
+                        <ul>
+                            <li>All indices are the <strong>effective</strong> (and group) indices of the interacting waveguide modes, which you supply from a mode solver; the calculator does not assume a material dispersion model. Energy conservation fixes the third wavelength ($1/\lambda_3 = 1/\lambda_1 + 1/\lambda_2$).</li>
+                            <li>QPM: a poling period $\Lambda$ supplies a grating vector $2\pi m/\Lambda$ that cancels $\Delta k$; $m$ is the QPM order (odd orders for a 50 % duty cycle). $d_{\text{eff}} = d_{33}\,\frac{2}{m\pi}|\sin(m\pi D)|$. If $|\Delta k| \approx 0$ the process is modal/birefringent phase-matched and needs no poling.</li>
+                            <li>Acceptance bandwidths come from expanding $\Delta k$ to first order in frequency: $\partial\Delta k/\partial\omega = \Delta n_g/c$ with the group-index combination of the tuned wave. SHG (both fundamental photons tuned): $\Delta n_g = 2(n_{g,3} - n_{g,1})$, giving $0.443\,\lambda_1^2/(L|n_{g,3} - n_{g,1}|)$. SFG, λ₁ tuned at fixed λ₂: $n_{g,3} - n_{g,1}$. DFG, signal tuned at fixed pump: $n_{g,2} - n_{g,1}$ (group-velocity matching of signal and idler makes this very broad and then GVD, not included, sets the width). The FWHM of $\text{sinc}^2$ corresponds to $|\Delta k_r L/2| = 1.392$.</li>
+                            <li>Efficiency: undepleted pump, lossless waveguide, fields normalized to the overlap area $A_{\text{eff}}$ (the usual three-mode overlap integral; roughly the mode area for well-overlapped modes). SHG: $\eta_{\text{norm}} = \frac{8\pi^2 d_{\text{eff}}^2}{\varepsilon_0 c\, n_1^2 n_3 \lambda_1^2 A_{\text{eff}}}$ and $P_3 = \eta_{\text{norm}}P_1^2L^2\,\text{sinc}^2$. SFG/DFG: $\frac{8\pi^2 d_{\text{eff}}^2}{\varepsilon_0 c\, n_1 n_2 n_3 \lambda_{\text{gen}}^2 A_{\text{eff}}}$ with the generated wavelength, and $P_{\text{gen}} = \eta P_a P_b L^2\,\text{sinc}^2$. A warning appears once the conversion exceeds 10 % (depletion).</li>
+                            <li>$d_{33}$ of LiNbO₃ is about 25–27 pm/V at 1064 nm and somewhat lower (≈ 20 pm/V) for 1550 nm SHG by Miller's rule; use the value you trust for your wavelengths. With the defaults (thin-film LN-like modes) $\eta_{\text{norm}} \approx 2100$ %/W/cm², the order of reported TFLN devices.</li>
+                            <li>Temperature: $\partial\Delta k_r/\partial T = 2\pi\sum \pm\frac{1}{\lambda_i}\frac{dn_i}{dT} + \frac{2\pi m}{\Lambda}\alpha_T$ (the second term is the thermal expansion of the poling period). The temperature FWHM is $5.566/(L\,|\partial\Delta k_r/\partial T|)$ and the phase-matched wavelength moves by $-(\partial\Delta k_r/\partial T)/(\partial\Delta k_r/\partial\lambda)$.</li>
                         </ul>
                     </details>
                 </div>
@@ -6049,6 +6224,250 @@
         });
 
 
+        // --- SECTION 5: χ(2) phase matching / QPM (user-supplied mode indices) ---
+        const qpIds = ['ProcessSelect', 'L1Input', 'L2Input', 'L3Input', 'L1Label', 'L2Label', 'L3Label', 'N1Input', 'N2Input', 'N3Input',
+            'Ng1Input', 'Ng2Input', 'Ng3Input', 'LengthInput', 'LengthUnitSelect', 'OrderInput', 'DutyInput', 'PeriodInput', 'PeriodIdealBtn',
+            'D33Input', 'AeffInput', 'PaInput', 'PbInput', 'PaLabel', 'PbLabel', 'PbBox', 'Dn1Input', 'Dn2Input', 'Dn3Input', 'ExpInput',
+            'Warning', 'SpectrumCanvas', 'DkDisplay', 'IdealDisplay', 'LcDisplay', 'ResidualDisplay', 'PmLabel', 'PmDisplay', 'DeffDisplay',
+            'Bw1Label', 'Bw1Display', 'Bw2Label', 'Bw2Display', 'PeriodTolDisplay', 'TempDisplay', 'EtaDisplay', 'PgenLabel', 'PgenDisplay', 'ConvDisplay'];
+        const QP = Object.fromEntries(qpIds.map(id => [id, document.getElementById('qp' + id)]));
+        const EPS0 = 8.8541878128e-12;
+        const SINC2_HALF_WIDTH = 5.56623; // full width of sinc²(ΔkL/2) at half maximum, in units of 1/L
+        let qpIsSyncing = false;
+        let qpPeriodMode = 'ideal'; // 'ideal' follows the indices; 'custom' keeps the period you typed
+        let qpLastState = null;
+
+        // Which wavelengths are inputs, and the labels, for each process
+        const QP_PROCESS = {
+            shg: { labels: ['λ₁ fundamental (nm)', 'λ₂ = λ₁ (nm)', 'λ₃ second harmonic (nm)'], free: [true, false, false],
+                pa: 'Fundamental Power P₁ (mW)', pb: null, gen: 'SH Power P₃', tuned: 'λ₁' },
+            sfg: { labels: ['λ₁ input (nm)', 'λ₂ input (nm)', 'λ₃ sum frequency (nm)'], free: [true, true, false],
+                pa: 'Power P₁ (mW)', pb: 'Power P₂ (mW)', gen: 'Sum Power P₃', tuned: 'λ₁ (λ₂ fixed)' },
+            dfg: { labels: ['λ₁ signal (nm)', 'λ₂ idler (nm)', 'λ₃ pump (nm)'], free: [true, false, true],
+                pa: 'Pump Power P₃ (mW)', pb: 'Signal Power P₁ (mW)', gen: 'Idler Power P₂', tuned: 'λ₁ signal (pump fixed)' }
+        };
+
+        function qpApplyProcessUI() {
+            const cfg = QP_PROCESS[QP.ProcessSelect.value];
+            [QP.L1Label, QP.L2Label, QP.L3Label].forEach((el, i) => { el.textContent = cfg.labels[i]; });
+            [QP.L1Input, QP.L2Input, QP.L3Input].forEach((el, i) => {
+                el.readOnly = !cfg.free[i];
+                el.classList.toggle('bg-slate-100', !cfg.free[i]);
+            });
+            const shg = QP.ProcessSelect.value === 'shg';
+            [QP.N2Input, QP.Ng2Input, QP.Dn2Input].forEach(el => { el.readOnly = shg; el.classList.toggle('bg-slate-100', shg); });
+            QP.PaLabel.textContent = cfg.pa;
+            QP.PbBox.classList.toggle('invisible', !cfg.pb);
+            if (cfg.pb) QP.PbLabel.textContent = cfg.pb;
+            QP.PgenLabel.textContent = cfg.gen;
+        }
+
+        const qpNum = (el) => { const v = parseFloat(el.value); return isNaN(v) ? NaN : v; };
+
+        // Set a label that sits in an uppercase container without capitalising Greek letters
+        // or µ (λ₁ would otherwise read Λ₁). The text is our own, so innerHTML is safe here.
+        function setCaseSafeLabel(el, text) {
+            el.innerHTML = text.replace(/([α-ωµ]+)/g, '<span style="text-transform:none">$1</span>');
+        }
+
+        function updateQpm(source = 'inputs') {
+            if (qpIsSyncing) return;
+            qpIsSyncing = true;
+            qpLastState = null;
+            try {
+                const proc = QP.ProcessSelect.value;
+                const cfg = QP_PROCESS[proc];
+                const warnings = [];
+
+                // Wavelengths (m), energy conservation fixes the derived one
+                let l1 = qpNum(QP.L1Input) * 1e-9, l2 = qpNum(QP.L2Input) * 1e-9, l3 = qpNum(QP.L3Input) * 1e-9;
+                if (proc === 'shg') {
+                    if (!(l1 > 0)) return;
+                    l2 = l1; l3 = l1 / 2;
+                    QP.L2Input.value = fmt(l2 * 1e9); QP.L3Input.value = fmt(l3 * 1e9);
+                } else if (proc === 'sfg') {
+                    if (!(l1 > 0) || !(l2 > 0)) return;
+                    l3 = 1 / (1 / l1 + 1 / l2);
+                    QP.L3Input.value = fmt(l3 * 1e9);
+                } else {
+                    if (!(l1 > 0) || !(l3 > 0)) return;
+                    if (!(l1 > l3)) {
+                        QP.Warning.textContent = 'DFG needs the signal wavelength λ₁ to be longer than the pump λ₃.';
+                        QP.Warning.className = 'phys-warning';
+                        return;
+                    }
+                    l2 = 1 / (1 / l3 - 1 / l1);
+                    QP.L2Input.value = fmt(l2 * 1e9);
+                }
+
+                // Mode indices (SHG: waves 1 and 2 are the same mode)
+                if (proc === 'shg') { QP.N2Input.value = QP.N1Input.value; QP.Ng2Input.value = QP.Ng1Input.value; QP.Dn2Input.value = QP.Dn1Input.value; }
+                const n1 = qpNum(QP.N1Input), n2 = qpNum(QP.N2Input), n3 = qpNum(QP.N3Input);
+                const g1 = qpNum(QP.Ng1Input), g2 = qpNum(QP.Ng2Input), g3 = qpNum(QP.Ng3Input);
+                if ([n1, n2, n3].some(v => !(v > 0))) return;
+
+                const L = qpNum(QP.LengthInput) * LENGTH_SI[QP.LengthUnitSelect.value];
+                const m = parseInt(QP.OrderInput.value, 10);
+                const duty = qpNum(QP.DutyInput);
+                if (!(L > 0) || !(m >= 1) || !(duty >= 0 && duty <= 1)) return;
+
+                // Phase mismatch and QPM period
+                const dk = 2 * Math.PI * (n3 / l3 - n1 / l1 - n2 / l2);
+                const sgn = dk >= 0 ? 1 : -1;
+                const idealPeriod = Math.abs(dk) > 0 ? 2 * Math.PI * m / Math.abs(dk) : Infinity;
+                if (source === 'ideal' || qpPeriodMode === 'ideal') {
+                    qpPeriodMode = 'ideal';
+                    QP.PeriodInput.value = isFinite(idealPeriod) ? fmt(idealPeriod * 1e6) : '';
+                }
+                const period = qpPeriodMode === 'ideal' && isFinite(idealPeriod) ? idealPeriod : qpNum(QP.PeriodInput) * 1e-6;
+                const dkr = period > 0 ? dk - sgn * 2 * Math.PI * m / period : dk;
+                const x = dkr * L / 2;
+                const sinc2 = Math.abs(x) < 1e-9 ? 1 : (Math.sin(x) / x) ** 2;
+
+                QP.DkDisplay.textContent = `${fmt(dk * 1e-6, 4)} /µm`;
+                QP.IdealDisplay.textContent = isFinite(idealPeriod) ? fmtLen(idealPeriod, 5) : '∞ (no poling)';
+                QP.LcDisplay.textContent = Math.abs(dk) > 0 ? fmtLen(Math.PI / Math.abs(dk), 4) : '∞';
+                QP.ResidualDisplay.textContent = `${fmt(x, 3)} · ${fmt(100 * sinc2, 4)} %`;
+                QP.PeriodTolDisplay.textContent = isFinite(idealPeriod) ? fmtLen(SINC2_HALF_WIDTH * period ** 2 / (2 * Math.PI * m * L), 3) : '-';
+                if (Math.abs(dk) * L < 2 * Math.PI) warnings.push('|Δk| L < 2π: the process is essentially phase-matched without poling (modal or birefringent phase matching).');
+
+                // Acceptance bandwidths: ∂Δk/∂ω = Δn_g / c for the tuned wave
+                const fwhmLambda = (lam, dng) => Math.abs(dng) > 0 ? SINC2_HALF_WIDTH / L * lam ** 2 / (2 * Math.PI * Math.abs(dng)) : Infinity;
+                let tunedLam, dngT, bw2, bw2Label;
+                if (proc === 'shg') {
+                    tunedLam = l1; dngT = 2 * (g3 - g1);
+                    bw2Label = 'SH-side Width Δλ₃ = Δλ₁/2'; bw2 = fwhmLambda(l1, dngT) / 2;
+                } else if (proc === 'sfg') {
+                    tunedLam = l1; dngT = g3 - g1;
+                    bw2Label = 'λ₂ Acceptance (λ₁ fixed)'; bw2 = fwhmLambda(l2, g3 - g2);
+                } else {
+                    tunedLam = l1; dngT = g2 - g1;
+                    bw2Label = 'Pump λ₃ Acceptance (signal fixed)'; bw2 = fwhmLambda(l3, g3 - g2);
+                }
+                const bw1 = fwhmLambda(tunedLam, dngT);
+                setCaseSafeLabel(QP.Bw1Label, `${cfg.tuned} Acceptance`);
+                setCaseSafeLabel(QP.Bw2Label, bw2Label);
+                const withGhz = (dl, lam) => isFinite(dl) ? `${fmtLen(dl, 3)} · ${fmtFreq(C * dl / lam ** 2, 3)}` : '∞ (see note)';
+                QP.Bw1Display.textContent = [g1, g2, g3].some(isNaN) ? '-' : withGhz(bw1, tunedLam);
+                QP.Bw2Display.textContent = [g1, g2, g3].some(isNaN) ? '-' : withGhz(bw2, proc === 'sfg' ? l2 : proc === 'dfg' ? l3 : l3);
+                if (Math.abs(dngT) < 1e-3 && ![g1, g2, g3].some(isNaN)) warnings.push('The tuned waves are group-velocity matched: the first-order acceptance diverges and group-velocity dispersion (not included) sets the real bandwidth.');
+
+                // Phase-matched wavelength of the tuned wave for the chosen period
+                const dDkDl = -2 * Math.PI * dngT / tunedLam ** 2; // ∂Δk/∂λ_tuned (1/m²)
+                let lamPm = NaN;
+                if (Math.abs(dDkDl) > 0 && period > 0) lamPm = tunedLam - dkr / dDkDl;
+                setCaseSafeLabel(QP.PmLabel, `Phase-Matched ${proc === 'dfg' ? 'Signal λ₁' : 'λ₁'} for Λ`);
+                QP.PmDisplay.textContent = isFinite(lamPm) ? `${fmt(lamPm * 1e9, 6)} nm` : '-';
+
+                // Temperature tuning (only when dn/dT values are given)
+                const dnv = [QP.Dn1Input, QP.Dn2Input, QP.Dn3Input].map(qpNum);
+                if (!dnv.some(isNaN)) {
+                    const alphaT = isNaN(qpNum(QP.ExpInput)) ? 0 : qpNum(QP.ExpInput);
+                    const dDkdT = 2 * Math.PI * (dnv[2] / l3 - dnv[0] / l1 - dnv[1] / l2) + (period > 0 ? sgn * 2 * Math.PI * m / period * alphaT : 0);
+                    const dT = Math.abs(dDkdT) > 0 ? SINC2_HALF_WIDTH / (L * Math.abs(dDkdT)) : Infinity;
+                    const dLdT = Math.abs(dDkDl) > 0 ? -dDkdT / dDkDl : NaN;
+                    QP.TempDisplay.textContent = `${isFinite(dT) ? fmt(dT, 3) + ' K' : '∞'} · ${isFinite(dLdT) ? fmt(dLdT * 1e9, 3) + ' nm/K' : '-'}`;
+                } else {
+                    QP.TempDisplay.textContent = 'enter dn/dT';
+                }
+
+                // Nonlinear efficiency (undepleted, lossless)
+                const d33 = qpNum(QP.D33Input) * 1e-12;
+                const deff = d33 * 2 / (m * Math.PI) * Math.abs(Math.sin(m * Math.PI * duty));
+                const A = qpNum(QP.AeffInput) * 1e-12;
+                QP.DeffDisplay.textContent = isNaN(deff) ? '-' : `${fmt(deff * 1e12, 3)} pm/V`;
+                if (deff === 0) warnings.push(`d_eff = 0: order m = ${m} vanishes at duty cycle ${fmt(duty, 2)}.`);
+                let etaNorm = NaN, pGen = NaN, conv = NaN;
+                if (deff > 0 && A > 0) {
+                    const lamGen = proc === 'dfg' ? l2 : l3;
+                    const pref = 8 * Math.PI ** 2 * deff ** 2 / (EPS0 * C * A);
+                    etaNorm = proc === 'shg' ? pref / (n1 ** 2 * n3 * l1 ** 2) : pref / (n1 * n2 * n3 * lamGen ** 2);
+                    const Pa = qpNum(QP.PaInput) * 1e-3, Pb = qpNum(QP.PbInput) * 1e-3;
+                    if (proc === 'shg' && Pa > 0) { pGen = etaNorm * Pa ** 2 * L ** 2 * sinc2; conv = pGen / Pa; }
+                    else if (proc !== 'shg' && Pa > 0 && Pb > 0) { pGen = etaNorm * Pa * Pb * L ** 2 * sinc2; conv = pGen / Math.min(Pa, Pb); }
+                }
+                // %/(W·cm²): P_gen / (P_a P_b L²), with P_a = P_b = P₁ for SHG
+                QP.EtaDisplay.textContent = isFinite(etaNorm) ? `${fmt(etaNorm * 1e-4 * 100, 4)} %/W/cm²` : '-';
+                QP.PgenDisplay.textContent = isFinite(pGen) ? fmtPower(pGen, 4) : '-';
+                QP.ConvDisplay.textContent = isFinite(conv) ? `${fmt(100 * conv, 3)} %` : '-';
+                if (conv > 0.1) warnings.push(`Conversion ≈ ${fmt(100 * conv, 3)} %: beyond ~10 % the undepleted-pump result overestimates the output.`);
+
+                if (warnings.length) {
+                    QP.Warning.innerHTML = warnings.map(t => `• ${t}`).join('<br>');
+                    QP.Warning.className = 'phys-warning is-info';
+                } else {
+                    QP.Warning.className = 'phys-warning is-info hidden';
+                }
+
+                qpLastState = { tunedLam, dkr, dDkDl, L, lamPm, bw1, label: cfg.tuned };
+            } finally {
+                qpIsSyncing = false;
+                drawQpmSpectrum();
+            }
+        }
+
+        // Normalized efficiency sinc²(Δk_r(λ) L/2) versus the tuned wavelength (first-order Δk)
+        function drawQpmSpectrum() {
+            if (!QP.SpectrumCanvas) return;
+            const prep = prepareCanvas(QP.SpectrumCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = qpLastState;
+            if (!s || !isFinite(s.bw1) || !(Math.abs(s.dDkDl) > 0)) {
+                ctx.fillStyle = '#767676';
+                ctx.font = '11px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(s ? 'Tuning curve needs group indices with a non-zero group-index difference.' : 'Enter wavelengths and indices.', W / 2, H / 2);
+                return;
+            }
+            const box = { padL: 46, padR: 12, padT: 12, padB: 36 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const lam0 = s.tunedLam * 1e9;
+            const pm = isFinite(s.lamPm) ? s.lamPm * 1e9 : lam0;
+            const fw = s.bw1 * 1e9;
+            const center = (lam0 + pm) / 2;
+            const half = Math.max(3 * fw, Math.abs(pm - lam0) / 2 + 2 * fw);
+            const xToPx = (nm) => box.padL + (nm - center + half) / (2 * half) * box.plotW;
+            const yToPx = (v) => box.padT + (1 - v) * box.plotH;
+            const eff = (nm) => {
+                const xx = (s.dkr + s.dDkDl * (nm - lam0) * 1e-9) * s.L / 2;
+                return Math.abs(xx) < 1e-9 ? 1 : (Math.sin(xx) / xx) ** 2;
+            };
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let i = 0; i <= 800; i++) {
+                const nm = center - half + (2 * half * i) / 800;
+                if (i === 0) ctx.moveTo(xToPx(nm), yToPx(eff(nm))); else ctx.lineTo(xToPx(nm), yToPx(eff(nm)));
+            }
+            ctx.stroke();
+            // Operating wavelength
+            ctx.fillStyle = '#9E403D';
+            ctx.beginPath();
+            ctx.arc(xToPx(lam0), yToPx(eff(lam0)), 4, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#9E403D';
+            ctx.setLineDash([5, 2]);
+            ctx.beginPath();
+            ctx.moveTo(xToPx(lam0), box.padT);
+            ctx.lineTo(xToPx(lam0), box.padT + box.plotH);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            const xTicks = niceTicks(center - half, center + half, 6).map(v => [xToPx(v), fmt(v, 6)]);
+            const yTicks = [0, 0.25, 0.5, 0.75, 1].map(v => [yToPx(v), `${v * 100}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, `Tuned wavelength ${s.label} (nm); dashed ● = current λ`, 'sinc² efficiency (%)');
+        }
+
+        QP.ProcessSelect.addEventListener('change', () => { qpApplyProcessUI(); updateQpm('inputs'); });
+        ['L1Input', 'L2Input', 'L3Input', 'N1Input', 'N2Input', 'N3Input', 'Ng1Input', 'Ng2Input', 'Ng3Input', 'LengthInput', 'OrderInput',
+            'DutyInput', 'D33Input', 'AeffInput', 'PaInput', 'PbInput', 'Dn1Input', 'Dn2Input', 'Dn3Input', 'ExpInput']
+            .forEach(id => QP[id].addEventListener('input', () => updateQpm('inputs')));
+        QP.LengthUnitSelect.addEventListener('change', () => updateQpm('inputs'));
+        QP.PeriodInput.addEventListener('input', () => { qpPeriodMode = 'custom'; updateQpm('period'); });
+        QP.PeriodIdealBtn.addEventListener('click', () => updateQpm('ideal'));
+        qpApplyProcessUI();
+
         // ==========================================
         // SECTION 6: GAUSSIAN BEAM PROPAGATION ENGINE
         // ==========================================
@@ -7083,6 +7502,7 @@
             updatePowerDb('p');
             updatePowerRatio('ratio');
             updatePulsedSource('inputs');
+            updateQpm('inputs');
             updateGaussianBeam('w0');
         }
 
@@ -7317,6 +7737,7 @@
             drawKerrCombSpectrum();
             drawBraggSpectrum();
             drawGratingCouplerSpectrum();
+            drawQpmSpectrum();
         });
 
         // ==========================================
@@ -7364,6 +7785,8 @@
             '#power': '#power-energy',
             '#db': '#power-energy',
             '#dbm': '#power-energy',
+            '#shg': '#qpm',
+            '#chi2': '#qpm',
             '#grating-coupler': '#grating-coupler',
             '#fiber': '#mode-coupling'
         };

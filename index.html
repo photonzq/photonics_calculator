@@ -593,28 +593,12 @@
 
                             <!-- 1. Global Electromagnetic & IR Spectrum Bar (100 nm to 1 mm / 0.3 THz) -->
                             <div>
-                                <div class="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1 px-1">
-                                    <span>UV</span>
-                                    <span class="text-cyan-700 font-black">VIS</span>
-                                    <span class="text-rose-700">NIR</span>
-                                    <span class="text-orange-700 font-black">SWIR</span>
-                                    <span class="text-amber-700">MWIR</span>
-                                    <span class="text-emerald-700">LWIR</span>
-                                    <span class="text-teal-700">FIR / THz</span>
-                                </div>
+                                <!-- Band names and ticks are placed by JS at their log-scale positions -->
+                                <div id="emBandLabels" class="relative h-4 mb-1 text-[9px] sm:text-[10px] font-bold tracking-tight"></div>
                                 <div class="em-spectrum-bar-container">
                                     <div id="spectrumPointer" class="spectrum-pointer" style="left: 29.8%;"></div>
                                 </div>
-                                <div class="flex justify-between text-[9px] font-mono text-slate-400 mt-1 px-0.5">
-                                    <span>100nm</span>
-                                    <span>380nm</span>
-                                    <span>780nm</span>
-                                    <span>1.4µm</span>
-                                    <span>3µm</span>
-                                    <span>8µm</span>
-                                    <span>15µm</span>
-                                    <span>1mm (0.3THz)</span>
-                                </div>
+                                <div id="emTickLabels" class="relative h-3.5 mt-1 text-[9px] font-mono text-slate-400"></div>
                             </div>
 
                             <!-- 2. Dedicated Visible Color Spectrum (380 - 780 nm) with RGB Hex tracking -->
@@ -622,17 +606,11 @@
                                 <div class="text-[10px] font-bold text-slate-500 mb-1 px-1">
                                     <span>Visible Spectrum (380 – 780 nm)</span>
                                 </div>
-                                <div class="spectrum-bar-container">
+                                <!-- Gradient is generated from nmToRGB() so it matches the swatch -->
+                                <div id="visSpectrumBar" class="spectrum-bar-container">
                                     <div id="visSpectrumPointer" class="vis-spectrum-pointer" style="left: 100%; opacity: 0.4;"></div>
                                 </div>
-                                <div class="flex justify-between text-[9px] font-mono text-slate-400 mt-1 px-0.5">
-                                    <span>380nm (Violet)</span>
-                                    <span>480nm</span>
-                                    <span>530nm</span>
-                                    <span>580nm</span>
-                                    <span>650nm</span>
-                                    <span>780nm (Red)</span>
-                                </div>
+                                <div id="visTickLabels" class="relative h-3.5 mt-1 text-[9px] font-mono text-slate-400"></div>
                             </div>
                         </div>
 
@@ -3422,21 +3400,72 @@
             }
 
             // 1. Calculate Logarithmic Full Spectrum Pointer (100 nm to 1,000,000 nm / 1 mm)
-            let logPercent;
-            if (nm <= 100) logPercent = 0.0;
-            else if (nm >= 1000000) logPercent = 100.0;
-            else logPercent = ((Math.log10(nm) - 2.0) / 4.0) * 100.0;
-            
-            if (spectrumPointer) spectrumPointer.style.left = `${logPercent}%`;
+            // Same mappings as the scale labels (emPercent / visPercent below)
+            if (spectrumPointer) spectrumPointer.style.left = `${emPercent(nm)}%`;
 
             // 2. Calculate Visible Rainbow Pointer (380 to 780 nm)
             if (visSpectrumPointer) {
-                let visPercent = ((Math.max(380, Math.min(780, nm)) - 380) / (780 - 380)) * 100;
-                visSpectrumPointer.style.left = `${visPercent}%`;
+                visSpectrumPointer.style.left = `${visPercent(nm)}%`;
                 visSpectrumPointer.style.opacity = (nm >= 380 && nm <= 780) ? '1' : '0.4';
             }
         }
 
+
+        // --- Spectrum bar scales ---
+        // The EM bar is logarithmic from 100 nm to 1 mm and the visible bar linear from
+        // 380 to 780 nm; both labels and pointer use the same mapping. The labels used to
+        // be spread evenly with flex justify-between, which put e.g. "3 µm" where 7 µm
+        // actually is and printed "SWIR" over the MWIR colour.
+        const emPercent = (nm) => Math.max(0, Math.min(100, (Math.log10(nm) - 2) / 4 * 100));
+        const visPercent = (nm) => (Math.max(380, Math.min(780, nm)) - 380) / 4;
+
+        function buildSpectrumScales() {
+            const place = (container, pct, text, cls = '') => {
+                const span = document.createElement('span');
+                span.textContent = text;
+                span.className = `absolute whitespace-nowrap ${cls}`;
+                span.style.left = `${pct}%`;
+                // Keep the end labels inside the bar
+                span.style.transform = pct <= 0.5 ? 'none' : pct >= 99.5 ? 'translateX(-100%)' : 'translateX(-50%)';
+                container.appendChild(span);
+            };
+            const bands = [
+                [100, 380, 'UV', 'text-violet-700'], [380, 780, 'VIS', 'text-cyan-700 font-black'],
+                [780, 1400, 'NIR', 'text-rose-700'], [1400, 3000, 'SWIR', 'text-orange-700 font-black'],
+                [3000, 8000, 'MWIR', 'text-amber-700'], [8000, 15000, 'LWIR', 'text-emerald-700'],
+                [15000, 1e6, 'FIR / THz', 'text-teal-700']
+            ];
+            const bandBox = document.getElementById('emBandLabels');
+            const tickBox = document.getElementById('emTickLabels');
+            if (bandBox && tickBox) {
+                bandBox.innerHTML = '';
+                tickBox.innerHTML = '';
+                // Band name at the log-centre of each band
+                bands.forEach(([a, b, name, cls]) => place(bandBox, emPercent(Math.sqrt(a * b)), name, cls));
+                // Band-edge ticks; the crowded middle ones are hidden on narrow screens
+                [[100, '100nm', ''], [380, '380nm', 'hidden sm:block'], [780, '780nm', 'hidden sm:block'], [1400, '1.4µm', ''],
+                    [3000, '3µm', 'hidden sm:block'], [8000, '8µm', ''], [15000, '15µm', 'hidden sm:block'],
+                    [1e5, '100µm', 'hidden sm:block'], [1e6, '1mm (0.3THz)', '']]
+                    .forEach(([nm, text, cls]) => place(tickBox, emPercent(nm), text, cls));
+            }
+            // Visible bar: gradient sampled from nmToRGB so the colour under the pointer is the swatch colour
+            const visBar = document.getElementById('visSpectrumBar');
+            if (visBar) {
+                const stops = [];
+                for (let nm = 380; nm <= 780; nm += 5) {
+                    const rgb = nmToRGB(nm);
+                    stops.push(`${rgb ? rgb.hex : '#000000'} ${visPercent(nm)}%`);
+                }
+                visBar.style.background = `linear-gradient(90deg, ${stops.join(', ')})`;
+            }
+            const visBox = document.getElementById('visTickLabels');
+            if (visBox) {
+                visBox.innerHTML = '';
+                [[380, '380nm'], [450, '450'], [500, '500'], [550, '550'], [600, '600'], [650, '650'], [700, '700'], [780, '780nm']]
+                    .forEach(([nm, text]) => place(visBox, visPercent(nm), text));
+            }
+        }
+        buildSpectrumScales();
 
         // --- SECTION 1: Spectral & Frequency Domain Logic ---
         function updateNmThzWavenumber(source) {
@@ -4126,7 +4155,10 @@
 
             const in_arrow_x = in_x / 2;
             const in_arrow_y = in_y / 2;
-            svgIncidentArrow.setAttribute('transform', `translate(${in_arrow_x}, ${in_arrow_y}) rotate(${theta_i_deg})`);
+            // Arrowheads point along +x; SVG rotate(a) turns them clockwise (y is down), so a is the
+            // ray direction from +x: incident (sin θi, cos θi) -> 90° - θi, reflected (sin θi, -cos θi)
+            // -> θi - 90°, transmitted (sin θt, cos θt) -> 90° - θt
+            svgIncidentArrow.setAttribute('transform', `translate(${in_arrow_x}, ${in_arrow_y}) rotate(${90 - theta_i_deg})`);
 
             const ref_x = rayLength * Math.sin(theta_i_rad);
             const ref_y = -rayLength * Math.cos(theta_i_rad);
@@ -4137,7 +4169,7 @@
 
             const ref_arrow_x = ref_x / 2;
             const ref_arrow_y = ref_y / 2;
-            svgReflectedArrow.setAttribute('transform', `translate(${ref_arrow_x}, ${ref_arrow_y}) rotate(${-theta_i_deg})`);
+            svgReflectedArrow.setAttribute('transform', `translate(${ref_arrow_x}, ${ref_arrow_y}) rotate(${theta_i_deg - 90})`);
             svgReflectedArrow.setAttribute('opacity', Math.max(0.2, res.R_unpol));
 
             const arcRadius = 45;
@@ -4179,7 +4211,7 @@
 
                 const tr_arrow_x = tr_x / 2;
                 const tr_arrow_y = tr_y / 2;
-                svgTransmittedArrow.setAttribute('transform', `translate(${tr_arrow_x}, ${tr_arrow_y}) rotate(${180 - res.theta_t_deg})`);
+                svgTransmittedArrow.setAttribute('transform', `translate(${tr_arrow_x}, ${tr_arrow_y}) rotate(${90 - res.theta_t_deg})`);
                 svgTransmittedArrow.setAttribute('opacity', Math.max(0.2, res.T_unpol));
 
                 const trArcRadius = 45;
@@ -4214,8 +4246,8 @@
             const h = rect.height;
             const padL = 52;
             const padR = 25;
-            const padT = 25;
-            const padB = 32;
+            const padT = 30;   // room for the legend above the plot, clear of the curves
+            const padB = 40;   // tick labels + axis title
             const plotW = w - padL - padR;
             const plotH = h - padT - padB;
 
@@ -4247,10 +4279,31 @@
                 ctx.moveTo(xPos, padT);
                 ctx.lineTo(xPos, padT + plotH);
                 ctx.stroke();
-                if (deg % 30 === 0 && deg > 0) {
+                if (deg % 30 === 0) {
                     ctx.fillText(`${deg}°`, xPos, padT + plotH + 6);
                 }
             }
+            ctx.fillText('Angle of incidence θᵢ', padL + plotW / 2, padT + plotH + 22);
+
+            // Angle markers are labelled on opposite sides of their lines (θ_B < θ_c always),
+            // staggered and on a white backing, so close angles such as Si→air
+            // (θ_B = 16.2°, θ_c = 16.8°) stay readable.
+            const markerLabel = (text, x, y, color, preferLeft) => {
+                ctx.save();
+                ctx.font = 'bold 9px sans-serif';
+                const tw = ctx.measureText(text).width;
+                let left = preferLeft ? x - 4 - tw : x + 4;
+                if (left < padL + 2) left = x + 4;
+                if (left + tw > padL + plotW - 2) left = x - 4 - tw;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillRect(left - 2, y - 6, tw + 4, 12);
+                ctx.fillStyle = color;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, left, y);
+                ctx.restore();
+            };
+            const markerJobs = [];
 
             const theta_b = Math.atan(n2 / n1) * 180.0 / Math.PI;
             if (theta_b > 0 && theta_b < 90) {
@@ -4263,10 +4316,8 @@
                 ctx.moveTo(xB, padT);
                 ctx.lineTo(xB, padT + plotH);
                 ctx.stroke();
-                ctx.fillStyle = '#b45309';
-                ctx.font = 'bold 9px sans-serif';
-                ctx.fillText(`θ_B (${theta_b.toFixed(1)}°)`, xB, padT + 8);
                 ctx.restore();
+                markerJobs.push(() => markerLabel(`θ_B ${theta_b.toFixed(1)}°`, xB, padT + 10, '#b45309', true));
             }
 
             if (n1 > n2) {
@@ -4280,10 +4331,8 @@
                 ctx.moveTo(xC, padT);
                 ctx.lineTo(xC, padT + plotH);
                 ctx.stroke();
-                ctx.fillStyle = '#dc2626';
-                ctx.font = 'bold 9px sans-serif';
-                ctx.fillText(`θ_c (${theta_c.toFixed(1)}°)`, xC, padT + 22);
                 ctx.restore();
+                markerJobs.push(() => markerLabel(`θ_c ${theta_c.toFixed(1)}°`, xC, padT + 24, '#dc2626', false));
             }
 
             ctx.beginPath();
@@ -4335,39 +4384,32 @@
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // Clean Legend in top-right
-            const legX = padL + plotW - 140;
-            const legY = padT + 6;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-            ctx.strokeStyle = '#cbd5e1';
-            ctx.lineWidth = 1;
-            ctx.fillRect(legX - 6, legY - 4, 142, 38);
-            ctx.strokeRect(legX - 6, legY - 4, 142, 38);
+            ctx.restore();
 
+            // Marker labels on top of the curves, legend in the top margin outside the plot
+            markerJobs.forEach(job => job());
+            ctx.save();
             ctx.font = 'bold 9.5px JetBrains Mono, monospace';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-
-            // Rs TE
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(legX, legY + 8);
-            ctx.lineTo(legX + 18, legY + 8);
-            ctx.stroke();
-            ctx.fillStyle = '#0891b2';
-            ctx.fillText('R_s (s-pol / TE)', legX + 24, legY + 8);
-
-            // Rp TM
-            ctx.strokeStyle = '#f97316';
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(legX, legY + 24);
-            ctx.lineTo(legX + 18, legY + 24);
-            ctx.stroke();
-            ctx.fillStyle = '#ea580c';
-            ctx.fillText('R_p (p-pol / TM)', legX + 24, legY + 24);
-
+            const legendItems = [['R_s (s-pol / TE)', '#06b6d4', '#0891b2'], ['R_p (p-pol / TM)', '#f97316', '#ea580c']];
+            let legX = padL + plotW;
+            const legY = padT - 14;
+            for (let k = legendItems.length - 1; k >= 0; k--) {
+                const [text, lineColor, textColor] = legendItems[k];
+                legX -= ctx.measureText(text).width + 30;
+                ctx.strokeStyle = lineColor;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(legX, legY);
+                ctx.lineTo(legX + 18, legY);
+                ctx.stroke();
+                ctx.fillStyle = textColor;
+                ctx.fillText(text, legX + 23, legY);
+            }
+            ctx.fillStyle = '#64748b';
+            ctx.textAlign = 'left';
+            ctx.fillText('Reflectance', padL, legY);
             ctx.restore();
         }
 
@@ -4926,13 +4968,25 @@
             // Span: three null half-widths on either side of λ_B, in nm
             const spanNm = 3 * s.toDlambda(s.deltaNull) * 1e9;
             const xToPx = (dnm) => box.padL + (dnm + spanNm) / (2 * spanNm) * box.plotW;
-            const yToPx = (R) => box.padT + (1 - R) * box.plotH;
+            // Weak gratings (R_max of a few %) would be a flat line on a fixed 0-100 % axis
+            const Rmax = Math.tanh(s.kappa * s.L) ** 2;
+            let topPct = 100;
+            if (Rmax < 0.6) {
+                const t = niceTicks(0, Rmax * 112, 5);
+                const step = t[1] - t[0];
+                topPct = Math.ceil(Rmax * 105 / step) * step;
+            }
+            const yToPx = (R) => box.padT + (1 - Math.min(R * 100, topPct) / topPct) * box.plotH;
+
+            // Resolve the sidelobes: their period is ≈ λ_B² / (2 n_g L); ~16 samples per fringe
+            const fringeNm = s.lambdaB ** 2 / (2 * s.ng * s.L) * 1e9;
+            const nSamples = Math.min(8000, Math.max(600, Math.ceil(16 * 2 * spanNm / fringeNm)));
 
             ctx.strokeStyle = '#385C9E';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            for (let i = 0; i <= 600; i++) {
-                const dnm = -spanNm + (2 * spanNm * i) / 600;
+            for (let i = 0; i <= nSamples; i++) {
+                const dnm = -spanNm + (2 * spanNm * i) / nSamples;
                 const delta = -2 * Math.PI * s.ng * (dnm * 1e-9) / s.lambdaB ** 2;
                 const x = xToPx(dnm), y = yToPx(braggReflectivity(s.kappa, delta, s.L));
                 if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
@@ -4952,7 +5006,7 @@
             ctx.setLineDash([]);
 
             const xTicks = niceTicks(-spanNm, spanNm).map(v => [xToPx(v), fmt(v, 3)]);
-            const yTicks = [0, 0.2, 0.4, 0.6, 0.8, 1].map(r => [yToPx(r), `${Math.round(r * 100)}`]);
+            const yTicks = niceTicks(0, topPct, 5).map(v => [yToPx(v / 100), fmt(v, 3)]);
             drawPlotFrame(ctx, box, xTicks, yTicks, `λ − λ_B (nm), λ_B = ${fmt(s.lambdaB * 1e9, 5)} nm; dashed: stop-band edges`, 'Reflectivity R (%)');
         }
 
@@ -5182,13 +5236,18 @@
             const spanNm = 4 * s.halfBw1 * 1e9;
             const yMax = Math.ceil(peakDb), yMin = yMax - 10;
             const xToPx = (dnm) => box.padL + (dnm + spanNm) / (2 * spanNm) * box.plotW;
-            const yToPx = (db) => box.padT + (yMax - Math.max(yMin, Math.min(yMax, db))) / (yMax - yMin) * box.plotH;
+            // No clamping: the curve is clipped at the plot edge instead of running along a false floor
+            const yToPx = (db) => box.padT + (yMax - db) / (yMax - yMin) * box.plotH;
             const k = Math.PI * s.wx * s.slope / s.lambda ** 2; // 1/m
 
             // 1-dB band
             ctx.fillStyle = 'rgba(238, 214, 113, 0.24)';
             ctx.fillRect(xToPx(-s.halfBw1 * 1e9), box.padT, xToPx(s.halfBw1 * 1e9) - xToPx(-s.halfBw1 * 1e9), box.plotH);
 
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(box.padL, box.padT, box.plotW, box.plotH);
+            ctx.clip();
             ctx.strokeStyle = '#385C9E';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
@@ -5198,6 +5257,7 @@
                 if (i === 0) ctx.moveTo(xToPx(dnm), yToPx(db)); else ctx.lineTo(xToPx(dnm), yToPx(db));
             }
             ctx.stroke();
+            ctx.restore();
 
             const xTicks = niceTicks(-spanNm, spanNm).map(v => [xToPx(v), fmt(v, 3)]);
             const yTicks = niceTicks(yMin, yMax, 5).map(v => [yToPx(v), fmt(v, 3)]);
@@ -5551,16 +5611,22 @@
             const muSpan = Math.max(10, Math.ceil(2 * Math.acosh(Math.sqrt(1e6)) / (Math.PI * s.tau0 * s.D1)));
             const xSpanHz = muSpan * s.fsr_hz;
             const xToPx = (fHz) => padL + (fHz + xSpanHz) / (2 * xSpanHz) * plotW;
-            const yToPx = (dbm) => padT + (yMax - Math.max(yMin, Math.min(yMax, dbm))) / (yMax - yMin) * plotH;
+            // No clamping: values below the axis are clipped away rather than drawn as a false floor
+            const yToPx = (dbm) => padT + (yMax - dbm) / (yMax - yMin) * plotH;
 
             // Axis unit: THz or GHz offset from the pump
             const useThz = xSpanHz >= 1e12;
             const xUnit = useThz ? 1e12 : 1e9;
 
             // Comb lines (sticks) or, when too dense to resolve, the envelope only
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(padL, padT, plotW, plotH);
+            ctx.clip();
             ctx.strokeStyle = '#385C9E';
             ctx.lineWidth = 1.5;
-            if (2 * muSpan + 1 <= plotW / 2) {
+            const linesDrawn = 2 * muSpan + 1 <= plotW / 2;
+            if (linesDrawn) {
                 ctx.beginPath();
                 for (let mu = -muSpan; mu <= muSpan; mu++) {
                     if (mu === 0) continue;
@@ -5582,6 +5648,12 @@
             }
             ctx.stroke();
             ctx.setLineDash([]);
+            ctx.restore();
+            if (!linesDrawn) {
+                ctx.fillStyle = '#767676';
+                ctx.textAlign = 'right';
+                ctx.fillText(`${2 * muSpan + 1} lines at ${fmtFreq(s.fsr_hz, 3)} spacing: too dense to draw, envelope only`, padL + plotW - 6, padT + 12);
+            }
 
             // Pump position
             ctx.strokeStyle = '#4D4D4D';
@@ -5775,6 +5847,10 @@
         let gbCurrentTab = 'caustic'; // 'caustic', 'intensity', 'lens'
         let gbIsDragging = false;
 
+        // Display labels for unit-select values ('um' is the option value, µm what is shown)
+        const UNIT_LABELS = { um: 'µm', urad: 'µrad', deg: '°', uw: 'µW', mw: 'mW', kw: 'kW', w: 'W' };
+        const unitLabel = (key) => UNIT_LABELS[key] || key;
+
         // Angle unit mapping
         const ANGLE_SI_MAP = {
             'rad': 1.0,
@@ -5855,9 +5931,9 @@
             if (source !== 'zr') gbZrInput.value = fmt(zR_m / LENGTH_SI[gbZrUnitSelect.value]);
             if (source !== 'theta') gbThetaInput.value = fmt(theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value]);
 
-            gb2W0Display.textContent = `${fmt((2 * w0_m) / LENGTH_SI[gbW0UnitSelect.value])} ${gbW0UnitSelect.value}`;
-            gbConfocalDisplay.textContent = `${fmt(b_m / LENGTH_SI[gbZrUnitSelect.value])} ${gbZrUnitSelect.value}`;
-            gb2ThetaDisplay.textContent = `${fmt(full_theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value])} ${gbThetaUnitSelect.value}`;
+            gb2W0Display.textContent = `${fmt((2 * w0_m) / LENGTH_SI[gbW0UnitSelect.value])} ${unitLabel(gbW0UnitSelect.value)}`;
+            gbConfocalDisplay.textContent = `${fmt(b_m / LENGTH_SI[gbZrUnitSelect.value])} ${unitLabel(gbZrUnitSelect.value)}`;
+            gb2ThetaDisplay.textContent = `${fmt(full_theta_rad / ANGLE_SI_MAP[gbThetaUnitSelect.value])} ${unitLabel(gbThetaUnitSelect.value)}`;
 
             // 4. Compute at distance z
             const z_ratio = z_m / zR_m;
@@ -5866,7 +5942,7 @@
 
             const wz_m = w0_m * Math.sqrt(1 + z_ratio ** 2);
             if (source !== 'wz') gbWzInput.value = fmt(wz_m / LENGTH_SI[gbWzUnitSelect.value]);
-            gb2WzDisplay.textContent = `${fmt((2 * wz_m) / LENGTH_SI[gbWzUnitSelect.value])} ${gbWzUnitSelect.value}`;
+            gb2WzDisplay.textContent = `${fmt((2 * wz_m) / LENGTH_SI[gbWzUnitSelect.value])} ${unitLabel(gbWzUnitSelect.value)}`;
 
             // Radius of curvature R(z)
             if (Math.abs(z_m) < 1e-12) {
@@ -5996,7 +6072,7 @@
             svgThetaLabel.setAttribute('y', `${(Y0 - labelR * Math.sin(midPhi) + 4).toFixed(1)}`);
             const thetaUnit = gbThetaUnitSelect.value;
             const thetaValStr = fmt(theta_rad / ANGLE_SI_MAP[thetaUnit], dispDecimals);
-            svgThetaLabel.textContent = `θ = ${thetaValStr} ${thetaUnit}`;
+            svgThetaLabel.textContent = `θ = ${thetaValStr} ${unitLabel(thetaUnit)}`;
 
             // Update Waist Dimension elements at z = 0
             if (svgWaistAxisLine) {
@@ -6012,7 +6088,7 @@
                 svgWaistLabel.setAttribute('x', `${X0}`);
                 svgWaistLabel.setAttribute('y', `${(Y0 - w0_px - 8).toFixed(1)}`);
                 const w0Unit = gbW0UnitSelect.value;
-                svgWaistLabel.textContent = `2w₀ = ${fmt((2 * w0_m) / LENGTH_SI[w0Unit], dispDecimals)} ${w0Unit}`;
+                svgWaistLabel.textContent = `2w₀ = ${fmt((2 * w0_m) / LENGTH_SI[w0Unit], dispDecimals)} ${unitLabel(w0Unit)}`;
 
                 if (svgWaistPlanarLabel) {
                     svgWaistPlanarLabel.setAttribute('x', `${X0}`);
@@ -6025,12 +6101,12 @@
                 const zrUnit = gbZrUnitSelect.value;
                 svgRayleighLabel.setAttribute('x', `${(X0 + scale_x / 2).toFixed(1)}`);
                 svgRayleighLabel.setAttribute('y', '56');
-                svgRayleighLabel.textContent = `z_R = ${fmt(zR_m / LENGTH_SI[zrUnit], dispDecimals)} ${zrUnit}`;
+                svgRayleighLabel.textContent = `z_R = ${fmt(zR_m / LENGTH_SI[zrUnit], dispDecimals)} ${unitLabel(zrUnit)}`;
                 if (svgConfocalLabel) {
                     const b_m = 2 * zR_m;
                     svgConfocalLabel.setAttribute('x', `${X0}`);
                     svgConfocalLabel.setAttribute('y', '316');
-                    svgConfocalLabel.textContent = `b = 2z_R = ${fmt(b_m / LENGTH_SI[zrUnit], dispDecimals)} ${zrUnit}`;
+                    svgConfocalLabel.textContent = `b = 2z_R = ${fmt(b_m / LENGTH_SI[zrUnit], dispDecimals)} ${unitLabel(zrUnit)}`;
                 }
                 if (svgRayleighWzrLabel) {
                     const w_zr_px = w0_px * Math.SQRT2;
@@ -6071,7 +6147,16 @@
             const zUnit = gbZDistanceUnitSelect.value;
             const clampedTextX = Math.max(70, Math.min(690, cursorX));
             svgCursorDistanceText.setAttribute('x', `${clampedTextX.toFixed(1)}`);
-            svgCursorDistanceText.textContent = `z = ${fmt(z_m / LENGTH_SI[zUnit], dispDecimals)} ${zUnit}`;
+            // Beyond ±3.5 z_R the cursor is pinned to the edge of the view; say so
+            const offScale = z_ratio > 3.5 ? ' ▸ off-scale' : z_ratio < -3.5 ? ' ◂ off-scale' : '';
+            svgCursorDistanceText.textContent = `z = ${fmt(z_m / LENGTH_SI[zUnit], dispDecimals)} ${unitLabel(zUnit)}${offScale}`;
+
+            // The cursor labels take over near the waist and near +z_R, where they would
+            // otherwise be printed on top of the static waist and w(z_R) labels
+            const nearWaist = Math.abs(cursorX - X0) < 75;
+            if (svgWaistLabel) svgWaistLabel.style.opacity = nearWaist ? '0' : '1';
+            if (svgWaistPlanarLabel) svgWaistPlanarLabel.style.opacity = nearWaist ? '0' : '1';
+            if (svgRayleighWzrLabel) svgRayleighWzrLabel.style.opacity = Math.abs(cursorX - (X0 + scale_x)) < 80 ? '0' : '1';
 
             // Spot size dimension arrow at cursor position
             svgWzDimensionLine.setAttribute('x1', `${cursorX.toFixed(1)}`);
@@ -6082,7 +6167,7 @@
             svgWzDimensionLabel.setAttribute('x', `${clampedTextX.toFixed(1)}`);
             svgWzDimensionLabel.setAttribute('y', `${(Y0 + cursorW_px + 18).toFixed(1)}`);
             const wzUnit = gbWzUnitSelect.value;
-            svgWzDimensionLabel.textContent = `2w(z) = ${fmt((2 * wz_m) / LENGTH_SI[wzUnit], dispDecimals)} ${wzUnit}`;
+            svgWzDimensionLabel.textContent = `2w(z) = ${fmt((2 * wz_m) / LENGTH_SI[wzUnit], dispDecimals)} ${unitLabel(wzUnit)}`;
 
             // Curved Wavefront Arc at cursor
             if (Math.abs(clamped_ratio) < 0.05) {
@@ -6099,11 +6184,12 @@
                 const apexX = cursorX + sagitta * 1.5;
                 svgWavefrontArc.setAttribute('d', `M ${cursorX.toFixed(1)} ${(Y0 - cursorW_px).toFixed(1)} Q ${apexX.toFixed(1)} ${Y0} ${cursorX.toFixed(1)} ${(Y0 + cursorW_px).toFixed(1)}`);
                 
-                const R_val_m = Math.abs(z_m) + (zR_m ** 2) / Math.abs(z_m);
+                // Signed, as in the R(z) field: negative before the waist (converging wavefront)
+                const R_val_m = z_m + (zR_m ** 2) / z_m;
                 const R_str = fmt(R_val_m / LENGTH_SI[zUnit], dispDecimals);
                 svgWavefrontLabel.setAttribute('x', `${clampedTextX.toFixed(1)}`);
                 svgWavefrontLabel.setAttribute('y', `${(Y0 - cursorW_px - 20).toFixed(1)}`);
-                svgWavefrontLabel.textContent = `R(z) = ${R_str} ${zUnit}`;
+                svgWavefrontLabel.textContent = `R(z) = ${R_str} ${unitLabel(zUnit)}`;
             }
         }
 

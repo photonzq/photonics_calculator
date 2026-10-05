@@ -1384,14 +1384,14 @@
                     </h3>
                 </div>
                 <div class="card-body space-y-4">
-                    <div class="equation-box">$$ \mathcal{F} = \frac{\text{FSR}}{\kappa_0/2\pi} \qquad Q = \frac{f_0}{\kappa_0/2\pi} \qquad \alpha = \frac{n_g \kappa_0}{c} \qquad \text{Loss/rt} = 1 - e^{-\alpha L_{\text{rt}}} \approx \frac{2\pi}{\mathcal{F}} $$</div>
+                    <div class="equation-box">$$ \text{FSR} = \frac{c}{n_g L} = \frac{c}{2\pi n_g R} \qquad \mathcal{F} = \frac{\text{FSR}}{\kappa_0/2\pi} \qquad Q = \frac{f_0}{\kappa_0/2\pi} \qquad \alpha = \frac{n_g \kappa_0}{c} \qquad \text{Loss/rt} = 1 - e^{-\alpha L} \approx \frac{2\pi}{\mathcal{F}} $$</div>
                     
-                    <!-- Row 1: Parameters (Center λ, Group Index, FSR) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Row 1: Parameters (Center λ, Group Index, FSR, Ring Length, Ring Radius) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         <div>
                             <label for="resCenterNmInput" class="input-label">Center Wavelength $\lambda_0$</label>
                             <div class="flex gap-1.5">
-                                <input type="number" id="resCenterNmInput" value="1550" class="calc-input">
+                                <input type="number" id="resCenterNmInput" value="1550" step="any" class="calc-input">
                                 <select id="resCenterUnitSelect" class="calc-unit-select w-16">
                                     <option value="nm" selected>nm</option>
                                     <option value="um">µm</option>
@@ -1405,11 +1405,34 @@
                         <div>
                             <label for="resFsrInput" class="input-label">Free Spectral Range (FSR)</label>
                             <div class="flex gap-1.5">
-                                <input type="number" id="resFsrInput" value="100" class="calc-input">
+                                <input type="number" id="resFsrInput" value="100" step="any" class="calc-input">
                                 <select id="resFsrUnitSelect" class="calc-unit-select w-18">
                                     <option value="ghz" selected>GHz</option>
                                     <option value="mhz">MHz</option>
                                     <option value="thz">THz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="resLengthInput" class="input-label">Ring Waveguide Length $L$</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="resLengthInput" step="any" placeholder="Length L" class="calc-input">
+                                <select id="resLengthUnitSelect" class="calc-unit-select w-18">
+                                    <option value="mm" selected>mm</option>
+                                    <option value="um">µm</option>
+                                    <option value="cm">cm</option>
+                                    <option value="m">m</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="resRadiusInput" class="input-label">Ring Radius $R = L/2\pi$</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="resRadiusInput" step="any" placeholder="Radius R" class="calc-input">
+                                <select id="resRadiusUnitSelect" class="calc-unit-select w-18">
+                                    <option value="um" selected>µm</option>
+                                    <option value="mm">mm</option>
+                                    <option value="cm">cm</option>
                                 </select>
                             </div>
                         </div>
@@ -1605,7 +1628,7 @@
                             <li>$\mathcal F = 2\pi/(\alpha L_{\text{rt}})$ and the linewidth formulas assume high finesse ($\alpha L_{\text{rt}} \ll 1$); the round-trip loss field reports the exact $1-e^{-\alpha L}$.</li>
                             <li>Single-mode, traveling-wave resonator side-coupled to one bus waveguide (all-pass configuration), in the temporal coupled-mode theory picture valid for $\kappa \ll$ FSR. Backscattering (mode splitting) and a drop port are not included; a drop port simply adds another $\kappa_{\text{ex}}$ term to $\kappa$.</li>
                             <li>Critical coupling ($\kappa_{\text{ex}} = \kappa_0$) gives zero transmission, $Q_L = Q_0/2$ and build-up $\mathcal F_L/\pi = \mathcal F_0/2\pi$ ($\mathcal F_L$ = loaded finesse). Here "≈ critical" means $|\kappa_{\text{ex}} - \kappa_0| < 2\%\,\kappa_0$.</li>
-                            <li>$L$ and $R$ are derived from FSR and $n_g$ ($L = c/(n_g\,\text{FSR})$); $R$ assumes a circular ring.</li>
+                            <li>$L$ (round-trip waveguide length), $R$ (ring radius, assuming circular ring: $L = 2\pi R$), and FSR convert back and forth via $\text{FSR} = c/(n_g L) = c/(2\pi n_g R)$. Editing any one immediately recomputes the other two.</li>
                         </ul>
                     </details>
                 </div>
@@ -3621,6 +3644,10 @@
         const resNgInput = document.getElementById('resNgInput');
         const resFsrInput = document.getElementById('resFsrInput');
         const resFsrUnitSelect = document.getElementById('resFsrUnitSelect');
+        const resLengthInput = document.getElementById('resLengthInput');
+        const resLengthUnitSelect = document.getElementById('resLengthUnitSelect');
+        const resRadiusInput = document.getElementById('resRadiusInput');
+        const resRadiusUnitSelect = document.getElementById('resRadiusUnitSelect');
         const resLinewidthInput = document.getElementById('resLinewidthInput');
         const resLinewidthUnitSelect = document.getElementById('resLinewidthUnitSelect');
         const resLossPerMInput = document.getElementById('resLossPerMInput');
@@ -5268,6 +5295,8 @@
 
 
         // --- SECTION 4: Reversible Microresonator Logic ---
+        let lastEditedGeometryField = 'fsr'; // 'fsr', 'length', or 'radius'
+
         function updateResonator(source) {
             if (isSyncing) return;
             isSyncing = true;
@@ -5276,31 +5305,118 @@
             const centerVal = parseFloat(resCenterNmInput.value);
             const centerUnit = resCenterUnitSelect.value;
             const ng = parseFloat(resNgInput.value);
-            const fsrVal = parseFloat(resFsrInput.value);
-            const fsrUnit = resFsrUnitSelect.value;
 
-            if ([centerVal, ng, fsrVal].some(isNaN) || centerVal <= 0 || ng <= 0 || fsrVal <= 0) {
+            if (isNaN(centerVal) || centerVal <= 0 || isNaN(ng) || ng <= 0) {
                 isSyncing = false;
                 return;
             }
 
             const center_m = centerVal * LENGTH_SI[centerUnit];
             const center_freq_hz = C / center_m;
-            const fsr_hz = fsrVal * FREQ_SI[fsrUnit];
-            const cavity_length_m = C / (ng * fsr_hz);
+
+            let fsr_hz = NaN;
+            let cavity_length_m = NaN;
+
+            if (source === 'length') {
+                lastEditedGeometryField = 'length';
+                const L_val = parseFloat(resLengthInput.value);
+                const L_unit = resLengthUnitSelect.value;
+                if (!isNaN(L_val) && L_val > 0) {
+                    cavity_length_m = L_val * LENGTH_SI[L_unit];
+                    fsr_hz = C / (ng * cavity_length_m);
+                    resFsrInput.value = fmt(fsr_hz / FREQ_SI[resFsrUnitSelect.value]);
+                    const R_m = cavity_length_m / (2 * Math.PI);
+                    resRadiusInput.value = fmt(R_m / LENGTH_SI[resRadiusUnitSelect.value]);
+                }
+            } else if (source === 'radius') {
+                lastEditedGeometryField = 'radius';
+                const R_val = parseFloat(resRadiusInput.value);
+                const R_unit = resRadiusUnitSelect.value;
+                if (!isNaN(R_val) && R_val > 0) {
+                    const R_m = R_val * LENGTH_SI[R_unit];
+                    cavity_length_m = 2 * Math.PI * R_m;
+                    fsr_hz = C / (ng * cavity_length_m);
+                    resLengthInput.value = fmt(cavity_length_m / LENGTH_SI[resLengthUnitSelect.value]);
+                    resFsrInput.value = fmt(fsr_hz / FREQ_SI[resFsrUnitSelect.value]);
+                }
+            } else if (source === 'fsr') {
+                lastEditedGeometryField = 'fsr';
+                const fsrVal = parseFloat(resFsrInput.value);
+                const fsrUnit = resFsrUnitSelect.value;
+                if (!isNaN(fsrVal) && fsrVal > 0) {
+                    fsr_hz = fsrVal * FREQ_SI[fsrUnit];
+                    cavity_length_m = C / (ng * fsr_hz);
+                    resLengthInput.value = fmt(cavity_length_m / LENGTH_SI[resLengthUnitSelect.value]);
+                    const R_m = cavity_length_m / (2 * Math.PI);
+                    resRadiusInput.value = fmt(R_m / LENGTH_SI[resRadiusUnitSelect.value]);
+                }
+            } else if (source === 'ng') {
+                if (lastEditedGeometryField === 'length') {
+                    const L_val = parseFloat(resLengthInput.value);
+                    const L_unit = resLengthUnitSelect.value;
+                    if (!isNaN(L_val) && L_val > 0) {
+                        cavity_length_m = L_val * LENGTH_SI[L_unit];
+                        fsr_hz = C / (ng * cavity_length_m);
+                        resFsrInput.value = fmt(fsr_hz / FREQ_SI[resFsrUnitSelect.value]);
+                        const R_m = cavity_length_m / (2 * Math.PI);
+                        resRadiusInput.value = fmt(R_m / LENGTH_SI[resRadiusUnitSelect.value]);
+                    }
+                } else if (lastEditedGeometryField === 'radius') {
+                    const R_val = parseFloat(resRadiusInput.value);
+                    const R_unit = resRadiusUnitSelect.value;
+                    if (!isNaN(R_val) && R_val > 0) {
+                        const R_m = R_val * LENGTH_SI[R_unit];
+                        cavity_length_m = 2 * Math.PI * R_m;
+                        fsr_hz = C / (ng * cavity_length_m);
+                        resLengthInput.value = fmt(cavity_length_m / LENGTH_SI[resLengthUnitSelect.value]);
+                        resFsrInput.value = fmt(fsr_hz / FREQ_SI[resFsrUnitSelect.value]);
+                    }
+                } else {
+                    const fsrVal = parseFloat(resFsrInput.value);
+                    const fsrUnit = resFsrUnitSelect.value;
+                    if (!isNaN(fsrVal) && fsrVal > 0) {
+                        fsr_hz = fsrVal * FREQ_SI[fsrUnit];
+                        cavity_length_m = C / (ng * fsr_hz);
+                        resLengthInput.value = fmt(cavity_length_m / LENGTH_SI[resLengthUnitSelect.value]);
+                        const R_m = cavity_length_m / (2 * Math.PI);
+                        resRadiusInput.value = fmt(R_m / LENGTH_SI[resRadiusUnitSelect.value]);
+                    }
+                }
+            } else {
+                const fsrVal = parseFloat(resFsrInput.value);
+                const fsrUnit = resFsrUnitSelect.value;
+                if (!isNaN(fsrVal) && fsrVal > 0) {
+                    fsr_hz = fsrVal * FREQ_SI[fsrUnit];
+                    cavity_length_m = C / (ng * fsr_hz);
+                    if (!resLengthInput.value) {
+                        resLengthInput.value = fmt(cavity_length_m / LENGTH_SI[resLengthUnitSelect.value]);
+                    }
+                    if (!resRadiusInput.value) {
+                        resRadiusInput.value = fmt((cavity_length_m / (2 * Math.PI)) / LENGTH_SI[resRadiusUnitSelect.value]);
+                    }
+                }
+            }
+
+            if (isNaN(fsr_hz) || fsr_hz <= 0 || isNaN(cavity_length_m) || cavity_length_m <= 0) {
+                isSyncing = false;
+                return;
+            }
 
             let linewidth_hz;
+            const effectiveLossSource = ['linewidth', 'loss_per_m', 'loss_db_m', 'q', 'finesse', 'loss_ratio'].includes(source)
+                ? source
+                : lastEditedResonatorField;
 
-            if (source === 'linewidth') {
+            if (effectiveLossSource === 'linewidth') {
                 const lwVal = parseFloat(resLinewidthInput.value);
                 const lwUnit = resLinewidthUnitSelect.value;
                 linewidth_hz = (!isNaN(lwVal) && lwVal >= 0) ? lwVal * FREQ_SI[lwUnit] : NaN;
-            } else if (source === 'loss_per_m') {
+            } else if (effectiveLossSource === 'loss_per_m') {
                 const alphaVal = parseFloat(resLossPerMInput.value);
                 const alphaUnit = resLossPerMUnitSelect.value;
                 const alpha = (!isNaN(alphaVal) && alphaVal >= 0) ? (alphaUnit === '1/cm' ? alphaVal * 100 : alphaVal) : NaN;
                 linewidth_hz = !isNaN(alpha) ? (alpha * C) / (ng * 2 * Math.PI) : NaN;
-            } else if (source === 'loss_db_m') {
+            } else if (effectiveLossSource === 'loss_db_m') {
                 const lossVal = parseFloat(resLossDbMInput.value);
                 const lossUnit = resLossDbMUnitSelect.value;
                 let alpha;
@@ -5310,13 +5426,13 @@
                     else alpha = (lossVal * 1e-3) / DB_CONVERSION;
                 }
                 linewidth_hz = !isNaN(alpha) ? (alpha * C) / (ng * 2 * Math.PI) : NaN;
-            } else if (source === 'q') {
+            } else if (effectiveLossSource === 'q') {
                 const q_val = parseFloat(resQfactorInput.value);
                 linewidth_hz = (!isNaN(q_val) && q_val > 0) ? center_freq_hz / q_val : NaN;
-            } else if (source === 'finesse') {
+            } else if (effectiveLossSource === 'finesse') {
                 const fin = parseFloat(resFinesseInput.value);
                 linewidth_hz = (!isNaN(fin) && fin > 0) ? fsr_hz / fin : NaN;
-            } else if (source === 'loss_ratio') {
+            } else if (effectiveLossSource === 'loss_ratio') {
                 const ratio_pct = parseFloat(resLossRatioInput.value);
                 if (!isNaN(ratio_pct) && ratio_pct > 0 && ratio_pct < 100) {
                     const alpha = -Math.log(1 - ratio_pct / 100.0) / cavity_length_m;
@@ -5335,17 +5451,17 @@
                 const alphaUnit = resLossPerMUnitSelect.value;
                 const dbUnit = resLossDbMUnitSelect.value;
 
-                if (source !== 'linewidth') resLinewidthInput.value = fmt(linewidth_hz / FREQ_SI[lwUnit]);
-                if (source !== 'loss_per_m') resLossPerMInput.value = fmt(alphaUnit === '1/cm' ? alpha_per_m / 100 : alpha_per_m);
-                if (source !== 'loss_db_m') {
+                if (effectiveLossSource !== 'linewidth') resLinewidthInput.value = fmt(linewidth_hz / FREQ_SI[lwUnit]);
+                if (effectiveLossSource !== 'loss_per_m') resLossPerMInput.value = fmt(alphaUnit === '1/cm' ? alpha_per_m / 100 : alpha_per_m);
+                if (effectiveLossSource !== 'loss_db_m') {
                     let dbVal = alpha_per_m * DB_CONVERSION;
                     if (dbUnit === 'dB/cm') dbVal = dbVal / 100;
                     else if (dbUnit === 'dB/km') dbVal = dbVal * 1e3;
                     resLossDbMInput.value = fmt(dbVal);
                 }
-                if (source !== 'finesse') resFinesseInput.value = fmt(finesse);
-                if (source !== 'loss_ratio') resLossRatioInput.value = fmt(loss_ratio);
-                if (source !== 'q') resQfactorInput.value = fmtExp(Q);
+                if (effectiveLossSource !== 'finesse') resFinesseInput.value = fmt(finesse);
+                if (effectiveLossSource !== 'loss_ratio') resLossRatioInput.value = fmt(loss_ratio);
+                if (effectiveLossSource !== 'q') resQfactorInput.value = fmtExp(Q);
             }
 
             isSyncing = false;
@@ -8363,9 +8479,38 @@
 
         resCenterNmInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
         resCenterUnitSelect.addEventListener('change', () => updateResonator(lastEditedResonatorField));
-        resNgInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
-        resFsrInput.addEventListener('input', () => updateResonator(lastEditedResonatorField));
-        resFsrUnitSelect.addEventListener('change', () => updateResonator('linewidth'));
+        resNgInput.addEventListener('input', () => updateResonator('ng'));
+        resFsrInput.addEventListener('input', () => updateResonator('fsr'));
+        resLengthInput.addEventListener('input', () => updateResonator('length'));
+        resRadiusInput.addEventListener('input', () => updateResonator('radius'));
+
+        resLengthUnitSelect.addEventListener('change', () => {
+            const ng = parseFloat(resNgInput.value);
+            const fsr_hz = parseFloat(resFsrInput.value) * FREQ_SI[resFsrUnitSelect.value];
+            if (!isNaN(ng) && ng > 0 && !isNaN(fsr_hz) && fsr_hz > 0) {
+                const L_m = C / (ng * fsr_hz);
+                resLengthInput.value = fmt(L_m / LENGTH_SI[resLengthUnitSelect.value]);
+            }
+        });
+        resRadiusUnitSelect.addEventListener('change', () => {
+            const ng = parseFloat(resNgInput.value);
+            const fsr_hz = parseFloat(resFsrInput.value) * FREQ_SI[resFsrUnitSelect.value];
+            if (!isNaN(ng) && ng > 0 && !isNaN(fsr_hz) && fsr_hz > 0) {
+                const R_m = C / (2 * Math.PI * ng * fsr_hz);
+                resRadiusInput.value = fmt(R_m / LENGTH_SI[resRadiusUnitSelect.value]);
+            }
+        });
+        resFsrUnitSelect.addEventListener('change', () => {
+            const ng = parseFloat(resNgInput.value);
+            const L_val = parseFloat(resLengthInput.value);
+            const L_unit = resLengthUnitSelect.value;
+            if (!isNaN(ng) && ng > 0 && !isNaN(L_val) && L_val > 0) {
+                const L_m = L_val * LENGTH_SI[L_unit];
+                const fsr_hz = C / (ng * L_m);
+                resFsrInput.value = fmt(fsr_hz / FREQ_SI[resFsrUnitSelect.value]);
+            }
+            updateResonator(lastEditedResonatorField);
+        });
         resLinewidthInput.addEventListener('input', () => {
             lastEditedResonatorField = 'linewidth';
             updateResonator('linewidth');

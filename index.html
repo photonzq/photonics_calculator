@@ -440,6 +440,7 @@
                     <a href="#nonlinear" class="jump-pill" data-section="nonlinear"><span>⚡</span> Solitons &amp; Combs</a>
                     <a href="#gaussian-beam" class="jump-pill" data-section="gaussian-beam"><span>🎯</span> Gaussian Beam</a>
                     <a href="#modulators" class="jump-pill" data-section="modulators"><span>🎛️</span> Modulators</a>
+                    <a href="#photodetector-noise" class="jump-pill" data-section="photodetector-noise"><span>📡</span> Photodetectors</a>
                 </div>
 
                 <!-- Specific Tool Dropdown -->
@@ -478,6 +479,9 @@
                         </optgroup>
                         <optgroup label="7. Modulators & Tuning">
                             <option value="#eo-modulator">⚡ Pockels Modulator, Sidebands &amp; Thermal Tuning</option>
+                        </optgroup>
+                        <optgroup label="8. Photodetectors & Receivers">
+                            <option value="#photodetector-noise">📡 Shot Noise, Thermal Noise, TIA & SNR</option>
                         </optgroup>
                     </select>
                 </div>
@@ -3426,6 +3430,330 @@
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- SECTION 8: PHOTODETECTORS & RECEIVERS -->
+        <!-- ========================================== -->
+        <section id="photodetector-noise" class="space-y-4 scroll-mt-28">
+            <div class="flex items-center gap-2 border-b border-slate-300 pb-2">
+                <span class="text-xl">📡</span>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight font-heading">Photodetectors &amp; Receiver Noise</h2>
+            </div>
+
+            <!-- CARD: Shot Noise, Thermal Noise, TIA & SNR -->
+            <div id="photodetector-card" class="group-card scroll-mt-28">
+                <div class="card-header flex justify-between items-center flex-wrap gap-2">
+                    <h3 class="group-title">
+                        <span class="text-indigo-600">⚡</span> Shot Noise, Thermal Noise, TIA &amp; SNR
+                    </h3>
+                    <!-- Presets Chips -->
+                    <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                        <span class="text-[11px] font-semibold text-slate-500 mr-0.5">Presets:</span>
+                        <button type="button" class="pd-preset-btn text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm" data-preset="50ohm">50 Ω RF (2 mA, 10 GHz)</button>
+                        <button type="button" class="pd-preset-btn text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm" data-preset="balanced">Balanced Homodyne (10 kΩ, 0.5 mA)</button>
+                        <button type="button" class="pd-preset-btn text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm" data-preset="highgain">High-Gain TIA (1 MΩ, 10 µA)</button>
+                        <button type="button" class="pd-preset-btn text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-700 transition shadow-sm" data-preset="subna">Sub-nA / Low-Light (100 MΩ, 50 pA)</button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="equation-box">$$ i_{n,\text{shot}} = \sqrt{2 q I_{\text{dc}}} \qquad i_{n,\text{th}} = \sqrt{\frac{4 k_B T}{R_f}} \qquad I_{\text{cross}} = \frac{2 k_B T}{q R_f} \qquad \text{SNR} = \frac{I_{\text{sig}}^2}{i_{n,\text{tot}}^2 B} \qquad \text{NEP} = \frac{i_{n,\text{tot}}}{\mathcal{R}} $$</div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- COLUMN 1: Photocurrent & Shot Noise -->
+                        <div class="space-y-3.5 bg-slate-50/70 p-3.5 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="text-indigo-600">💡</span> Photodiode &amp; Shot Noise
+                                </span>
+                            </div>
+
+                            <!-- Responsivity & Preset -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="pdRespInput" class="input-label text-xs mb-0">Responsivity $\mathcal{R}$ (A/W)</label>
+                                    <button type="button" id="pdRespSyncBtn" class="text-[10px] text-indigo-600 hover:underline font-semibold" title="Compute ideal responsivity qλ/(hc) from global wavelength">Use ideal for $\lambda$</button>
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdRespInput" value="0.95" step="any" min="0" class="calc-input text-xs">
+                                    <select id="pdPdPresetSelect" class="calc-unit-select text-[11px] w-32">
+                                        <option value="custom">Preset...</option>
+                                        <option value="ingaas1550" selected>InGaAs @1550 (0.95 A/W)</option>
+                                        <option value="ingaas1310">InGaAs @1310 (0.85 A/W)</option>
+                                        <option value="si850">Silicon @850 (0.55 A/W)</option>
+                                        <option value="si633">Silicon @633 (0.40 A/W)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- DC Optical Power Pin (reversible with Idc) -->
+                            <div>
+                                <label for="pdPinInput" class="input-label text-xs">Optical Input Power $P_0$ (at photodiode)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdPinInput" value="1.053" step="any" class="calc-input text-xs">
+                                    <select id="pdPinUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="mw" selected>mW</option>
+                                        <option value="uw">µW</option>
+                                        <option value="nw">nW</option>
+                                        <option value="w">W</option>
+                                        <option value="dbm">dBm</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- DC Photocurrent (Two-way reversible with Shot Noise) -->
+                            <div>
+                                <label for="pdIdcInput" class="input-label text-xs font-semibold text-slate-800">DC Photocurrent $I_{\text{dc}}$ (reversible)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdIdcInput" value="1" step="any" min="0" class="calc-input text-xs font-semibold text-indigo-900 border-indigo-200">
+                                    <select id="pdIdcUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="ma" selected>mA</option>
+                                        <option value="ua">µA</option>
+                                        <option value="na">nA</option>
+                                        <option value="pa">pA</option>
+                                        <option value="a">A</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Dark Current -->
+                            <div>
+                                <label for="pdIdarkInput" class="input-label text-xs">Photodiode Dark Current $I_{\text{dark}}$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdIdarkInput" value="1" step="any" min="0" class="calc-input text-xs">
+                                    <select id="pdIdarkUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="na" selected>nA</option>
+                                        <option value="pa">pA</option>
+                                        <option value="ua">µA</option>
+                                        <option value="ma">mA</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Shot Noise Spectral Density (Two-way reversible) -->
+                            <div class="pt-1 border-t border-slate-200">
+                                <label for="pdShotNoiseInput" class="input-label text-xs font-bold text-indigo-900">Shot Noise Density $i_{n,\text{shot}}$ (reversible)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdShotNoiseInput" step="any" min="0" class="calc-input text-xs font-bold text-indigo-800 bg-indigo-50/50 border-indigo-300">
+                                    <select id="pdShotNoiseUnitSelect" class="calc-unit-select w-24 text-xs font-semibold">
+                                        <option value="pa_rt_hz" selected>pA/√Hz</option>
+                                        <option value="na_rt_hz">nA/√Hz</option>
+                                        <option value="fa_rt_hz">fA/√Hz</option>
+                                        <option value="a_rt_hz">A/√Hz</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Shot Noise Metrics -->
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div class="metric-badge">
+                                    <div class="metric-label">Shot Noise RIN</div>
+                                    <div id="pdShotRinDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Integrated $I_{n,\text{shot}}$</div>
+                                    <div id="pdShotIntDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: TIA Feedback Resistor & Thermal Noise -->
+                        <div class="space-y-3.5 bg-slate-50/70 p-3.5 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="text-amber-600">⚡</span> TIA &amp; Thermal (Johnson) Noise
+                                </span>
+                            </div>
+
+                            <!-- TIA Feedback Resistor (Two-way reversible with Thermal Noise) -->
+                            <div>
+                                <label for="pdRfInput" class="input-label text-xs font-semibold text-slate-800">Feedback / Load Resistor $R_f$ (reversible)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdRfInput" value="10" step="any" min="0" class="calc-input text-xs font-semibold text-amber-900 border-amber-200">
+                                    <select id="pdRfUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="kohm" selected>kΩ</option>
+                                        <option value="ohm">Ω</option>
+                                        <option value="mohm">MΩ</option>
+                                        <option value="gohm">GΩ</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Temperature -->
+                            <div>
+                                <label for="pdTempInput" class="input-label text-xs">Temperature $T$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdTempInput" value="295" step="any" class="calc-input text-xs">
+                                    <select id="pdTempUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="k" selected>K</option>
+                                        <option value="c">°C</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Quick Resistor Presets -->
+                            <div>
+                                <label for="pdRfPresetSelect" class="input-label text-xs">Standard TIA Gain Presets</label>
+                                <select id="pdRfPresetSelect" class="calc-select w-full text-xs py-1.5">
+                                    <option value="">Select standard value...</option>
+                                    <option value="50,ohm">50 Ω (Matched Load, e.g. RF Detector)</option>
+                                    <option value="500,ohm">500 Ω (High-Speed TIA)</option>
+                                    <option value="1,kohm">1 kΩ (Wideband TIA)</option>
+                                    <option value="10,kohm" selected>10 kΩ (Balanced Detector / 10-50 MHz)</option>
+                                    <option value="100,kohm">100 kΩ (Medium-Gain TIA / ~5 MHz)</option>
+                                    <option value="1,mohm">1 MΩ (Precision Photometry / ~500 kHz)</option>
+                                    <option value="10,mohm">10 MΩ (High-Sensitivity / ~50 kHz)</option>
+                                    <option value="100,mohm">100 MΩ (Ultra-Low Light / ~5 kHz)</option>
+                                    <option value="1,gohm">1 GΩ (Sub-pA Electrometer)</option>
+                                </select>
+                            </div>
+
+                            <!-- Thermal Noise Spectral Density (Two-way reversible with Rf) -->
+                            <div class="pt-1 border-t border-slate-200">
+                                <label for="pdThermalNoiseInput" class="input-label text-xs font-bold text-amber-900">Thermal Noise Density $i_{n,\text{th}}$ (reversible)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdThermalNoiseInput" step="any" min="0" class="calc-input text-xs font-bold text-amber-800 bg-amber-50/50 border-amber-300">
+                                    <select id="pdThermalNoiseUnitSelect" class="calc-unit-select w-24 text-xs font-semibold">
+                                        <option value="pa_rt_hz" selected>pA/√Hz</option>
+                                        <option value="na_rt_hz">nA/√Hz</option>
+                                        <option value="fa_rt_hz">fA/√Hz</option>
+                                        <option value="a_rt_hz">A/√Hz</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Thermal Noise Metrics -->
+                            <div class="grid grid-cols-2 gap-2 pt-1">
+                                <div class="metric-badge">
+                                    <div class="metric-label">Crossover Current $I_{\text{cross}}$</div>
+                                    <div id="pdIcrossDisplay" class="metric-value text-xs font-mono text-amber-700 mt-0.5" title="Photocurrent where shot noise equals thermal noise (2 VT / Rf)">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Output Voltage Noise $v_{n,\text{th}}$</div>
+                                    <div id="pdVnThDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                            </div>
+                            <div class="metric-badge">
+                                <div class="metric-label">Integrated Thermal $I_{n,\text{th}}$</div>
+                                <div id="pdThermalIntDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 3: Noise Stacking, Bandwidth & SNR -->
+                        <div class="space-y-3.5 bg-slate-50/70 p-3.5 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="text-emerald-600">📊</span> Regime, SNR &amp; NEP
+                                </span>
+                            </div>
+
+                            <!-- Operating Regime Badge -->
+                            <div>
+                                <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Operating Regime</div>
+                                <div id="pdRegimeBadge" class="w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-white border-slate-200 text-slate-700">
+                                    Evaluating...
+                                </div>
+                            </div>
+
+                            <!-- Noise Variance Distribution Bar -->
+                            <div>
+                                <div class="flex justify-between items-center text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                                    <span>Noise Power Share</span>
+                                    <span id="pdNoiseBarText" class="font-mono text-[10px] text-slate-600">-</span>
+                                </div>
+                                <div class="h-3 w-full rounded bg-slate-200 overflow-hidden flex border border-slate-300">
+                                    <div id="pdNoiseBarShot" class="h-full bg-indigo-500 transition-all duration-200" title="Shot Noise Share" style="width: 50%;"></div>
+                                    <div id="pdNoiseBarThermal" class="h-full bg-amber-500 transition-all duration-200" title="Thermal Noise Share" style="width: 50%;"></div>
+                                    <div id="pdNoiseBarDark" class="h-full bg-slate-400 transition-all duration-200" title="Dark Current Share" style="width: 0%;"></div>
+                                </div>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400 mt-0.5 px-0.5">
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Shot</span>
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Thermal</span>
+                                    <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span> Dark</span>
+                                </div>
+                            </div>
+
+                            <!-- Detection Bandwidth -->
+                            <div>
+                                <label for="pdBwInput" class="input-label text-xs">Detection Bandwidth $B$ (ENBW)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdBwInput" value="10" step="any" min="0" class="calc-input text-xs">
+                                    <select id="pdBwUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="mhz" selected>MHz</option>
+                                        <option value="ghz">GHz</option>
+                                        <option value="khz">kHz</option>
+                                        <option value="hz">Hz</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Signal Input -->
+                            <div>
+                                <label for="pdIsigInput" class="input-label text-xs">AC Signal Current $I_{\text{sig}}$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="pdIsigInput" value="10" step="any" min="0" class="calc-input text-xs">
+                                    <select id="pdIsigUnitSelect" class="calc-unit-select w-20 text-xs">
+                                        <option value="ua" selected>µA</option>
+                                        <option value="ma">mA</option>
+                                        <option value="na">nA</option>
+                                        <option value="pa">pA</option>
+                                    </select>
+                                    <select id="pdSigModeSelect" class="calc-select text-xs w-20" title="Signal definition: RMS vs Peak AC vs Peak-to-Peak">
+                                        <option value="rms" selected>RMS</option>
+                                        <option value="peak">Peak</option>
+                                        <option value="pkpk">Pk-Pk</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Total Noise & SNR Metrics -->
+                            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                                <div class="metric-badge">
+                                    <div class="metric-label">Total Noise Density $i_{n,\text{tot}}$</div>
+                                    <div id="pdInTotDisplay" class="metric-value text-xs font-mono font-bold text-slate-800 mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Total Integrated $I_{n,\text{tot}}$</div>
+                                    <div id="pdIntTotDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge bg-indigo-50/60 border-indigo-200">
+                                    <div class="metric-label text-indigo-900 font-bold">Electrical $\text{SNR}_{\text{dB}}$</div>
+                                    <div id="pdSnrDisplay" class="metric-value text-sm font-bold text-indigo-700 mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Shot Limit $\text{SNR}_{\text{shot}}$ (Penalty)</div>
+                                    <div id="pdSnrShotDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Noise Equivalent Power (NEP)</div>
+                                    <div id="pdNepDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                                <div class="metric-badge">
+                                    <div class="metric-label">Min Detectable Power $P_{\text{min}}$</div>
+                                    <div id="pdPminDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Collapsible Physics Notes -->
+                    <details class="phys-note mt-4">
+                        <summary>Physics notes &amp; receiver design guidelines</summary>
+                        <ul class="text-xs space-y-1.5 text-slate-600">
+                            <li><strong>Shot Noise</strong>: Originates from the Poisson statistics of discrete photon and electron events ($q = 1.602176634\times 10^{-19}\text{ C}$). Single-sided spectral density is $i_{n,\text{shot}} = \sqrt{2 q I_{\text{dc}}}$. In terms of optical relative intensity noise, the shot-noise floor is $\text{RIN}_{\text{shot}} = 2q / I_{\text{dc}}$ ($1/\text{Hz}$ or $\text{dBc}/\text{Hz}$). High photocurrent drives the RIN floor down ($1\text{ mA} \to -155\text{ dBc}/\text{Hz}$; $10\text{ mA} \to -165\text{ dBc}/\text{Hz}$).</li>
+                            <li><strong>Johnson-Nyquist Thermal Noise</strong>: Thermal fluctuation of charge carriers in any resistive load or TIA feedback resistor $R_f$ generates current noise $i_{n,\text{th}} = \sqrt{4 k_B T / R_f}$. Increasing $R_f$ reduces the input-referred current noise by $1/\sqrt{R_f}$ while increasing the transimpedance voltage gain $V = I \cdot R_f$ linearly, boosting the output voltage signal faster than thermal noise.</li>
+                            <li><strong>Crossover Current ($I_{\text{cross}}$)</strong>: The threshold photocurrent where shot noise equals thermal noise is $I_{\text{cross}} = \frac{2 k_B T}{q R_f} = \frac{2 V_T}{R_f}$. At room temperature ($T = 295\text{ K}$), $2 V_T \approx 50.84\text{ mV}$. If $I_{\text{dc}} > I_{\text{cross}}$, the receiver is <em>shot-noise limited</em>; if $I_{\text{dc}} < I_{\text{cross}}$, it is <em>thermal-noise limited</em>. For example, a 50 Ω load requires $I_{\text{dc}} > 1.02\text{ mA}$ to be shot-noise limited, whereas a 10 kΩ TIA requires only $5.08\,\mu\text{A}$, and a 1 MΩ TIA requires only $50.8\text{ nA}$.</li>
+                            <li><strong>Gain-Bandwidth Tradeoff in TIAs</strong>: While a higher feedback resistor $R_f$ lowers input noise density, the parasitic capacitance across the feedback resistor ($C_f$, typically $0.1 - 0.5\text{ pF}$) and photodiode capacitance ($C_d$) create a pole at $f_{-3\text{dB}} \approx \frac{1}{2\pi R_f C_f}$ (or $\approx \sqrt{\frac{\text{GBW}}{2\pi R_f (C_d + C_{\text{in}})}}$ for a Butterworth-damped op-amp). Thus high gain requires sacrificing closed-loop bandwidth.</li>
+                            <li><strong>Signal-to-Noise Ratio (SNR)</strong>: Electrical signal power scales as $I_{\text{sig,rms}}^2$, whereas total noise power scales as $i_{n,\text{tot}}^2 B$. Therefore $\text{SNR}_{\text{dB}} = 10\log_{10}(I_{\text{sig,rms}}^2 / (i_{n,\text{tot}}^2 B)) = 20\log_{10}(I_{\text{sig,rms}} / I_{n,\text{tot}})$. The thermal penalty represents the loss in dB compared to the quantum shot-noise limit.</li>
+                            <li><strong>Noise Equivalent Power (NEP)</strong>: The input optical signal power that produces an electrical SNR of 1 in a 1 Hz bandwidth: $\text{NEP} = i_{n,\text{tot}} / \mathcal{R}\;[\text{W}/\sqrt{\text{Hz}}]$. The minimum detectable optical power over detection bandwidth $B$ is $P_{\text{min}} = \text{NEP}\sqrt{B}$.</li>
+                            <li><strong>Balanced Detection</strong>: In balanced photoreceivers with two matched photodiodes, the differential output subtracts classical common-mode intensity fluctuations (laser RIN) while adding uncorrelated shot-noise powers in quadrature: $i_{n,\text{shot}} = \sqrt{2 q (I_1 + I_2)}$. This allows shot-noise-limited sensitivity even with noisy laser sources.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Footer -->
@@ -3441,6 +3769,7 @@
         const C = 299792458; // Speed of light in m/s
         const H_PLANCK = 6.62607015e-34; // Planck constant in J·s (exact, SI 2019)
         const E_CHARGE = 1.602176634e-19; // Elementary charge in C (exact, SI 2019)
+        const K_BOLTZMANN = 1.380649e-23; // Boltzmann constant in J/K (exact, SI 2019)
         const DB_CONVERSION = 10 * Math.log10(Math.E); // Approx 4.342944819
         const TBP_VALUES = {
             'sech2': 0.3148,
@@ -3513,6 +3842,28 @@
             'nw': 1e-9,
             'mw': 1e-3,
             'uw': 1e-6
+        };
+
+        const CURRENT_SI = {
+            'a': 1,
+            'ma': 1e-3,
+            'ua': 1e-6,
+            'na': 1e-9,
+            'pa': 1e-12
+        };
+
+        const RESISTANCE_SI = {
+            'ohm': 1,
+            'kohm': 1e3,
+            'mohm': 1e6,
+            'gohm': 1e9
+        };
+
+        const NOISE_DENSITY_SI = {
+            'a_rt_hz': 1,
+            'na_rt_hz': 1e-9,
+            'pa_rt_hz': 1e-12,
+            'fa_rt_hz': 1e-15
         };
 
         // --- DOM Elements ---
@@ -3780,6 +4131,15 @@
             const [unit, scale] = a >= 1e3 ? ['kW', 1e3] : a >= 1 ? ['W', 1] : a >= 1e-3 ? ['mW', 1e-3]
                 : a >= 1e-6 ? ['µW', 1e-6] : ['nW', 1e-9];
             return `${fmt(w / scale, sig)} ${unit}`;
+        }
+
+        // Current with an automatically chosen unit (read-only displays)
+        function fmtCurr(a, sig = getPrecision()) {
+            if (typeof a !== 'number' || !isFinite(a)) return '-';
+            const abs = Math.abs(a);
+            const [unit, scale] = abs >= 1 ? ['A', 1] : abs >= 1e-3 ? ['mA', 1e-3] : abs >= 1e-6 ? ['µA', 1e-6]
+                : abs >= 1e-9 ? ['nA', 1e-9] : ['pA', 1e-12];
+            return `${fmt(a / scale, sig)} ${unit}`;
         }
 
         // Time with an automatically chosen unit (read-only displays)
@@ -8269,6 +8629,361 @@
             updateEoModulator('inputs');
         });
 
+        // ==========================================
+        // SECTION 8: PHOTODETECTORS & RECEIVER NOISE
+        // ==========================================
+        const pdIds = [
+            'RespInput', 'RespSyncBtn', 'PdPresetSelect', 'PinInput', 'PinUnitSelect',
+            'IdcInput', 'IdcUnitSelect', 'IdarkInput', 'IdarkUnitSelect',
+            'ShotNoiseInput', 'ShotNoiseUnitSelect', 'ShotRinDisplay', 'ShotIntDisplay',
+            'RfInput', 'RfUnitSelect', 'TempInput', 'TempUnitSelect', 'RfPresetSelect',
+            'ThermalNoiseInput', 'ThermalNoiseUnitSelect', 'IcrossDisplay', 'VnThDisplay', 'ThermalIntDisplay',
+            'RegimeBadge', 'NoiseBarShot', 'NoiseBarThermal', 'NoiseBarDark', 'NoiseBarText',
+            'BwInput', 'BwUnitSelect', 'IsigInput', 'IsigUnitSelect', 'SigModeSelect',
+            'InTotDisplay', 'IntTotDisplay', 'SnrDisplay', 'SnrShotDisplay', 'NepDisplay', 'PminDisplay'
+        ];
+        const PD = Object.fromEntries(pdIds.map(id => [id, document.getElementById('pd' + id)]));
+
+        let pdIsSyncing = false;
+        let pdLastThermalField = 'rf'; // 'rf' or 'thermal_noise'
+        let pdLastShotField = 'idc';    // 'idc', 'shot_noise', or 'pin'
+
+        function getPinWatts() {
+            const raw = qpNum(PD.PinInput);
+            if (isNaN(raw)) return NaN;
+            const unit = PD.PinUnitSelect.value;
+            if (unit === 'dbm') {
+                return Math.pow(10, raw / 10) * 1e-3;
+            }
+            return raw * POWER_SI[unit];
+        }
+
+        function setPinWatts(watts) {
+            if (!(watts > 0) || !isFinite(watts)) {
+                PD.PinInput.value = '';
+                return;
+            }
+            const unit = PD.PinUnitSelect.value;
+            if (unit === 'dbm') {
+                const dbm = 10 * Math.log10(watts / 1e-3);
+                PD.PinInput.value = fmt(dbm, 4);
+            } else {
+                PD.PinInput.value = fmt(watts / POWER_SI[unit]);
+            }
+        }
+
+        function updatePhotodetectorNoise(source = 'idc') {
+            if (pdIsSyncing) return;
+            pdIsSyncing = true;
+            try {
+                // 1. Responsivity
+                const resp = qpNum(PD.RespInput);
+                const respValid = !isNaN(resp) && resp > 0;
+
+                // 2. DC Photocurrent & Shot Noise density (Two-Way Reactivity)
+                let Idc = 0;
+                if (source === 'shot_noise') {
+                    pdLastShotField = 'shot_noise';
+                    const in_shot_in = qpNum(PD.ShotNoiseInput) * NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value];
+                    if (in_shot_in >= 0) {
+                        Idc = (in_shot_in ** 2) / (2 * E_CHARGE);
+                        PD.IdcInput.value = fmt(Idc / CURRENT_SI[PD.IdcUnitSelect.value]);
+                        if (respValid) setPinWatts(Idc / resp);
+                    }
+                } else if (source === 'pin') {
+                    pdLastShotField = 'pin';
+                    const pin_w = getPinWatts();
+                    if (pin_w >= 0 && respValid) {
+                        Idc = pin_w * resp;
+                        PD.IdcInput.value = fmt(Idc / CURRENT_SI[PD.IdcUnitSelect.value]);
+                        const in_shot = Math.sqrt(2 * E_CHARGE * Math.max(0, Idc));
+                        PD.ShotNoiseInput.value = fmt(in_shot / NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value]);
+                    }
+                } else {
+                    // source === 'idc', 'resp', or general
+                    if (source === 'idc') pdLastShotField = 'idc';
+                    Idc = Math.max(0, (qpNum(PD.IdcInput) || 0) * CURRENT_SI[PD.IdcUnitSelect.value]);
+                    const in_shot = Math.sqrt(2 * E_CHARGE * Idc);
+                    PD.ShotNoiseInput.value = fmt(in_shot / NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value]);
+                    if (respValid && source !== 'pin') setPinWatts(Idc / resp);
+                }
+
+                // Photodiode Dark Current
+                const Idark = Math.max(0, (qpNum(PD.IdarkInput) || 0) * CURRENT_SI[PD.IdarkUnitSelect.value]);
+                const in_dark = Math.sqrt(2 * E_CHARGE * Idark);
+
+                // Shot Noise current density (A/√Hz)
+                const in_shot = Math.sqrt(2 * E_CHARGE * Math.max(0, Idc));
+
+                // 3. Feedback Resistor & Thermal Noise (Two-Way Reactivity)
+                let tempK = qpNum(PD.TempInput);
+                if (PD.TempUnitSelect.value === 'c') tempK += 273.15;
+                if (!(tempK > 0) || isNaN(tempK)) tempK = 295;
+
+                let in_th = 0;
+                let Rf = 0;
+
+                if (source === 'thermal_noise') {
+                    pdLastThermalField = 'thermal_noise';
+                    const in_th_in = qpNum(PD.ThermalNoiseInput) * NOISE_DENSITY_SI[PD.ThermalNoiseUnitSelect.value];
+                    if (in_th_in > 0) {
+                        in_th = in_th_in;
+                        Rf = (4 * K_BOLTZMANN * tempK) / (in_th_in ** 2);
+                        PD.RfInput.value = fmt(Rf / RESISTANCE_SI[PD.RfUnitSelect.value]);
+                    }
+                } else {
+                    // source === 'rf', 'temp', or general
+                    if (source === 'rf') pdLastThermalField = 'rf';
+                    Rf = Math.max(0, (qpNum(PD.RfInput) || 0) * RESISTANCE_SI[PD.RfUnitSelect.value]);
+                    if (Rf > 0) {
+                        in_th = Math.sqrt((4 * K_BOLTZMANN * tempK) / Rf);
+                        PD.ThermalNoiseInput.value = fmt(in_th / NOISE_DENSITY_SI[PD.ThermalNoiseUnitSelect.value]);
+                    }
+                }
+
+                // 4. Bandwidth
+                const bw = Math.max(0, (qpNum(PD.BwInput) || 0) * FREQ_SI[PD.BwUnitSelect.value]);
+                const sqrtBw = bw > 0 ? Math.sqrt(bw) : 0;
+
+                // 5. Crossover Current: I_cross = 2 k_B T / (q R_f)
+                let Icross = NaN;
+                if (Rf > 0) {
+                    Icross = (2 * K_BOLTZMANN * tempK) / (E_CHARGE * Rf);
+                    PD.IcrossDisplay.textContent = fmtCurr(Icross);
+                } else {
+                    PD.IcrossDisplay.textContent = '-';
+                }
+
+                // Output Voltage Noise vn,th = in,th * Rf = sqrt(4 kB T Rf)
+                if (Rf > 0 && in_th > 0) {
+                    const vn_th = in_th * Rf; // V/√Hz
+                    PD.VnThDisplay.textContent = vn_th >= 1e-6
+                        ? `${fmt(vn_th * 1e6, 4)} µV/√Hz`
+                        : `${fmt(vn_th * 1e9, 4)} nV/√Hz`;
+                } else {
+                    PD.VnThDisplay.textContent = '-';
+                }
+
+                // Shot Noise RIN
+                if (Idc > 0) {
+                    const rin_val = (2 * E_CHARGE) / Idc; // 1/Hz
+                    const rin_dbc = 10 * Math.log10(rin_val);
+                    PD.ShotRinDisplay.textContent = `${fmt(rin_dbc, 4)} dBc/Hz`;
+                } else {
+                    PD.ShotRinDisplay.textContent = '-';
+                }
+
+                // Integrated Shot & Thermal noise
+                PD.ShotIntDisplay.textContent = sqrtBw > 0 ? fmtCurr(in_shot * sqrtBw) : '-';
+                PD.ThermalIntDisplay.textContent = sqrtBw > 0 ? fmtCurr(in_th * sqrtBw) : '-';
+
+                // 6. Total Noise Density & Stacking
+                const var_shot = in_shot ** 2;
+                const var_th = in_th ** 2;
+                const var_dark = in_dark ** 2;
+                const var_tot = var_shot + var_th + var_dark;
+                const in_tot = Math.sqrt(var_tot);
+
+                if (in_tot > 0) {
+                    const in_pA = in_tot * 1e12;
+                    const in_nA = in_tot * 1e9;
+                    PD.InTotDisplay.textContent = in_pA >= 1000
+                        ? `${fmt(in_nA, 4)} nA/√Hz (${fmt(in_pA, 4)} pA/√Hz)`
+                        : `${fmt(in_pA, 4)} pA/√Hz (${fmt(in_nA, 4)} nA/√Hz)`;
+                    PD.IntTotDisplay.textContent = sqrtBw > 0 ? fmtCurr(in_tot * sqrtBw) : '-';
+                } else {
+                    PD.InTotDisplay.textContent = '-';
+                    PD.IntTotDisplay.textContent = '-';
+                }
+
+                // 7. Operating Regime Badge & Noise Power Share Bar
+                if (var_tot > 0) {
+                    const pctShot = (var_shot / var_tot) * 100;
+                    const pctTh = (var_th / var_tot) * 100;
+                    const pctDark = (var_dark / var_tot) * 100;
+
+                    PD.NoiseBarShot.style.width = `${pctShot.toFixed(1)}%`;
+                    PD.NoiseBarThermal.style.width = `${pctTh.toFixed(1)}%`;
+                    PD.NoiseBarDark.style.width = `${pctDark.toFixed(1)}%`;
+                    PD.NoiseBarText.textContent = `Shot: ${pctShot.toFixed(1)}% | Thermal: ${pctTh.toFixed(1)}% | Dark: ${pctDark.toFixed(1)}%`;
+
+                    if (isFinite(Icross) && Icross > 0) {
+                        const ratio = Idc / Icross;
+                        if (ratio >= 2.0) {
+                            PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-emerald-50 border-emerald-300 text-emerald-800';
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚡</span> Shot-Noise Limited (${fmt(ratio, 3)}× above $I_{\\text{cross}}$)</span>`;
+                        } else if (ratio <= 0.5) {
+                            const inv = ratio > 0 ? 1 / ratio : Infinity;
+                            PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-amber-50 border-amber-300 text-amber-900';
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>🔥</span> Thermal-Noise Limited (${isFinite(inv) ? fmt(inv, 3) + '× below' : 'below'} $I_{\\text{cross}}$)</span>`;
+                        } else {
+                            PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-indigo-50 border-indigo-300 text-indigo-900';
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚖️</span> Transition Regime ($I_{\\text{dc}} \\approx I_{\\text{cross}}$)</span>`;
+                        }
+                    } else {
+                        PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-slate-50 border-slate-200 text-slate-700';
+                        PD.RegimeBadge.textContent = 'Set $R_f > 0$ to determine crossover';
+                    }
+                } else {
+                    PD.NoiseBarShot.style.width = '50%';
+                    PD.NoiseBarThermal.style.width = '50%';
+                    PD.NoiseBarDark.style.width = '0%';
+                    PD.NoiseBarText.textContent = '-';
+                    PD.RegimeBadge.textContent = 'Awaiting input...';
+                }
+
+                // 8. Signal & Electrical SNR
+                let Isig = Math.max(0, (qpNum(PD.IsigInput) || 0) * CURRENT_SI[PD.IsigUnitSelect.value]);
+                let Isig_rms = Isig;
+                if (PD.SigModeSelect.value === 'peak') {
+                    Isig_rms = Isig / Math.SQRT2;
+                } else if (PD.SigModeSelect.value === 'pkpk') {
+                    Isig_rms = Isig / (2 * Math.SQRT2);
+                }
+
+                if (Isig_rms > 0 && in_tot > 0 && sqrtBw > 0) {
+                    const In_tot_rms = in_tot * sqrtBw;
+                    const snr_linear = (Isig_rms / In_tot_rms) ** 2;
+                    const snr_db = 10 * Math.log10(snr_linear);
+                    PD.SnrDisplay.textContent = `${fmt(snr_db, 4)} dB (${fmt(Math.sqrt(snr_linear), 3)}×)`;
+
+                    // Shot-Noise Limited theoretical limit
+                    if (in_shot > 0) {
+                        const In_shot_rms = in_shot * sqrtBw;
+                        const snr_shot_db = 20 * Math.log10(Isig_rms / In_shot_rms);
+                        const penalty = snr_shot_db - snr_db;
+                        PD.SnrShotDisplay.textContent = `${fmt(snr_shot_db, 4)} dB (-${fmt(penalty, 3)} dB loss)`;
+                    } else {
+                        PD.SnrShotDisplay.textContent = '-';
+                    }
+                } else {
+                    PD.SnrDisplay.textContent = '-';
+                    PD.SnrShotDisplay.textContent = '-';
+                }
+
+                // 9. Noise Equivalent Power (NEP) & Minimum Detectable Power
+                if (respValid && in_tot > 0) {
+                    const nep = in_tot / resp; // W/√Hz
+                    PD.NepDisplay.textContent = nep < 1e-12
+                        ? `${fmt(nep * 1e15, 4)} fW/√Hz`
+                        : `${fmt(nep * 1e12, 4)} pW/√Hz`;
+
+                    if (sqrtBw > 0) {
+                        const pmin = nep * sqrtBw; // W
+                        const pmin_dbm = 10 * Math.log10(pmin / 1e-3);
+                        const pmin_str = pmin < 1e-9 ? `${fmt(pmin * 1e12, 4)} pW` : `${fmt(pmin * 1e9, 4)} nW`;
+                        PD.PminDisplay.textContent = `${pmin_str} (${fmt(pmin_dbm, 4)} dBm)`;
+                    } else {
+                        PD.PminDisplay.textContent = '-';
+                    }
+                } else {
+                    PD.NepDisplay.textContent = '-';
+                    PD.PminDisplay.textContent = '-';
+                }
+
+            } finally {
+                pdIsSyncing = false;
+            }
+        }
+
+        function applyPdPreset(presetKey) {
+            if (presetKey === '50ohm') {
+                PD.RfInput.value = '50'; PD.RfUnitSelect.value = 'ohm';
+                PD.IdcInput.value = '2'; PD.IdcUnitSelect.value = 'ma';
+                PD.BwInput.value = '10'; PD.BwUnitSelect.value = 'ghz';
+                PD.IsigInput.value = '100'; PD.IsigUnitSelect.value = 'ua';
+                PD.IdarkInput.value = '5'; PD.IdarkUnitSelect.value = 'na';
+                PD.RespInput.value = '0.95';
+                PD.PdPresetSelect.value = 'ingaas1550';
+            } else if (presetKey === 'balanced') {
+                PD.RfInput.value = '10'; PD.RfUnitSelect.value = 'kohm';
+                PD.IdcInput.value = '500'; PD.IdcUnitSelect.value = 'ua';
+                PD.BwInput.value = '10'; PD.BwUnitSelect.value = 'mhz';
+                PD.IsigInput.value = '10'; PD.IsigUnitSelect.value = 'ua';
+                PD.IdarkInput.value = '1'; PD.IdarkUnitSelect.value = 'na';
+                PD.RespInput.value = '1.0';
+                PD.PdPresetSelect.value = 'custom';
+            } else if (presetKey === 'highgain') {
+                PD.RfInput.value = '1'; PD.RfUnitSelect.value = 'mohm';
+                PD.IdcInput.value = '10'; PD.IdcUnitSelect.value = 'ua';
+                PD.BwInput.value = '100'; PD.BwUnitSelect.value = 'khz';
+                PD.IsigInput.value = '500'; PD.IsigUnitSelect.value = 'na';
+                PD.IdarkInput.value = '0.5'; PD.IdarkUnitSelect.value = 'na';
+                PD.RespInput.value = '0.9';
+                PD.PdPresetSelect.value = 'custom';
+            } else if (presetKey === 'subna') {
+                PD.RfInput.value = '100'; PD.RfUnitSelect.value = 'mohm';
+                PD.IdcInput.value = '50'; PD.IdcUnitSelect.value = 'pa';
+                PD.BwInput.value = '1'; PD.BwUnitSelect.value = 'khz';
+                PD.IsigInput.value = '5'; PD.IsigUnitSelect.value = 'pa';
+                PD.IdarkInput.value = '0.05'; PD.IdarkUnitSelect.value = 'na';
+                PD.RespInput.value = '0.85';
+                PD.PdPresetSelect.value = 'custom';
+            }
+            updatePhotodetectorNoise('idc');
+        }
+
+        // Section 8 Listeners
+        PD.RespInput.addEventListener('input', () => updatePhotodetectorNoise('resp'));
+        PD.RespSyncBtn.addEventListener('click', () => {
+            const lam_m = parseFloat(nmInput.value) * LENGTH_SI[nmUnitSelect.value];
+            if (lam_m > 0) {
+                const r_ideal = (E_CHARGE * lam_m) / (H_PLANCK * C); // A/W at 100% QE
+                PD.RespInput.value = fmt(r_ideal, 4);
+                PD.PdPresetSelect.value = 'custom';
+                updatePhotodetectorNoise('resp');
+            }
+        });
+        PD.PdPresetSelect.addEventListener('change', () => {
+            const v = PD.PdPresetSelect.value;
+            if (v === 'ingaas1550') { PD.RespInput.value = '0.95'; PD.IdarkInput.value = '1'; PD.IdarkUnitSelect.value = 'na'; }
+            else if (v === 'ingaas1310') { PD.RespInput.value = '0.85'; PD.IdarkInput.value = '1'; PD.IdarkUnitSelect.value = 'na'; }
+            else if (v === 'si850') { PD.RespInput.value = '0.55'; PD.IdarkInput.value = '0.1'; PD.IdarkUnitSelect.value = 'na'; }
+            else if (v === 'si633') { PD.RespInput.value = '0.40'; PD.IdarkInput.value = '0.05'; PD.IdarkUnitSelect.value = 'na'; }
+            updatePhotodetectorNoise('resp');
+        });
+        PD.PinInput.addEventListener('input', () => updatePhotodetectorNoise('pin'));
+        PD.PinUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('idc'));
+        PD.IdcInput.addEventListener('input', () => updatePhotodetectorNoise('idc'));
+        PD.IdcUnitSelect.addEventListener('change', () => {
+            updatePhotodetectorNoise(pdLastShotField === 'shot_noise' ? 'shot_noise' : 'idc');
+        });
+        PD.IdarkInput.addEventListener('input', () => updatePhotodetectorNoise('idc'));
+        PD.IdarkUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('idc'));
+        PD.ShotNoiseInput.addEventListener('input', () => updatePhotodetectorNoise('shot_noise'));
+        PD.ShotNoiseUnitSelect.addEventListener('change', () => {
+            updatePhotodetectorNoise(pdLastShotField === 'shot_noise' ? 'idc' : 'shot_noise');
+        });
+
+        PD.RfInput.addEventListener('input', () => updatePhotodetectorNoise('rf'));
+        PD.RfUnitSelect.addEventListener('change', () => {
+            updatePhotodetectorNoise(pdLastThermalField === 'thermal_noise' ? 'thermal_noise' : 'rf');
+        });
+        PD.TempInput.addEventListener('input', () => updatePhotodetectorNoise('temp'));
+        PD.TempUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('temp'));
+        PD.RfPresetSelect.addEventListener('change', () => {
+            if (PD.RfPresetSelect.value) {
+                const [val, unit] = PD.RfPresetSelect.value.split(',');
+                PD.RfInput.value = val;
+                PD.RfUnitSelect.value = unit;
+                updatePhotodetectorNoise('rf');
+            }
+        });
+        PD.ThermalNoiseInput.addEventListener('input', () => updatePhotodetectorNoise('thermal_noise'));
+        PD.ThermalNoiseUnitSelect.addEventListener('change', () => {
+            updatePhotodetectorNoise(pdLastThermalField === 'thermal_noise' ? 'rf' : 'thermal_noise');
+        });
+
+        PD.BwInput.addEventListener('input', () => updatePhotodetectorNoise('bw'));
+        PD.BwUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('bw'));
+        PD.IsigInput.addEventListener('input', () => updatePhotodetectorNoise('isig'));
+        PD.IsigUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('isig'));
+        PD.SigModeSelect.addEventListener('change', () => updatePhotodetectorNoise('isig'));
+
+        document.querySelectorAll('.pd-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyPdPreset(btn.dataset.preset));
+        });
+
         // --- Safety Net for the Shared isSyncing Latch ---
         // Each section sets isSyncing while it writes its sibling fields and clears
         // it again at every exit point. If one of them ever throws in between, the
@@ -8311,6 +9026,7 @@
             updateQpm('inputs');
             updateEoModulator('inputs');
             updateGaussianBeam('w0');
+            updatePhotodetectorNoise('idc');
         }
 
 
@@ -8631,7 +9347,17 @@
             '#vpi': '#eo-modulator',
             '#modulator': '#eo-modulator',
             '#grating-coupler': '#grating-coupler',
-            '#fiber': '#mode-coupling'
+            '#fiber': '#mode-coupling',
+            '#photodetector-noise': '#photodetector-noise',
+            '#noise': '#photodetector-noise',
+            '#shot-noise': '#photodetector-noise',
+            '#thermal-noise': '#photodetector-noise',
+            '#tia': '#photodetector-noise',
+            '#photodetector': '#photodetector-noise',
+            '#photodetectors': '#photodetector-noise',
+            '#photoreceiver': '#photodetector-noise',
+            '#snr': '#photodetector-noise',
+            '#nep': '#photodetector-noise'
         };
 
         // Tools that live inside a tab of another card: [card to scroll to, tab to open]

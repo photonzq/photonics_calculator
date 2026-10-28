@@ -3535,10 +3535,13 @@
                                 <label for="pdShotNoiseInput" class="input-label text-xs font-bold text-indigo-900">Shot Noise Density $i_{n,\text{shot}}$ (reversible)</label>
                                 <div class="flex gap-1.5">
                                     <input type="number" id="pdShotNoiseInput" step="any" min="0" class="calc-input text-xs font-bold text-indigo-800 bg-indigo-50/50 border-indigo-300">
-                                    <select id="pdShotNoiseUnitSelect" class="calc-unit-select w-24 text-xs font-semibold">
+                                    <select id="pdShotNoiseUnitSelect" class="calc-unit-select w-28 text-xs font-semibold">
                                         <option value="pa_rt_hz" selected>pA/√Hz</option>
                                         <option value="na_rt_hz">nA/√Hz</option>
                                         <option value="fa_rt_hz">fA/√Hz</option>
+                                        <option value="pw_rt_hz">pW/√Hz (opt)</option>
+                                        <option value="fw_rt_hz">fW/√Hz (opt)</option>
+                                        <option value="nw_rt_hz">nW/√Hz (opt)</option>
                                         <option value="a_rt_hz">A/√Hz</option>
                                     </select>
                                 </div>
@@ -3613,10 +3616,13 @@
                                 <label for="pdThermalNoiseInput" class="input-label text-xs font-bold text-amber-900">Thermal Noise Density $i_{n,\text{th}}$ (reversible)</label>
                                 <div class="flex gap-1.5">
                                     <input type="number" id="pdThermalNoiseInput" step="any" min="0" class="calc-input text-xs font-bold text-amber-800 bg-amber-50/50 border-amber-300">
-                                    <select id="pdThermalNoiseUnitSelect" class="calc-unit-select w-24 text-xs font-semibold">
+                                    <select id="pdThermalNoiseUnitSelect" class="calc-unit-select w-28 text-xs font-semibold">
                                         <option value="pa_rt_hz" selected>pA/√Hz</option>
                                         <option value="na_rt_hz">nA/√Hz</option>
                                         <option value="fa_rt_hz">fA/√Hz</option>
+                                        <option value="pw_rt_hz">pW/√Hz (opt)</option>
+                                        <option value="fw_rt_hz">fW/√Hz (opt)</option>
+                                        <option value="nw_rt_hz">nW/√Hz (opt)</option>
                                         <option value="a_rt_hz">A/√Hz</option>
                                     </select>
                                 </div>
@@ -3724,12 +3730,23 @@
                                     <div class="metric-label">Shot Limit $\text{SNR}_{\text{shot}}$ (Penalty)</div>
                                     <div id="pdSnrShotDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
                                 </div>
-                                <div class="metric-badge">
-                                    <div class="metric-label">Noise Equivalent Power (NEP)</div>
-                                    <div id="pdNepDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
+                                <div class="col-span-2 metric-badge bg-white border border-slate-300 p-2">
+                                    <div class="flex justify-between items-center mb-0.5">
+                                        <label for="pdNepInput" class="metric-label text-slate-800 font-bold mb-0">Total NEP (Reversible $\leftrightarrow R_f$)</label>
+                                        <span id="pdNepLimitHint" class="text-[10px] text-slate-400 font-mono"></span>
+                                    </div>
+                                    <div class="flex gap-1.5 mt-1">
+                                        <input type="number" id="pdNepInput" step="any" min="0" class="calc-input text-xs font-bold text-slate-900 border-slate-300">
+                                        <select id="pdNepUnitSelect" class="calc-unit-select w-28 text-xs font-semibold">
+                                            <option value="pw_rt_hz" selected>pW/√Hz</option>
+                                            <option value="fw_rt_hz">fW/√Hz</option>
+                                            <option value="nw_rt_hz">nW/√Hz</option>
+                                            <option value="w_rt_hz">W/√Hz</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="metric-badge">
-                                    <div class="metric-label">Min Detectable Power $P_{\text{min}}$</div>
+                                <div class="col-span-2 metric-badge">
+                                    <div class="metric-label">Min Detectable Optical Power $P_{\text{min}} = \text{NEP}\sqrt{B}$</div>
                                     <div id="pdPminDisplay" class="metric-value text-xs font-mono mt-0.5">-</div>
                                 </div>
                             </div>
@@ -3864,6 +3881,13 @@
             'na_rt_hz': 1e-9,
             'pa_rt_hz': 1e-12,
             'fa_rt_hz': 1e-15
+        };
+
+        const OPT_NOISE_SI = {
+            'w_rt_hz': 1,
+            'nw_rt_hz': 1e-9,
+            'pw_rt_hz': 1e-12,
+            'fw_rt_hz': 1e-15
         };
 
         // --- DOM Elements ---
@@ -8640,12 +8664,12 @@
             'ThermalNoiseInput', 'ThermalNoiseUnitSelect', 'IcrossDisplay', 'VnThDisplay', 'ThermalIntDisplay',
             'RegimeBadge', 'NoiseBarShot', 'NoiseBarThermal', 'NoiseBarDark', 'NoiseBarText',
             'BwInput', 'BwUnitSelect', 'IsigInput', 'IsigUnitSelect', 'SigModeSelect',
-            'InTotDisplay', 'IntTotDisplay', 'SnrDisplay', 'SnrShotDisplay', 'NepDisplay', 'PminDisplay'
+            'InTotDisplay', 'IntTotDisplay', 'SnrDisplay', 'SnrShotDisplay', 'NepInput', 'NepUnitSelect', 'NepLimitHint', 'PminDisplay'
         ];
         const PD = Object.fromEntries(pdIds.map(id => [id, document.getElementById('pd' + id)]));
 
         let pdIsSyncing = false;
-        let pdLastThermalField = 'rf'; // 'rf' or 'thermal_noise'
+        let pdLastThermalField = 'rf'; // 'rf', 'thermal_noise', or 'nep'
         let pdLastShotField = 'idc';    // 'idc', 'shot_noise', or 'pin'
 
         function getPinWatts() {
@@ -8672,6 +8696,34 @@
             }
         }
 
+        function noiseUnitToCurrent(val, unit, resp) {
+            if (isNaN(val)) return NaN;
+            if (OPT_NOISE_SI[unit] !== undefined) {
+                if (!(resp > 0)) return NaN;
+                return val * OPT_NOISE_SI[unit] * resp;
+            }
+            return val * (NOISE_DENSITY_SI[unit] || 1);
+        }
+
+        function currentToNoiseUnit(in_a, unit, resp) {
+            if (isNaN(in_a) || in_a < 0) return '';
+            if (OPT_NOISE_SI[unit] !== undefined) {
+                if (!(resp > 0)) return '';
+                const nep_w = in_a / resp;
+                return fmt(nep_w / OPT_NOISE_SI[unit]);
+            }
+            return fmt(in_a / (NOISE_DENSITY_SI[unit] || 1));
+        }
+
+        function renderBadgeMath(tex, fallbackHtml) {
+            if (typeof katex !== 'undefined' && katex.renderToString) {
+                try {
+                    return katex.renderToString(tex, { throwOnError: false, displayMode: false });
+                } catch (_) {}
+            }
+            return fallbackHtml || tex;
+        }
+
         function updatePhotodetectorNoise(source = 'idc') {
             if (pdIsSyncing) return;
             pdIsSyncing = true;
@@ -8684,7 +8736,7 @@
                 let Idc = 0;
                 if (source === 'shot_noise') {
                     pdLastShotField = 'shot_noise';
-                    const in_shot_in = qpNum(PD.ShotNoiseInput) * NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value];
+                    const in_shot_in = noiseUnitToCurrent(qpNum(PD.ShotNoiseInput), PD.ShotNoiseUnitSelect.value, resp);
                     if (in_shot_in >= 0) {
                         Idc = (in_shot_in ** 2) / (2 * E_CHARGE);
                         PD.IdcInput.value = fmt(Idc / CURRENT_SI[PD.IdcUnitSelect.value]);
@@ -8697,14 +8749,14 @@
                         Idc = pin_w * resp;
                         PD.IdcInput.value = fmt(Idc / CURRENT_SI[PD.IdcUnitSelect.value]);
                         const in_shot = Math.sqrt(2 * E_CHARGE * Math.max(0, Idc));
-                        PD.ShotNoiseInput.value = fmt(in_shot / NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value]);
+                        PD.ShotNoiseInput.value = currentToNoiseUnit(in_shot, PD.ShotNoiseUnitSelect.value, resp);
                     }
                 } else {
-                    // source === 'idc', 'resp', or general
+                    // source === 'idc', 'resp', 'nep', or general
                     if (source === 'idc') pdLastShotField = 'idc';
                     Idc = Math.max(0, (qpNum(PD.IdcInput) || 0) * CURRENT_SI[PD.IdcUnitSelect.value]);
                     const in_shot = Math.sqrt(2 * E_CHARGE * Idc);
-                    PD.ShotNoiseInput.value = fmt(in_shot / NOISE_DENSITY_SI[PD.ShotNoiseUnitSelect.value]);
+                    PD.ShotNoiseInput.value = currentToNoiseUnit(in_shot, PD.ShotNoiseUnitSelect.value, resp);
                     if (respValid && source !== 'pin') setPinWatts(Idc / resp);
                 }
 
@@ -8723,9 +8775,34 @@
                 let in_th = 0;
                 let Rf = 0;
 
-                if (source === 'thermal_noise') {
+                if (source === 'nep') {
+                    pdLastThermalField = 'nep';
+                    const nep_target_w = qpNum(PD.NepInput) * OPT_NOISE_SI[PD.NepUnitSelect.value];
+                    if (respValid && nep_target_w > 0) {
+                        const in_target = nep_target_w * resp;
+                        const var_target = in_target ** 2;
+                        const var_shot_dark = in_shot ** 2 + in_dark ** 2;
+                        if (var_target > var_shot_dark) {
+                            const var_th_needed = var_target - var_shot_dark;
+                            Rf = (4 * K_BOLTZMANN * tempK) / var_th_needed;
+                            PD.RfInput.value = fmt(Rf / RESISTANCE_SI[PD.RfUnitSelect.value]);
+                            in_th = Math.sqrt(var_th_needed);
+                            PD.ThermalNoiseInput.value = currentToNoiseUnit(in_th, PD.ThermalNoiseUnitSelect.value, resp);
+                            PD.NepLimitHint.textContent = '';
+                        } else {
+                            // Target NEP is below quantum shot noise floor
+                            const nep_floor = Math.sqrt(var_shot_dark) / resp;
+                            const unitText = PD.NepUnitSelect.selectedOptions[0]?.text || 'pW/√Hz';
+                            PD.NepLimitHint.textContent = `Floor: ${fmt(nep_floor / OPT_NOISE_SI[PD.NepUnitSelect.value], 3)} ${unitText}`;
+                            PD.NepLimitHint.className = 'text-[9px] text-amber-600 font-bold';
+                            Rf = Math.max(0, (qpNum(PD.RfInput) || 0) * RESISTANCE_SI[PD.RfUnitSelect.value]);
+                            if (Rf > 0) in_th = Math.sqrt((4 * K_BOLTZMANN * tempK) / Rf);
+                            PD.ThermalNoiseInput.value = currentToNoiseUnit(in_th, PD.ThermalNoiseUnitSelect.value, resp);
+                        }
+                    }
+                } else if (source === 'thermal_noise') {
                     pdLastThermalField = 'thermal_noise';
-                    const in_th_in = qpNum(PD.ThermalNoiseInput) * NOISE_DENSITY_SI[PD.ThermalNoiseUnitSelect.value];
+                    const in_th_in = noiseUnitToCurrent(qpNum(PD.ThermalNoiseInput), PD.ThermalNoiseUnitSelect.value, resp);
                     if (in_th_in > 0) {
                         in_th = in_th_in;
                         Rf = (4 * K_BOLTZMANN * tempK) / (in_th_in ** 2);
@@ -8737,7 +8814,7 @@
                     Rf = Math.max(0, (qpNum(PD.RfInput) || 0) * RESISTANCE_SI[PD.RfUnitSelect.value]);
                     if (Rf > 0) {
                         in_th = Math.sqrt((4 * K_BOLTZMANN * tempK) / Rf);
-                        PD.ThermalNoiseInput.value = fmt(in_th / NOISE_DENSITY_SI[PD.ThermalNoiseUnitSelect.value]);
+                        PD.ThermalNoiseInput.value = currentToNoiseUnit(in_th, PD.ThermalNoiseUnitSelect.value, resp);
                     }
                 }
 
@@ -8807,22 +8884,26 @@
                     PD.NoiseBarDark.style.width = `${pctDark.toFixed(1)}%`;
                     PD.NoiseBarText.textContent = `Shot: ${pctShot.toFixed(1)}% | Thermal: ${pctTh.toFixed(1)}% | Dark: ${pctDark.toFixed(1)}%`;
 
+                    const txtIcross = renderBadgeMath("I_{\\text{cross}}", "<i>I</i><sub>cross</sub>");
+                    const txtIdc = renderBadgeMath("I_{\\text{dc}}", "<i>I</i><sub>dc</sub>");
+                    const txtRf = renderBadgeMath("R_f", "<i>R</i><sub>f</sub>");
+
                     if (isFinite(Icross) && Icross > 0) {
                         const ratio = Idc / Icross;
                         if (ratio >= 2.0) {
                             PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-emerald-50 border-emerald-300 text-emerald-800';
-                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚡</span> Shot-Noise Limited (${fmt(ratio, 3)}× above $I_{\\text{cross}}$)</span>`;
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚡</span> Shot-Noise Limited (${fmt(ratio, 3)}× above ${txtIcross})</span>`;
                         } else if (ratio <= 0.5) {
                             const inv = ratio > 0 ? 1 / ratio : Infinity;
                             PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-amber-50 border-amber-300 text-amber-900';
-                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>🔥</span> Thermal-Noise Limited (${isFinite(inv) ? fmt(inv, 3) + '× below' : 'below'} $I_{\\text{cross}}$)</span>`;
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>🔥</span> Thermal-Noise Limited (${isFinite(inv) ? fmt(inv, 3) + '× below' : 'below'} ${txtIcross})</span>`;
                         } else {
                             PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-indigo-50 border-indigo-300 text-indigo-900';
-                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚖️</span> Transition Regime ($I_{\\text{dc}} \\approx I_{\\text{cross}}$)</span>`;
+                            PD.RegimeBadge.innerHTML = `<span class="flex items-center gap-1.5"><span>⚖️</span> Transition Regime (${txtIdc} ≈ ${txtIcross})</span>`;
                         }
                     } else {
                         PD.RegimeBadge.className = 'w-full flex items-center justify-center p-2 rounded-md border text-center font-bold text-xs shadow-sm bg-slate-50 border-slate-200 text-slate-700';
-                        PD.RegimeBadge.textContent = 'Set $R_f > 0$ to determine crossover';
+                        PD.RegimeBadge.innerHTML = `Set ${txtRf} &gt; 0 to determine crossover`;
                     }
                 } else {
                     PD.NoiseBarShot.style.width = '50%';
@@ -8864,9 +8945,13 @@
                 // 9. Noise Equivalent Power (NEP) & Minimum Detectable Power
                 if (respValid && in_tot > 0) {
                     const nep = in_tot / resp; // W/√Hz
-                    PD.NepDisplay.textContent = nep < 1e-12
-                        ? `${fmt(nep * 1e15, 4)} fW/√Hz`
-                        : `${fmt(nep * 1e12, 4)} pW/√Hz`;
+                    if (source !== 'nep') {
+                        PD.NepInput.value = fmt(nep / OPT_NOISE_SI[PD.NepUnitSelect.value]);
+                        const nep_shot = in_shot / resp;
+                        const unitText = PD.NepUnitSelect.selectedOptions[0]?.text || 'pW/√Hz';
+                        PD.NepLimitHint.textContent = `Shot floor: ${fmt(nep_shot / OPT_NOISE_SI[PD.NepUnitSelect.value], 3)} ${unitText}`;
+                        PD.NepLimitHint.className = 'text-[10px] text-slate-400 font-mono';
+                    }
 
                     if (sqrtBw > 0) {
                         const pmin = nep * sqrtBw; // W
@@ -8877,7 +8962,8 @@
                         PD.PminDisplay.textContent = '-';
                     }
                 } else {
-                    PD.NepDisplay.textContent = '-';
+                    if (source !== 'nep') PD.NepInput.value = '';
+                    PD.NepLimitHint.textContent = '';
                     PD.PminDisplay.textContent = '-';
                 }
 
@@ -8979,6 +9065,9 @@
         PD.IsigInput.addEventListener('input', () => updatePhotodetectorNoise('isig'));
         PD.IsigUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('isig'));
         PD.SigModeSelect.addEventListener('change', () => updatePhotodetectorNoise('isig'));
+
+        PD.NepInput.addEventListener('input', () => updatePhotodetectorNoise('nep'));
+        PD.NepUnitSelect.addEventListener('change', () => updatePhotodetectorNoise('bw'));
 
         document.querySelectorAll('.pd-preset-btn').forEach(btn => {
             btn.addEventListener('click', () => applyPdPreset(btn.dataset.preset));

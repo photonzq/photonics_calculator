@@ -454,7 +454,7 @@
                         </optgroup>
                         <optgroup label="2. Ultrafast Pulses & Dispersion">
                             <option value="#transform-limited">⌛ Transform-Limited Pulses</option>
-                            <option value="#dispersion-gdd">📊 GDD ↔ Total Dispersion (D)</option>
+                            <option value="#dispersion-gdd">📊 SMF Fiber Dispersion &amp; GDD ↔ D</option>
                             <option value="#pulse-elongation">📈 Pulse Elongation (Broadening)</option>
                             <option value="#power-energy">🔋 Power, Pulse Energy &amp; dB</option>
                         </optgroup>
@@ -479,6 +479,7 @@
                         </optgroup>
                         <optgroup label="7. Modulators & Tuning">
                             <option value="#eo-modulator">⚡ Pockels Modulator, Sidebands &amp; Thermal Tuning</option>
+                            <option value="#rf-power-voltage">🔌 RF Power (dBm ↔ W..fW) ↔ Voltage @ Z₀</option>
                         </optgroup>
                         <optgroup label="8. Photodetectors & Receivers">
                             <option value="#photodetector-noise">📡 Shot Noise, Thermal Noise, TIA & SNR</option>
@@ -802,20 +803,20 @@
                     </div>
                 </div>
 
-                <!-- CARD 2: GDD Conversion -->
+                <!-- CARD 2: SMF Fiber Dispersion & GDD Conversion -->
                 <div id="dispersion-gdd" class="group-card scroll-mt-28">
-                    <div class="card-header">
+                    <div class="card-header flex justify-between items-center">
                         <h3 class="group-title">
-                            <span class="text-cyan-600">📊</span> GDD ↔ Total Dispersion ($D$)
+                            <span class="text-cyan-600">📊</span> SMF Fiber Dispersion &amp; GDD ↔ $D$
                         </h3>
                     </div>
                     <div class="card-body">
-                        <div class="equation-box">$$ \text{GDD} = - \frac{\lambda_c^2}{2 \pi c} D $$</div>
+                        <div class="equation-box">$$ D = D_\lambda L \quad \text{GDD} = \beta_2 L = -\frac{\lambda_c^2}{2 \pi c} D $$</div>
                         
                         <div>
                             <label for="gddCenterNm" class="input-label">Center $\lambda$</label>
                             <div class="flex gap-1.5">
-                                <input type="number" id="gddCenterNm" value="1550" class="calc-input">
+                                <input type="number" id="gddCenterNm" value="1550" step="any" class="calc-input">
                                 <select id="gddCenterUnitSelect" class="calc-unit-select w-16">
                                     <option value="nm" selected>nm</option>
                                     <option value="um">µm</option>
@@ -823,44 +824,129 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label for="dInput" class="input-label">Total Dispersion $D$</label>
-                            <div class="flex gap-1.5">
-                                <input type="number" id="dInput" placeholder="1.0" value="1" class="calc-input">
-                                <select id="dUnitSelect" class="calc-unit-select w-20">
-                                    <option value="ps/nm" selected>ps/nm</option>
-                                    <option value="fs/nm">fs/nm</option>
-                                    <option value="ns/nm">ns/nm</option>
-                                    <option value="ps/um">ps/µm</option>
-                                </select>
+                        <!-- SMF Fiber & Material Dispersion Calculator -->
+                        <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50/70 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label for="gddFiberSelect" class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Fiber / Material Model</label>
+                                <span id="gddRegimeBadge" class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Anomalous</span>
+                            </div>
+                            <select id="gddFiberSelect" class="calc-select w-full text-xs py-1.5">
+                                <optgroup label="Telecom & Standard Single-Mode Fibers">
+                                    <option value="smf28" selected>SMF-28e+ / Ultra (ITU G.652.D: λ₀ = 1310 nm, +17.0 @ 1550)</option>
+                                    <option value="leaf">Corning LEAF (NZ-DSF G.655: λ₀ = 1500 nm, +4.2 @ 1550)</option>
+                                    <option value="tw_rs">OFS TrueWave RS (G.655: λ₀ = 1450 nm, +4.4 @ 1550)</option>
+                                    <option value="tw_reach">OFS TrueWave REACH (G.655.E: λ₀ = 1405 nm, +7.2 @ 1550)</option>
+                                    <option value="hnlf">OFS HNLF (Highly Nonlinear: λ₀ = 1545 nm, +0.12 @ 1550)</option>
+                                </optgroup>
+                                <optgroup label="PM & Specialty Fibers (Vis / NIR / 2 µm)">
+                                    <option value="pm1550">Coherent PM1550-XP (PANDA: λ₀ = 1340 nm, +17.9 @ 1550)</option>
+                                    <option value="hi1060">Corning HI 1060 / PM980 (-53.5 @ 980, -38.5 @ 1060 nm)</option>
+                                    <option value="780hp">Coherent 780HP / PM780-HP (-118 @ 800 nm)</option>
+                                    <option value="s405">S405-XP / 460HP / 630HP (Pure-Silica-Core Vis SMF)</option>
+                                    <option value="sm1950">Coherent SM1950 / SM2000 (2 µm Anomalous, +35 @ 2000 nm)</option>
+                                    <option value="pm2000d">Coherent PM2000D / SM2000D (2 µm Normal, -55 @ 2000 nm)</option>
+                                </optgroup>
+                                <optgroup label="Dispersion-Compensating & Ultra-High NA">
+                                    <option value="pm_dcf">Thorlabs PM-DCF (-100 ps/(nm·km), RDS 0.0034 @ 1550)</option>
+                                    <option value="dcf">Standard Telecom DCF (-85 ps/(nm·km) @ 1550)</option>
+                                    <option value="dcf38">Thorlabs DCF38 (-38 ps/(nm·km) @ 1550)</option>
+                                    <option value="uhna1">Coherent UHNA1 (NA 0.28: -34.5 @ 1550, λ₀ ≈ 2210 nm)</option>
+                                    <option value="uhna3">Coherent UHNA3 (NA 0.35: -84 @ 1550 nm)</option>
+                                    <option value="uhna7">Coherent UHNA7 (NA 0.41: -47.4 @ 1550 nm)</option>
+                                </optgroup>
+                                <optgroup label="Photonic Crystal (PCF) & Mid-IR Fluoride">
+                                    <option value="lma10">NKT LMA-10 / LMA-PM-10 (10 µm PCF: λ₀ = 1190 nm)</option>
+                                    <option value="lma15">NKT LMA-15 / LMA-PM-15 (15 µm PCF: λ₀ = 1240 nm)</option>
+                                    <option value="sc1040">NKT SC-5.0-1040 (Supercontinuum PCF: λ₀ = 1040 nm)</option>
+                                    <option value="andi1050">NKT NL-1050-NEG-1 (ANDi PCF: -8 @ 1050 nm)</option>
+                                    <option value="zblan">ZBLAN Fluoride Fiber / Bulk (λ₀ ≈ 1708 nm)</option>
+                                </optgroup>
+                                <optgroup label="Bulk Optical Glasses & Crystals (Sellmeier)">
+                                    <option value="sio2">Fused Silica (Bulk SiO₂ Malitson, λ₀ = 1273 nm)</option>
+                                    <option value="bk7">SCHOTT N-BK7 Glass (λ₀ = 1317 nm)</option>
+                                    <option value="sf11">SCHOTT N-SF11 Dense Flint (+187.5 fs²/mm @ 800 nm)</option>
+                                    <option value="sapphire">Sapphire Al₂O₃ o-ray (+58.0 fs²/mm @ 800 nm)</option>
+                                    <option value="caf2">Calcium Fluoride CaF₂ (+27.9 fs²/mm @ 800 nm)</option>
+                                </optgroup>
+                                <option value="custom">Custom D_λ or β₂</option>
+                            </select>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="gddDlambdaInput" class="input-label text-[11px]">$D_\lambda$ (ps/(nm·km))</label>
+                                    <input type="number" id="gddDlambdaInput" value="17.0" step="any" class="calc-input text-xs">
+                                </div>
+                                <div>
+                                    <label for="gddBeta2Input" class="input-label text-[11px]">$\beta_2$ (ps²/km = fs²/mm)</label>
+                                    <input type="number" id="gddBeta2Input" value="-21.68" step="any" class="calc-input text-xs">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="gddLengthInput" class="input-label text-[11px] font-semibold text-slate-700">Fiber / Medium Length $L$ (reversible)</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="gddLengthInput" value="1" step="any" min="0" class="calc-input text-xs font-semibold">
+                                    <select id="gddLengthUnitSelect" class="calc-unit-select w-18 text-xs">
+                                        <option value="m" selected>m</option>
+                                        <option value="km">km</option>
+                                        <option value="cm">cm</option>
+                                        <option value="mm">mm</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="arrow-separator">↕</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label for="dInput" class="input-label text-xs">Total Dispersion $D = D_\lambda L$</label>
+                                <div class="flex gap-1">
+                                    <input type="number" id="dInput" placeholder="0.017" value="0.017" step="any" class="calc-input text-xs">
+                                    <select id="dUnitSelect" class="calc-unit-select w-18 text-xs">
+                                        <option value="ps/nm" selected>ps/nm</option>
+                                        <option value="fs/nm">fs/nm</option>
+                                        <option value="ns/nm">ns/nm</option>
+                                        <option value="ps/um">ps/µm</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div>
-                            <label for="gddInput" class="input-label">Group Delay Dispersion (GDD)</label>
-                            <div class="flex gap-1.5">
-                                <input type="number" id="gddInput" placeholder="ps²" class="calc-input">
-                                <select id="gddUnitSelect" class="calc-unit-select w-18">
-                                    <option value="ps2" selected>ps²</option>
-                                    <option value="fs2">fs²</option>
-                                    <option value="ns2">ns²</option>
-                                </select>
+                            <div>
+                                <label for="gddInput" class="input-label text-xs font-bold text-indigo-900">Total $\text{GDD} = \beta_2 L$</label>
+                                <div class="flex gap-1">
+                                    <input type="number" id="gddInput" placeholder="ps²" step="any" class="calc-input text-xs font-bold text-indigo-900 bg-indigo-50/40 border-indigo-200">
+                                    <select id="gddUnitSelect" class="calc-unit-select w-16 text-xs">
+                                        <option value="ps2" selected>ps²</option>
+                                        <option value="fs2">fs²</option>
+                                        <option value="ns2">ns²</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="metric-badge bg-slate-50 mt-auto">
+                        <div class="metric-badge bg-slate-50">
                             <div class="metric-label">GDD in Femtoseconds Squared</div>
-                            <div id="gddFs2Display" class="metric-value text-indigo-700 mt-0.5">-1,275,448 fs²</div>
+                            <div id="gddFs2Display" class="metric-value text-indigo-700 mt-0.5">-21,683 fs²</div>
                         </div>
 
-                        <details class="phys-note">
+                        <!-- Auto-apply to Pulse Elongation module -->
+                        <div class="flex items-center justify-between gap-2 p-2 rounded-md bg-cyan-50/80 border border-cyan-200 text-xs">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-cyan-900 font-semibold select-none">
+                                <input type="checkbox" id="gddAutoApplyElong" checked class="rounded border-cyan-400 text-cyan-600 focus:ring-cyan-500">
+                                <span>Auto-apply to Pulse Elongation</span>
+                            </label>
+                            <button type="button" id="gddApplyElongBtn" class="px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-[11px] transition shadow-sm">
+                                Apply →
+                            </button>
+                        </div>
+
+                        <details class="phys-note mt-auto">
                             <summary>Physics notes &amp; assumptions</summary>
                             <ul>
-                                <li>$D$ here is the <strong>total</strong> (length-integrated) dispersion, e.g. $D_\lambda\,[\text{ps/(nm·km)}] \times L\,[\text{km}]$; GDD $= \beta_2 L = d^2\phi/d\omega^2$.</li>
-                                <li>Sign convention: $D > 0$ (anomalous) ⇔ GDD $< 0$. Standard SMF-28 at 1550 nm: $D_\lambda \approx +17$ ps/(nm·km), $\beta_2 \approx -21.7$ ps²/km.</li>
-                                <li>The relation is exact for the second-order term only; third-order dispersion (TOD) and higher are not included.</li>
+                                <li><strong>Telecom &amp; Specialty Fibers</strong>: Standard ITU-T G.652/G.655 silica fibers use $D_\lambda(\lambda) = \frac{S_0}{4}\!\left(\lambda - \frac{\lambda_0^4}{\lambda^3}\right)$ calibrated to Corning/Coherent/OFS datasheets (SMF-28, LEAF, TrueWave, HNLF, PM1550, HI 1060, 780HP, SM1950, LMA/SC PCFs). DCF, PM2000D, and UHNA1/3/7 use nominal datasheet dispersion &amp; slope/RDS fits around their operating bands.</li>
+                                <li><strong>Sellmeier Substrates &amp; Pure-Silica Fibers</strong>: Fused Silica (and pure-silica-core visible SMFs like S405-XP/460HP), ZBLAN fluoride (Gan), N-BK7, N-SF11, Sapphire ($n_o$), and $\text{CaF}_2$ use the exact analytical second derivative $D_{\text{mat}}(\lambda) = -\frac{\lambda}{c}\frac{d^2 n}{d\lambda^2}$ from standard Sellmeier equations.</li>
+                                <li>$D = D_\lambda L$ is the <strong>total</strong> (length-integrated) dispersion, and $\text{GDD} = \beta_2 L = d^2\phi/d\omega^2$. Note that $1\text{ ps}^2/\text{km} \equiv 1\text{ fs}^2/\text{mm}$.</li>
+                                <li>Sign convention: $D > 0$ (anomalous) ⇔ $\beta_2, \text{GDD} < 0$; $D < 0$ (normal) ⇔ $\beta_2, \text{GDD} > 0$.</li>
+                                <li>When <em>Auto-apply to Pulse Elongation</em> is checked, the computed $|\text{GDD}|$ (or $D$) and $\lambda$ are automatically pushed to the Pulse Elongation card.</li>
                             </ul>
                         </details>
                     </div>
@@ -3428,6 +3514,174 @@
                     </details>
                 </div>
             </div>
+
+            <!-- CARD 2: RF Power (dBm <-> Linear m/u/n/p/fW) <-> Voltage @ Any Impedance -->
+            <div id="rf-power-voltage" class="group-card border-rose-200 shadow-md scroll-mt-28">
+                <div class="card-header bg-gradient-to-r from-rose-50 to-amber-50 border-b border-rose-100 flex justify-between items-center flex-wrap gap-2">
+                    <h3 class="group-title text-rose-900">
+                        <span class="text-rose-600">🔌</span> RF Power ($\text{dBm} \leftrightarrow \text{W}\dots\text{fW}$) ↔ Voltage at Any Impedance
+                    </h3>
+                    <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                        <span class="text-[11px] font-semibold text-slate-500 mr-0.5">Quick $P$:</span>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="20">+20 dBm</button>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="0">0 dBm</button>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="-30">-30 dBm</button>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="-60">-60 dBm</button>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="-90">-90 dBm</button>
+                        <button type="button" class="rf-dbm-preset text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:border-rose-300 hover:text-rose-700 transition shadow-sm" data-dbm="-120">-120 dBm</button>
+                    </div>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="equation-box">$$ P_{\text{dBm}} = 10\log_{10}\!\left(\frac{P}{1\,\text{mW}}\right) \qquad P = \frac{V_{\text{rms}}^2}{Z_0} = \frac{V_{\text{pk}}^2}{2 Z_0} = \frac{V_{\text{pp}}^2}{8 Z_0} \qquad V_{\text{dBV}} = 20\log_{10}\!\left(\frac{V_{\text{rms}}}{1\,\text{V}}\right) $$</div>
+
+                    <!-- Row 1: Impedance + Power inputs -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="rfZ0Input" class="input-label text-xs mb-0 font-bold text-slate-800">Load Impedance $Z_0$</label>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" class="rf-z0-preset text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 hover:bg-rose-100 text-slate-700 border border-slate-200" data-z="50" data-unit="ohm">50Ω</button>
+                                    <button type="button" class="rf-z0-preset text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 hover:bg-rose-100 text-slate-700 border border-slate-200" data-z="75" data-unit="ohm">75Ω</button>
+                                    <button type="button" class="rf-z0-preset text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 hover:bg-rose-100 text-slate-700 border border-slate-200" data-z="1" data-unit="mohm">1MΩ</button>
+                                </div>
+                            </div>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfZ0Input" value="50" step="any" min="0" class="calc-input text-xs font-semibold">
+                                <select id="rfZ0UnitSelect" class="calc-unit-select w-18 text-xs">
+                                    <option value="ohm" selected>Ω</option>
+                                    <option value="kohm">kΩ</option>
+                                    <option value="mohm">MΩ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="rfDbmInput" class="input-label text-xs font-bold text-rose-900">RF Power $P_{\text{dBm}}$ (reversible)</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfDbmInput" value="0" step="any" class="calc-input text-xs font-bold text-rose-900 bg-rose-50/40 border-rose-300">
+                                <span class="inline-flex items-center px-2.5 rounded border border-slate-200 bg-slate-100 text-xs font-mono font-semibold text-slate-600">dBm</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="rfPowInput" class="input-label text-xs font-bold text-slate-800">Linear Power $P$ (reversible)</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfPowInput" value="1" step="any" min="0" class="calc-input text-xs font-semibold">
+                                <select id="rfPowUnitSelect" class="calc-unit-select w-20 text-xs font-semibold">
+                                    <option value="w">W</option>
+                                    <option value="mw" selected>mW</option>
+                                    <option value="uw">µW</option>
+                                    <option value="nw">nW</option>
+                                    <option value="pw">pW</option>
+                                    <option value="fw">fW</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Sinusoidal Voltage Conversions -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+                        <div>
+                            <label for="rfVrmsInput" class="input-label text-xs font-bold text-indigo-900">RMS Voltage $V_{\text{rms}}$ (reversible)</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfVrmsInput" step="any" min="0" class="calc-input text-xs font-bold text-indigo-900 bg-indigo-50/40 border-indigo-200">
+                                <select id="rfVrmsUnitSelect" class="calc-unit-select w-18 text-xs">
+                                    <option value="kv">kV</option>
+                                    <option value="v">V</option>
+                                    <option value="mv" selected>mV</option>
+                                    <option value="uv">µV</option>
+                                    <option value="nv">nV</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="rfVpkInput" class="input-label text-xs font-semibold text-slate-800">Peak Amplitude $V_{\text{pk}} = \sqrt{2}\,V_{\text{rms}}$ (reversible)</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfVpkInput" step="any" min="0" class="calc-input text-xs font-semibold">
+                                <select id="rfVpkUnitSelect" class="calc-unit-select w-18 text-xs">
+                                    <option value="kv">kV</option>
+                                    <option value="v">V</option>
+                                    <option value="mv" selected>mV</option>
+                                    <option value="uv">µV</option>
+                                    <option value="nv">nV</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="rfVppInput" class="input-label text-xs font-semibold text-slate-800">Peak-to-Peak $V_{\text{pp}} = 2 V_{\text{pk}}$ (reversible)</label>
+                            <div class="flex gap-1.5">
+                                <input type="number" id="rfVppInput" step="any" min="0" class="calc-input text-xs font-semibold">
+                                <select id="rfVppUnitSelect" class="calc-unit-select w-18 text-xs">
+                                    <option value="kv">kV</option>
+                                    <option value="v">V</option>
+                                    <option value="mv" selected>mV</option>
+                                    <option value="uv">µV</option>
+                                    <option value="nv">nV</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Linear Power Multi-Scale Strip (mW, uW, nW, pW, fW) -->
+                    <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Linear Power Across Scales</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                            <div class="bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <div class="text-[10px] text-slate-400 font-semibold">mW ($10^{-3}$ W)</div>
+                                <div id="rfMwDisplay" class="font-mono font-bold text-slate-800">-</div>
+                            </div>
+                            <div class="bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <div class="text-[10px] text-slate-400 font-semibold">µW ($10^{-6}$ W)</div>
+                                <div id="rfUwDisplay" class="font-mono font-bold text-slate-800">-</div>
+                            </div>
+                            <div class="bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <div class="text-[10px] text-slate-400 font-semibold">nW ($10^{-9}$ W)</div>
+                                <div id="rfNwDisplay" class="font-mono font-bold text-slate-800">-</div>
+                            </div>
+                            <div class="bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <div class="text-[10px] text-slate-400 font-semibold">pW ($10^{-12}$ W)</div>
+                                <div id="rfPwDisplay" class="font-mono font-bold text-slate-800">-</div>
+                            </div>
+                            <div class="bg-white rounded border border-slate-200 px-2.5 py-1.5">
+                                <div class="text-[10px] text-slate-400 font-semibold">fW ($10^{-15}$ W)</div>
+                                <div id="rfFwDisplay" class="font-mono font-bold text-slate-800">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Additional RF Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div class="metric-badge">
+                            <div class="metric-label">Power (<span class="normal-case">dBW</span>)</div>
+                            <div id="rfDbwDisplay" class="metric-value text-sm font-mono mt-1">-</div>
+                        </div>
+                        <div class="metric-badge">
+                            <div class="metric-label">Voltage Level (<span class="normal-case">dBV</span>)</div>
+                            <div id="rfDbvDisplay" class="metric-value text-sm font-mono mt-1">-</div>
+                        </div>
+                        <div class="metric-badge">
+                            <div class="metric-label">Voltage Level (<span class="normal-case">dBµV</span>)</div>
+                            <div id="rfDbuvDisplay" class="metric-value text-sm font-mono mt-1">-</div>
+                        </div>
+                        <div class="metric-badge">
+                            <div class="metric-label">RMS Current $I_{\text{rms}} = V_{\text{rms}}/Z_0$</div>
+                            <div id="rfIrmsDisplay" class="metric-value text-sm font-mono mt-1">-</div>
+                        </div>
+                    </div>
+
+                    <details class="phys-note">
+                        <summary>Physics notes &amp; impedance conventions</summary>
+                        <ul>
+                            <li><strong>Power–Voltage Relation</strong>: For a sinusoidal wave across real impedance $Z_0$, average power is $P = V_{\text{rms}}^2 / Z_0 = V_{\text{pk}}^2 / (2 Z_0) = V_{\text{pp}}^2 / (8 Z_0)$. At $Z_0 = 50\,\Omega$, $0\text{ dBm} = 1\text{ mW}$ corresponds to $V_{\text{rms}} \approx 223.6\text{ mV}$, $V_{\text{pk}} \approx 316.2\text{ mV}$, and $V_{\text{pp}} \approx 632.5\text{ mV}$.</li>
+                            <li><strong>dBm Scale</strong>: $P_{\text{dBm}} = 10\log_{10}(P / 1\text{ mW})$, so $0\text{ dBm} = 1\text{ mW}$, $-30\text{ dBm} = 1\,\mu\text{W}$, $-60\text{ dBm} = 1\text{ nW}$, $-90\text{ dBm} = 1\text{ pW}$, and $-120\text{ dBm} = 1\text{ fW}$.</li>
+                            <li><strong>Changing $Z_0$</strong>: Holds whichever quantity class (power/dBm vs voltage) you edited last constant and updates the other side accordingly. For an open-circuit (high-Z) source termination compared to a matched $50\,\Omega$ load, the voltage amplitude doubles ($+6.02\text{ dB}$ in voltage).</li>
+                            <li><strong>Voltage dB Units</strong>: $V_{\text{dBV}} = 20\log_{10}(V_{\text{rms}}/1\text{ V})$ and $V_{\text{dBµV}} = 20\log_{10}(V_{\text{rms}}/1\,\mu\text{V}) = V_{\text{dBV}} + 120$. At $50\,\Omega$, $\text{dB}\mu\text{V} = \text{dBm} + 107$.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
         </section>
 
         <!-- ========================================== -->
@@ -3856,9 +4110,19 @@
             'gw': 1e9,
             'megw': 1e6,
             'kw': 1e3,
-            'nw': 1e-9,
             'mw': 1e-3,
-            'uw': 1e-6
+            'uw': 1e-6,
+            'nw': 1e-9,
+            'pw': 1e-12,
+            'fw': 1e-15
+        };
+
+        const VOLTAGE_SI = {
+            'kv': 1e3,
+            'v': 1,
+            'mv': 1e-3,
+            'uv': 1e-6,
+            'nv': 1e-9
         };
 
         const CURRENT_SI = {
@@ -3934,6 +4198,14 @@
 
         const gddCenterNm = document.getElementById('gddCenterNm');
         const gddCenterUnitSelect = document.getElementById('gddCenterUnitSelect');
+        const gddFiberSelect = document.getElementById('gddFiberSelect');
+        const gddRegimeBadge = document.getElementById('gddRegimeBadge');
+        const gddDlambdaInput = document.getElementById('gddDlambdaInput');
+        const gddBeta2Input = document.getElementById('gddBeta2Input');
+        const gddLengthInput = document.getElementById('gddLengthInput');
+        const gddLengthUnitSelect = document.getElementById('gddLengthUnitSelect');
+        const gddAutoApplyElong = document.getElementById('gddAutoApplyElong');
+        const gddApplyElongBtn = document.getElementById('gddApplyElongBtn');
         const dInput = document.getElementById('dInput');
         const dUnitSelect = document.getElementById('dUnitSelect');
         const gddInput = document.getElementById('gddInput');
@@ -4692,11 +4964,83 @@
             isSyncing = false;
         }
 
-        function updateGdd(fromD) {
+        // Data-driven fiber and optical substrate dispersion models
+        // - 'itu': D(λ) = (S0 / 4) * (λ - λ0^4 / λ^3) [ps/(nm·km)]
+        // - 'linear': D(λ) = dRef + slope * (λ - lamRef) [ps/(nm·km)]
+        // - 'parabolic': D(λ) = dPeak - curv * (λ - lamPeak)^2 [ps/(nm·km)]
+        // - 'sellmeier': D(λ) = -(λ/c) * d^2n/dλ^2 from analytical n^2 - 1 = Σ B_i λ^2 / (λ^2 - C_i)
+        const FIBER_DISPERSION_MODELS = {
+            // Telecom & Standard SMF
+            smf28:    { label: 'SMF-28',         type: 'itu', lam0: 1310, s0: 0.08952 },
+            leaf:     { label: 'Corning LEAF',   type: 'itu', lam0: 1500, s0: 0.085 },
+            tw_rs:    { label: 'TrueWave RS',    type: 'itu', lam0: 1450, s0: 0.045 },
+            tw_reach: { label: 'TrueWave REACH', type: 'itu', lam0: 1405, s0: 0.045 },
+            hnlf:     { label: 'OFS HNLF',       type: 'itu', lam0: 1545, s0: 0.025 },
+            // PM & Specialty Silica Fibers
+            pm1550:   { label: 'PM1550-XP',      type: 'itu', lam0: 1340, s0: 0.095 },
+            hi1060:   { label: 'HI 1060',        type: 'itu', lam0: 1474.6, s0: 0.05292 },
+            '780hp':  { label: '780HP',          type: 'itu', lam0: 1332.8, s0: 0.088 },
+            s405:     { label: 'Vis SMF (SiO₂)', type: 'sellmeier', B: [0.6961663, 0.4079426, 0.8974794], C: [0.0684043 ** 2, 0.1162414 ** 2, 9.896161 ** 2] },
+            sm1950:   { label: 'SM1950/SM2000',  type: 'itu', lam0: 1315, s0: 0.087 },
+            pm2000d:  { label: 'PM2000D',        type: 'linear', lamRef: 2000, dRef: -55.0, slope: -0.0111 },
+            // Dispersion-Compensating & UHNA Fibers
+            pm_dcf:   { label: 'PM-DCF',         type: 'linear', lamRef: 1550, dRef: -100.0, slope: -0.34 },
+            dcf:      { label: 'Telecom DCF',    type: 'linear', lamRef: 1550, dRef: -85.0, slope: -0.28 },
+            dcf38:    { label: 'DCF38',          type: 'linear', lamRef: 1550, dRef: -38.0, slope: -0.115 },
+            uhna1:    { label: 'UHNA1',          type: 'linear', lamRef: 1550, dRef: -34.5, slope: 0.0367 },
+            uhna3:    { label: 'UHNA3',          type: 'linear', lamRef: 1550, dRef: -84.0, slope: 0.015 },
+            uhna7:    { label: 'UHNA7',          type: 'linear', lamRef: 1550, dRef: -47.4, slope: 0.025 },
+            // PCF & Mid-IR Fluoride
+            lma10:    { label: 'LMA-10 PCF',     type: 'itu', lam0: 1190, s0: 0.075 },
+            lma15:    { label: 'LMA-15 PCF',     type: 'itu', lam0: 1240, s0: 0.078 },
+            sc1040:   { label: 'SC-5.0-1040',    type: 'itu', lam0: 1040, s0: 0.070 },
+            andi1050: { label: 'NL-1050-NEG-1',  type: 'parabolic', lamPeak: 1050, dPeak: -8.0, curv: 1.5e-4 },
+            zblan:    { label: 'ZBLAN Fiber',    type: 'sellmeier', B: [1.22514, 1.52898], C: [0.089692 ** 2, 21.3825 ** 2] },
+            // Bulk Optical Substrates
+            sio2:     { label: 'Fused Silica',   type: 'sellmeier', B: [0.6961663, 0.4079426, 0.8974794], C: [0.0684043 ** 2, 0.1162414 ** 2, 9.896161 ** 2] },
+            bk7:      { label: 'N-BK7',          type: 'sellmeier', B: [1.03961212, 0.231792344, 1.01046945], C: [0.00600069867, 0.0200179144, 103.560653] },
+            sf11:     { label: 'N-SF11',         type: 'sellmeier', B: [1.73759695, 0.313747346, 1.89878101], C: [0.013188707, 0.0623068142, 155.23629] },
+            sapphire: { label: 'Sapphire (o)',   type: 'sellmeier', B: [1.4313493, 0.65054713, 5.3414021], C: [0.0726631 ** 2, 0.1193242 ** 2, 18.028251 ** 2] },
+            caf2:     { label: 'CaF₂',           type: 'sellmeier', B: [0.5675888, 0.4710914, 3.8484723], C: [0.00252643, 0.01007833, 1200.555973] }
+        };
+        let elongFiberSummary = '';
+
+        // Compute material/fiber dispersion parameter D_λ in ps/(nm·km) at wavelength λ (nm)
+        function computeFiberDispersionParameter(modelKey, lambda_nm) {
+            const m = FIBER_DISPERSION_MODELS[modelKey];
+            if (!m || !(lambda_nm > 0)) return NaN;
+            let d = NaN;
+            if (m.type === 'itu') {
+                d = (m.s0 / 4) * (lambda_nm - (m.lam0 ** 4) / (lambda_nm ** 3));
+            } else if (m.type === 'linear') {
+                d = m.dRef + m.slope * (lambda_nm - m.lamRef);
+            } else if (m.type === 'parabolic') {
+                d = m.dPeak - m.curv * ((lambda_nm - m.lamPeak) ** 2);
+            } else if (m.type === 'sellmeier') {
+                const lam_um = lambda_nm * 1e-3;
+                const l2 = lam_um * lam_um;
+                let S = 1.0, Sp = 0.0, Spp = 0.0;
+                for (let i = 0; i < m.B.length; i++) {
+                    const b = m.B[i], c = m.C[i];
+                    const denom = l2 - c;
+                    if (Math.abs(denom) < 1e-12) return NaN;
+                    S += (b * l2) / denom;
+                    Sp += (-2.0 * b * c * lam_um) / (denom * denom);
+                    Spp += (2.0 * b * c * (3.0 * l2 + c)) / (denom * denom * denom);
+                }
+                if (S <= 0) return NaN;
+                const n = Math.sqrt(S);
+                const np = Sp / (2.0 * n);
+                const npp = Spp / (2.0 * n) - (np * np) / n; // µm⁻²
+                d = -(lam_um * npp / C) * 1e12; // ps/(nm·km)
+            }
+            return Math.abs(d) < 1e-10 ? 0 : d;
+        }
+
+        function updateGdd(mode = 'fiber', forceApplyElong = false) {
             if (isSyncing) return;
             isSyncing = true;
 
-            const digits = getPrecision();
             const centerVal = parseFloat(gddCenterNm.value);
             const centerUnit = gddCenterUnitSelect.value;
             if (isNaN(centerVal) || centerVal <= 0) {
@@ -4705,8 +5049,12 @@
             }
 
             const lambda_m = centerVal * LENGTH_SI[centerUnit];
+            const lambda_nm = lambda_m * 1e9;
             const dUnit = dUnitSelect.value;
             const gddUnit = gddUnitSelect.value;
+
+            // Normalize legacy boolean arguments: true -> 'fiber' (or 'd'), false -> 'gdd'
+            const src = mode === true ? 'fiber' : mode === false ? 'gdd' : mode;
 
             const parseDToSI = (val) => {
                 if (dUnit === 'ps/nm') return val * 1e-3;
@@ -4736,24 +5084,100 @@
                 return gdd_si / 1e-24;
             };
 
-            if (fromD) {
-                const dVal = parseFloat(dInput.value);
-                if (!isNaN(dVal)) {
-                    const D_si = parseDToSI(dVal);
-                    const gdd_si = -(lambda_m ** 2 / (2 * Math.PI * C)) * D_si;
+            // 1. Determine D_λ (ps/(nm·km)) and β₂ (ps²/km)
+            // Relation: D_λ [s/m²] = D_λ [ps/(nm·km)] * 1e-6; β₂ [s²/m] = -(λ² / (2πc)) * D_λ [s/m²]
+            // β₂ [ps²/km] = β₂ [s²/m] * 1e27
+            const dLambdaToBeta2 = (d_lam) => -(lambda_m ** 2 / (2 * Math.PI * C)) * (d_lam * 1e-6) * 1e27;
+            const beta2ToDLambda = (b2) => -(b2 * 1e-27) * (2 * Math.PI * C) / (lambda_m ** 2) / 1e-6;
+
+            let dLambda = parseFloat(gddDlambdaInput.value);
+            let beta2 = parseFloat(gddBeta2Input.value);
+
+            if (src === 'dlambda') {
+                gddFiberSelect.value = 'custom';
+                if (!isNaN(dLambda)) {
+                    beta2 = dLambdaToBeta2(dLambda);
+                    gddBeta2Input.value = fmt(beta2);
+                }
+            } else if (src === 'beta2') {
+                gddFiberSelect.value = 'custom';
+                if (!isNaN(beta2)) {
+                    dLambda = beta2ToDLambda(beta2);
+                    gddDlambdaInput.value = fmt(dLambda);
+                }
+            } else if (gddFiberSelect.value !== 'custom') {
+                const modelD = computeFiberDispersionParameter(gddFiberSelect.value, lambda_nm);
+                if (!isNaN(modelD)) {
+                    dLambda = modelD;
+                    beta2 = dLambdaToBeta2(dLambda);
+                    gddDlambdaInput.value = fmt(dLambda);
+                    gddBeta2Input.value = fmt(beta2);
+                }
+            } else if (!isNaN(dLambda)) {
+                beta2 = dLambdaToBeta2(dLambda);
+                gddBeta2Input.value = fmt(beta2);
+            }
+
+            // Update dispersion regime badge
+            if (!isNaN(dLambda)) {
+                if (dLambda > 1e-3) {
+                    gddRegimeBadge.textContent = 'Anomalous (D > 0, β₂ < 0)';
+                    gddRegimeBadge.className = 'text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200';
+                } else if (dLambda < -1e-3) {
+                    gddRegimeBadge.textContent = 'Normal (D < 0, β₂ > 0)';
+                    gddRegimeBadge.className = 'text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200';
+                } else {
+                    gddRegimeBadge.textContent = 'Zero-Dispersion (D ≈ 0)';
+                    gddRegimeBadge.className = 'text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 border border-slate-300';
+                }
+            }
+
+            // 2. Compute total D_si (s/m) and gdd_si (s²)
+            let D_si = NaN;
+            let gdd_si = NaN;
+            const lenVal = parseFloat(gddLengthInput.value);
+            const lenUnit = gddLengthUnitSelect.value;
+            const L_m = !isNaN(lenVal) && lenVal >= 0 ? lenVal * LENGTH_SI[lenUnit] : NaN;
+
+            if (src === 'fiber' || src === 'dlambda' || src === 'beta2' || src === 'length') {
+                if (!isNaN(dLambda) && !isNaN(L_m)) {
+                    const D_ps_nm = dLambda * (L_m * 1e-3); // D_λ [ps/(nm·km)] * L [km]
+                    D_si = D_ps_nm * 1e-3;
+                    gdd_si = -(lambda_m ** 2 / (2 * Math.PI * C)) * D_si;
+                    dInput.value = fmt(formatDFromSI(D_si));
                     gddInput.value = fmt(formatGddFromSI(gdd_si));
                     gddFs2Display.textContent = `${fmt(gdd_si / 1e-30)} fs²`;
+                }
+            } else if (src === 'd') {
+                const dVal = parseFloat(dInput.value);
+                if (!isNaN(dVal)) {
+                    D_si = parseDToSI(dVal);
+                    gdd_si = -(lambda_m ** 2 / (2 * Math.PI * C)) * D_si;
+                    gddInput.value = fmt(formatGddFromSI(gdd_si));
+                    gddFs2Display.textContent = `${fmt(gdd_si / 1e-30)} fs²`;
+                    if (!isNaN(dLambda) && Math.abs(dLambda) > 1e-9) {
+                        const calcL_km = (D_si / 1e-3) / dLambda;
+                        if (calcL_km >= 0) {
+                            gddLengthInput.value = fmt((calcL_km * 1e3) / LENGTH_SI[lenUnit]);
+                        }
+                    }
                 } else {
                     gddInput.value = '';
                     gddFs2Display.textContent = '-';
                 }
-            } else {
+            } else if (src === 'gdd') {
                 const gddVal = parseFloat(gddInput.value);
                 if (!isNaN(gddVal)) {
-                    const gdd_si = parseGddToSI(gddVal);
-                    const D_si = -gdd_si * (2 * Math.PI * C) / (lambda_m ** 2);
+                    gdd_si = parseGddToSI(gddVal);
+                    D_si = -gdd_si * (2 * Math.PI * C) / (lambda_m ** 2);
                     dInput.value = fmt(formatDFromSI(D_si));
                     gddFs2Display.textContent = `${fmt(gdd_si / 1e-30)} fs²`;
+                    if (!isNaN(dLambda) && Math.abs(dLambda) > 1e-9) {
+                        const calcL_km = (D_si / 1e-3) / dLambda;
+                        if (calcL_km >= 0) {
+                            gddLengthInput.value = fmt((calcL_km * 1e3) / LENGTH_SI[lenUnit]);
+                        }
+                    }
                 } else {
                     dInput.value = '';
                     gddFs2Display.textContent = '-';
@@ -4761,6 +5185,24 @@
             }
 
             isSyncing = false;
+
+            // 3. Auto-apply to Pulse Elongation (Broadening) module if enabled or explicitly triggered
+            if ((gddAutoApplyElong && gddAutoApplyElong.checked) || forceApplyElong) {
+                if (isFinite(gdd_si)) {
+                    // Sync wavelength to Transform-Limited & Pulse Elongation cards
+                    const targetPulseWl = lambda_m / LENGTH_SI[pulseCenterUnitSelect.value];
+                    if (Math.abs((parseFloat(pulseCenterNmInput.value) || 0) - targetPulseWl) > 1e-6) {
+                        pulseCenterNmInput.value = fmt(targetPulseWl);
+                        updatePulse(lastEditedPulseField);
+                    }
+                    const fName = FIBER_DISPERSION_MODELS[gddFiberSelect.value]?.label || 'Custom medium';
+                    const curLen = gddLengthInput.value ? `${gddLengthInput.value} ${lenUnit}` : '';
+                    elongFiberSummary = `Synced from ${fName} (${curLen} @ ${fmt(lambda_nm)} nm → GDD = ${fmt(gdd_si / 1e-30)} fs²)`;
+                    const convertedDisp = convertGddSeconds2ToDispersion(gdd_si, elongDispUnit.value, lambda_nm);
+                    elongDispInput.value = fmt(Math.abs(convertedDisp));
+                    updatePulseElongation('disp');
+                }
+            }
         }
 
         function parseDispersionToGddSeconds2(val, unit, centerNm) {
@@ -4884,7 +5326,9 @@
             const shape = pulseShapeSelect.value;
             const model = broadeningModel(shape, tbp);
             const shapeName = { sech2: 'sech², exact numerical curve', gaussian: 'Gaussian, exact', custom: 'custom TBP, Gaussian-form approximation' }[shape] || '';
-            elongSourceLabel.textContent = `Uses λ = ${fmt(centerNm)} nm and TBP = ${fmt(tbp, 4)} (${shapeName}) from the Transform-Limited card.`;
+            elongSourceLabel.textContent = elongFiberSummary
+                ? `${elongFiberSummary} · TBP = ${fmt(tbp, 4)} (${shapeName}).`
+                : `Uses λ = ${fmt(centerNm)} nm and TBP = ${fmt(tbp, 4)} (${shapeName}) from the Transform-Limited card.`;
             const showPower = (M) => {
                 const ratio = model.peak(M);
                 elongPowerFactor.textContent = `${fmt(100 * ratio, 3)}% (${fmt(10 * Math.log10(ratio), 3)} dB)`;
@@ -8653,6 +9097,152 @@
             updateEoModulator('inputs');
         });
 
+        // --- SECTION 7 (CARD 2): RF Power (dBm <-> Linear W..fW) <-> Voltage @ Any Impedance ---
+        const rfIds = [
+            'Z0Input', 'Z0UnitSelect', 'DbmInput', 'PowInput', 'PowUnitSelect',
+            'VrmsInput', 'VrmsUnitSelect', 'VpkInput', 'VpkUnitSelect', 'VppInput', 'VppUnitSelect',
+            'MwDisplay', 'UwDisplay', 'NwDisplay', 'PwDisplay', 'FwDisplay',
+            'DbwDisplay', 'DbvDisplay', 'DbuvDisplay', 'IrmsDisplay'
+        ];
+        const RF = Object.fromEntries(rfIds.map(id => [id, document.getElementById('rf' + id)]));
+        let rfIsSyncing = false;
+        let rfLastDriver = 'dbm'; // 'dbm', 'pow', 'vrms', 'vpk', 'vpp'
+        let rfCurrentPowerW = 1e-3;
+
+        function updateRfPowerVoltage(source = 'dbm') {
+            if (rfIsSyncing) return;
+            rfIsSyncing = true;
+            try {
+                const z0Raw = qpNum(RF.Z0Input);
+                const z0 = z0Raw * (RESISTANCE_SI[RF.Z0UnitSelect.value] || 1);
+                if (!(z0 > 0) || !isFinite(z0)) return;
+
+                const effectiveSource = source === 'z0' ? rfLastDriver : source;
+                if (source !== 'z0' && source !== 'unit') rfLastDriver = source;
+
+                let power_w = NaN;
+                let vrms = NaN;
+
+                if (effectiveSource === 'unit') {
+                    if (!isNaN(rfCurrentPowerW) && rfCurrentPowerW >= 0) {
+                        power_w = rfCurrentPowerW;
+                        vrms = Math.sqrt(power_w * z0);
+                    }
+                } else if (effectiveSource === 'dbm') {
+                    const dbm = qpNum(RF.DbmInput);
+                    if (!isNaN(dbm)) {
+                        power_w = Math.pow(10, (dbm - 30) / 10);
+                        vrms = Math.sqrt(power_w * z0);
+                    }
+                } else if (effectiveSource === 'pow') {
+                    const pVal = qpNum(RF.PowInput);
+                    if (!isNaN(pVal) && pVal >= 0) {
+                        power_w = pVal * (POWER_SI[RF.PowUnitSelect.value] || 1);
+                        vrms = Math.sqrt(power_w * z0);
+                    }
+                } else if (effectiveSource === 'vrms') {
+                    const vVal = qpNum(RF.VrmsInput);
+                    if (!isNaN(vVal) && vVal >= 0) {
+                        vrms = vVal * (VOLTAGE_SI[RF.VrmsUnitSelect.value] || 1);
+                        power_w = (vrms * vrms) / z0;
+                    }
+                } else if (effectiveSource === 'vpk') {
+                    const vVal = qpNum(RF.VpkInput);
+                    if (!isNaN(vVal) && vVal >= 0) {
+                        vrms = (vVal * (VOLTAGE_SI[RF.VpkUnitSelect.value] || 1)) / Math.SQRT2;
+                        power_w = (vrms * vrms) / z0;
+                    }
+                } else if (effectiveSource === 'vpp') {
+                    const vVal = qpNum(RF.VppInput);
+                    if (!isNaN(vVal) && vVal >= 0) {
+                        vrms = (vVal * (VOLTAGE_SI[RF.VppUnitSelect.value] || 1)) / (2 * Math.SQRT2);
+                        power_w = (vrms * vrms) / z0;
+                    }
+                }
+
+                if (isNaN(power_w) || isNaN(vrms)) {
+                    if (effectiveSource !== 'dbm') RF.DbmInput.value = '';
+                    if (effectiveSource !== 'pow') RF.PowInput.value = '';
+                    if (effectiveSource !== 'vrms') RF.VrmsInput.value = '';
+                    if (effectiveSource !== 'vpk') RF.VpkInput.value = '';
+                    if (effectiveSource !== 'vpp') RF.VppInput.value = '';
+                    [RF.MwDisplay, RF.UwDisplay, RF.NwDisplay, RF.PwDisplay, RF.FwDisplay,
+                     RF.DbwDisplay, RF.DbvDisplay, RF.DbuvDisplay, RF.IrmsDisplay].forEach(el => { el.textContent = '-'; });
+                    return;
+                }
+
+                rfCurrentPowerW = power_w;
+                const vpk = vrms * Math.SQRT2;
+                const vpp = vrms * 2 * Math.SQRT2;
+
+                if (source !== 'dbm') {
+                    RF.DbmInput.value = power_w > 0 ? fmt(10 * Math.log10(power_w / 1e-3)) : '';
+                }
+                if (source !== 'pow') {
+                    RF.PowInput.value = fmt(power_w / (POWER_SI[RF.PowUnitSelect.value] || 1));
+                }
+                if (source !== 'vrms') {
+                    RF.VrmsInput.value = fmt(vrms / (VOLTAGE_SI[RF.VrmsUnitSelect.value] || 1));
+                }
+                if (source !== 'vpk') {
+                    RF.VpkInput.value = fmt(vpk / (VOLTAGE_SI[RF.VpkUnitSelect.value] || 1));
+                }
+                if (source !== 'vpp') {
+                    RF.VppInput.value = fmt(vpp / (VOLTAGE_SI[RF.VppUnitSelect.value] || 1));
+                }
+
+                // Multi-scale linear power displays (mW, µW, nW, pW, fW)
+                RF.MwDisplay.textContent = fmt(power_w * 1e3);
+                RF.UwDisplay.textContent = fmt(power_w * 1e6);
+                RF.NwDisplay.textContent = fmt(power_w * 1e9);
+                RF.PwDisplay.textContent = fmt(power_w * 1e12);
+                RF.FwDisplay.textContent = fmt(power_w * 1e15);
+
+                // Additional RF metrics
+                if (power_w > 0) {
+                    const dbw = 10 * Math.log10(power_w);
+                    const dbv = 20 * Math.log10(vrms);
+                    const dbuv = 20 * Math.log10(vrms / 1e-6);
+                    RF.DbwDisplay.textContent = `${fmt(dbw, 4)} dBW`;
+                    RF.DbvDisplay.textContent = `${fmt(dbv, 4)} dBV`;
+                    RF.DbuvDisplay.textContent = `${fmt(dbuv, 4)} dBµV`;
+                } else {
+                    RF.DbwDisplay.textContent = '-∞ dBW';
+                    RF.DbvDisplay.textContent = '-∞ dBV';
+                    RF.DbuvDisplay.textContent = '-∞ dBµV';
+                }
+                RF.IrmsDisplay.textContent = fmtCurr(vrms / z0);
+            } finally {
+                rfIsSyncing = false;
+            }
+        }
+
+        RF.Z0Input.addEventListener('input', () => updateRfPowerVoltage('z0'));
+        RF.Z0UnitSelect.addEventListener('change', () => updateRfPowerVoltage('z0'));
+        RF.DbmInput.addEventListener('input', () => updateRfPowerVoltage('dbm'));
+        RF.PowInput.addEventListener('input', () => updateRfPowerVoltage('pow'));
+        RF.PowUnitSelect.addEventListener('change', () => updateRfPowerVoltage('unit'));
+        RF.VrmsInput.addEventListener('input', () => updateRfPowerVoltage('vrms'));
+        RF.VrmsUnitSelect.addEventListener('change', () => updateRfPowerVoltage('unit'));
+        RF.VpkInput.addEventListener('input', () => updateRfPowerVoltage('vpk'));
+        RF.VpkUnitSelect.addEventListener('change', () => updateRfPowerVoltage('unit'));
+        RF.VppInput.addEventListener('input', () => updateRfPowerVoltage('vpp'));
+        RF.VppUnitSelect.addEventListener('change', () => updateRfPowerVoltage('unit'));
+
+        document.querySelectorAll('.rf-z0-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                RF.Z0Input.value = btn.dataset.z;
+                RF.Z0UnitSelect.value = btn.dataset.unit;
+                updateRfPowerVoltage('z0');
+            });
+        });
+        document.querySelectorAll('.rf-dbm-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                RF.DbmInput.value = btn.dataset.dbm;
+                updateRfPowerVoltage('dbm');
+            });
+        });
+
         // ==========================================
         // SECTION 8: PHOTODETECTORS & RECEIVER NOISE
         // ==========================================
@@ -9114,6 +9704,7 @@
             updatePulsedSource('inputs');
             updateQpm('inputs');
             updateEoModulator('inputs');
+            updateRfPowerVoltage('dbm');
             updateGaussianBeam('w0');
             updatePhotodetectorNoise('idc');
         }
@@ -9153,10 +9744,26 @@
         // change here (value or unit) must refresh it too.
         pulseCenterNmInput.addEventListener('input', () => {
             updatePulse(lastEditedPulseField);
+            if (gddAutoApplyElong && gddAutoApplyElong.checked) {
+                const lam_m = (parseFloat(pulseCenterNmInput.value) || 0) * LENGTH_SI[pulseCenterUnitSelect.value];
+                if (lam_m > 0) {
+                    gddCenterNm.value = fmt(lam_m / LENGTH_SI[gddCenterUnitSelect.value]);
+                    updateGdd('fiber');
+                    return;
+                }
+            }
             updatePulseElongation('disp');
         });
         pulseCenterUnitSelect.addEventListener('change', () => {
             updatePulse(lastEditedPulseField);
+            if (gddAutoApplyElong && gddAutoApplyElong.checked) {
+                const lam_m = (parseFloat(pulseCenterNmInput.value) || 0) * LENGTH_SI[pulseCenterUnitSelect.value];
+                if (lam_m > 0) {
+                    gddCenterNm.value = fmt(lam_m / LENGTH_SI[gddCenterUnitSelect.value]);
+                    updateGdd('fiber');
+                    return;
+                }
+            }
             updatePulseElongation('disp');
         });
         pulseShapeSelect.addEventListener('change', () => {
@@ -9179,24 +9786,41 @@
         });
         pulseWidthUnitSelect.addEventListener('change', () => updatePulse('bw'));
 
-        gddCenterNm.addEventListener('input', () => updateGdd(true));
-        gddCenterUnitSelect.addEventListener('change', () => updateGdd(true));
-        dInput.addEventListener('input', () => updateGdd(true));
-        dUnitSelect.addEventListener('change', () => updateGdd(false));
-        gddInput.addEventListener('input', () => updateGdd(false));
-        gddUnitSelect.addEventListener('change', () => updateGdd(true));
+        gddCenterNm.addEventListener('input', () => updateGdd('fiber'));
+        gddCenterUnitSelect.addEventListener('change', () => updateGdd('fiber'));
+        gddFiberSelect.addEventListener('change', () => updateGdd('fiber'));
+        gddDlambdaInput.addEventListener('input', () => updateGdd('dlambda'));
+        gddBeta2Input.addEventListener('input', () => updateGdd('beta2'));
+        gddLengthInput.addEventListener('input', () => updateGdd('length'));
+        gddLengthUnitSelect.addEventListener('change', () => updateGdd('length'));
+        dInput.addEventListener('input', () => updateGdd('d'));
+        dUnitSelect.addEventListener('change', () => updateGdd('gdd'));
+        gddInput.addEventListener('input', () => updateGdd('gdd'));
+        gddUnitSelect.addEventListener('change', () => updateGdd('d'));
+        gddAutoApplyElong.addEventListener('change', () => {
+            if (gddAutoApplyElong.checked) {
+                updateGdd('gdd', true);
+            } else {
+                elongFiberSummary = '';
+                updatePulseElongation('disp');
+            }
+        });
+        gddApplyElongBtn.addEventListener('click', () => updateGdd('gdd', true));
 
         elongTau0Input.addEventListener('input', () => updatePulseElongation('disp'));
         elongTau0Unit.addEventListener('change', () => updatePulseElongation('disp'));
         elongDispInput.addEventListener('input', () => {
+            elongFiberSummary = '';
             updatePulseElongation('disp');
         });
         elongDispUnit.addEventListener('change', () => updatePulseElongation('tau_out'));
         elongTauOutInput.addEventListener('input', () => {
+            elongFiberSummary = '';
             updatePulseElongation('tau_out');
         });
         elongTauOutUnit.addEventListener('change', () => updatePulseElongation('disp'));
         elongMInput.addEventListener('input', () => {
+            elongFiberSummary = '';
             updatePulseElongation('m');
         });
 
@@ -9435,6 +10059,12 @@
             '#eo': '#eo-modulator',
             '#vpi': '#eo-modulator',
             '#modulator': '#eo-modulator',
+            '#rf': '#rf-power-voltage',
+            '#rf-power': '#rf-power-voltage',
+            '#dbm-volt': '#rf-power-voltage',
+            '#vpp': '#rf-power-voltage',
+            '#vrms': '#rf-power-voltage',
+            '#z0': '#rf-power-voltage',
             '#grating-coupler': '#grating-coupler',
             '#fiber': '#mode-coupling',
             '#photodetector-noise': '#photodetector-noise',
@@ -9446,7 +10076,10 @@
             '#photodetectors': '#photodetector-noise',
             '#photoreceiver': '#photodetector-noise',
             '#snr': '#photodetector-noise',
-            '#nep': '#photodetector-noise'
+            '#nep': '#photodetector-noise',
+            '#smf': '#dispersion-gdd',
+            '#fiber-dispersion': '#dispersion-gdd',
+            '#beta2': '#dispersion-gdd'
         };
 
         // Tools that live inside a tab of another card: [card to scroll to, tab to open]

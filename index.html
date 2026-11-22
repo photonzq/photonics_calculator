@@ -1586,8 +1586,8 @@
                             <span>Bus Coupling &amp; Loaded Response</span>
                             <span class="text-[10px] text-slate-400 font-normal normal-case">Intrinsic $\kappa_0$ from the rows above · edit any one coupling field</span>
                         </div>
-                        <div class="equation-box">$$ \kappa = \kappa_0 + \kappa_{\text{ex}} \qquad Q_L^{-1} = Q_0^{-1} + Q_{\text{ex}}^{-1} \qquad T_0 = \left(\frac{\kappa_0 - \kappa_{\text{ex}}}{\kappa_0 + \kappa_{\text{ex}}}\right)^2 \qquad \frac{P_{\text{circ}}}{P_{\text{in}}} = \frac{4\kappa_{\text{ex}}}{\kappa^2}\,\text{FSR} $$</div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="equation-box">$$ \kappa = \kappa_0 + \kappa_{\text{ex}} + \kappa_{\text{ex},2} \qquad T_0 = \left(\frac{\kappa_0 + \kappa_{\text{ex},2} - \kappa_{\text{ex}}}{\kappa}\right)^2 \qquad D_0 = \frac{4\kappa_{\text{ex}}\kappa_{\text{ex},2}}{\kappa^2} \qquad \frac{P_{\text{circ}}}{P_{\text{in}}} = \frac{4\kappa_{\text{ex}}}{\kappa^2}\,\text{FSR} $$</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <label for="resKexInput" class="input-label">External Coupling $\kappa_{\text{ex}}/2\pi$</label>
                                 <div class="flex gap-1.5">
@@ -1606,6 +1606,17 @@
                             <div>
                                 <label for="resEtaInput" class="input-label">Coupling Ratio $\eta = \kappa_{\text{ex}}/\kappa$</label>
                                 <input type="number" id="resEtaInput" step="0.01" min="0" max="0.999" class="calc-input">
+                            </div>
+                            <div>
+                                <label for="resKex2Input" class="input-label">Drop-Port Coupling $\kappa_{\text{ex},2}/2\pi$</label>
+                                <div class="flex gap-1.5">
+                                    <input type="number" id="resKex2Input" value="0" step="any" min="0" class="calc-input">
+                                    <select id="resKex2UnitSelect" class="calc-unit-select w-18">
+                                        <option value="mhz" selected>MHz</option>
+                                        <option value="khz">kHz</option>
+                                        <option value="ghz">GHz</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -1635,12 +1646,12 @@
                                 <div id="resLifetimeDisplay" class="metric-value text-sm mt-1">-</div>
                             </div>
                             <div class="metric-badge">
-                                <div class="metric-label">Round-Trip Length $L$</div>
-                                <div id="resLengthDisplay" class="metric-value text-sm mt-1">-</div>
+                                <div class="metric-label">Drop on Resonance $D_0$</div>
+                                <div id="resD0Display" class="metric-value text-sm mt-1">-</div>
                             </div>
                             <div class="metric-badge">
-                                <div class="metric-label">Ring Radius $R = L/2\pi$</div>
-                                <div id="resRadiusDisplay" class="metric-value text-sm mt-1">-</div>
+                                <div class="metric-label">Loaded Finesse $\mathcal{F}_L$</div>
+                                <div id="resFLDisplay" class="metric-value text-sm mt-1">-</div>
                             </div>
                         </div>
 
@@ -1708,6 +1719,69 @@
                                 </div>
                             </div>
                         </details>
+
+                        <!-- Through / drop / reflection spectrum with backscatter splitting -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 border-t border-slate-100">
+                            <div class="space-y-3">
+                                <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Resonance Spectrum (Through, Drop, Back-Reflection)</div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label for="resBsInput" class="input-label text-xs">Backscatter Coupling $g/2\pi$</label>
+                                        <div class="flex gap-1">
+                                            <input type="number" id="resBsInput" value="0" step="any" min="0" class="calc-input text-xs">
+                                            <select id="resBsUnitSelect" class="calc-unit-select w-16 text-xs">
+                                                <option value="mhz" selected>MHz</option>
+                                                <option value="khz">kHz</option>
+                                                <option value="ghz">GHz</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="resSpecScaleSelect" class="input-label text-xs">Vertical Scale</label>
+                                        <select id="resSpecScaleSelect" class="calc-select w-full text-xs py-1.5">
+                                            <option value="lin" selected>Linear</option>
+                                            <option value="db">dB</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <div class="metric-badge"><div class="metric-label">Through at $\Delta = 0$</div><div id="resSpecTDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">Drop at $\Delta = 0$</div><div id="resSpecDDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">Reflection at $\Delta = 0$</div><div id="resSpecRDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">Splitting $2g/2\pi$</div><div id="resSpecSplitDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                </div>
+                                <div class="relative w-full h-52 bg-white rounded-md border border-slate-200 p-2">
+                                    <canvas id="resSpectrumCanvas" class="w-full h-full"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Resonant electro-optic comb estimate -->
+                            <div class="space-y-3">
+                                <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Resonant EO Comb (modulation at the FSR)</div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label for="resCombBetaInput" class="input-label text-xs mb-0">Round-Trip Modulation $\beta$ (rad)</label>
+                                            <button type="button" id="resCombBetaSyncBtn" class="text-[10px] text-indigo-600 hover:text-indigo-800 underline" title="Use the modulation index of the Pockels modulator card">from EO card</button>
+                                        </div>
+                                        <input type="number" id="resCombBetaInput" value="1" step="any" min="0" class="calc-input text-xs">
+                                    </div>
+                                    <div>
+                                        <label for="resCombD2Input" class="input-label text-xs">$D_2/2\pi$ (kHz, optional)</label>
+                                        <input type="text" id="resCombD2Input" placeholder="e.g. 800 for 100 GHz" class="calc-input text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <div class="metric-badge"><div class="metric-label">Line-Power Slope</div><div id="resCombSlopeDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">Lines within 10 / 30 dB</div><div id="resCombLinesDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">30-dB Span</div><div id="resCombSpanDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                    <div class="metric-badge"><div class="metric-label">Dispersion Limit $\pm\mu_{\max}$</div><div id="resCombDispDisplay" class="metric-value text-xs mt-1">-</div></div>
+                                </div>
+                                <div class="relative w-full h-52 bg-white rounded-md border border-slate-200 p-2">
+                                    <canvas id="resCombCanvas" class="w-full h-full"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <details class="phys-note">
@@ -1716,7 +1790,9 @@
                             <li>$\kappa_0$, $\kappa_{\text{ex}}$ and $\kappa$ are <strong>energy</strong> decay rates (angular); the FWHM linewidth in Hz is $\kappa/2\pi$ and $Q = \omega_0/\kappa = f_0/(\kappa/2\pi)$.</li>
                             <li>$\alpha$ is the <strong>power</strong> attenuation coefficient: $P(z) = P_0 e^{-\alpha z}$, $\alpha[\text{dB/m}] = 4.343\,\alpha[\text{m}^{-1}]$, and $\kappa_0 = \alpha\, v_g = \alpha c/n_g$. Some papers quote a field coefficient ($\alpha/2$) instead.</li>
                             <li>$\mathcal F = 2\pi/(\alpha L_{\text{rt}})$ and the linewidth formulas assume high finesse ($\alpha L_{\text{rt}} \ll 1$); the round-trip loss field reports the exact $1-e^{-\alpha L}$.</li>
-                            <li>Single-mode, traveling-wave resonator side-coupled to one bus waveguide (all-pass configuration), in the temporal coupled-mode theory picture valid for $\kappa \ll$ FSR. Backscattering (mode splitting) and a drop port are not included; a drop port simply adds another $\kappa_{\text{ex}}$ term to $\kappa$.</li>
+                            <li>Traveling-wave resonator side-coupled to a bus ($\kappa_{\text{ex}}$) and optionally a drop waveguide ($\kappa_{\text{ex},2}$; 0 = all-pass), in temporal coupled-mode theory valid for $\kappa \ll$ FSR. With a drop port, critical coupling means $\kappa_{\text{ex}} = \kappa_0 + \kappa_{\text{ex},2}$; $\eta$ and $Q_{\text{ex}}$ refer to the bus.</li>
+                            <li>Spectrum: the clockwise mode $a_+$ (driven) and counter-clockwise mode $a_-$ are coupled by backscattering at rate $g$: $\dot a_\pm = (i\Delta - \kappa/2)a_\pm + i g\,a_\mp + \sqrt{\kappa_{\text{ex}}}\,s\,\delta_{+}$, with through $t = 1 - \sqrt{\kappa_{\text{ex}}}\,a_+/s$, drop $\sqrt{\kappa_{\text{ex},2}}\,a_+/s$ and back-reflection $\sqrt{\kappa_{\text{ex}}}\,a_-/s$; with backscatter the counter-clockwise wave also leaves through the drop port backwards ($\kappa_{\text{ex},2}|a_-|^2$), so that $T + D_{\text{fwd}} + D_{\text{bwd}} + R + \kappa_0(|a_+|^2 + |a_-|^2)/|s|^2 = 1$. The doublet is resolved once $2g \gtrsim \kappa$; $g$ is taken real (symmetric splitting). $\Delta$ is the laser detuning from the cold resonance.</li>
+                            <li>Resonant EO comb (modulation frequency equal to the FSR, phase modulation $\beta$ per round trip): the intracavity field is $E \propto 1/(1 - r e^{i\beta\sin\Omega t})$ with $r$ the round-trip field factor from the loaded finesse ($\mathcal F_L = \pi\sqrt r/(1-r)$). Its line powers fall as $e^{-2|n|\operatorname{asinh}(-\ln r/\beta)}$, i.e. $\approx 27.3/(\beta\mathcal F_L)$ dB per line at high finesse. The dispersion limit $\mu_{\max} \approx \sqrt{2\beta\,\Omega_m/D_2}$ (the instantaneous frequency excursion $\beta\Omega_m$, $\Omega_m = 2\pi\,\text{FSR}$, must cover the dispersive detuning $D_2\mu^2/2$) is an order-of-magnitude bound.</li>
                             <li>Critical coupling ($\kappa_{\text{ex}} = \kappa_0$) gives zero transmission, $Q_L = Q_0/2$ and build-up $\mathcal F_L/\pi = \mathcal F_0/2\pi$ ($\mathcal F_L$ = loaded finesse). Here "≈ critical" means $|\kappa_{\text{ex}} - \kappa_0| < 2\%\,\kappa_0$.</li>
                             <li>$L$ (round-trip waveguide length), $R$ (ring radius, assuming circular ring: $L = 2\pi R$), and FSR convert back and forth via $\text{FSR} = c/(n_g L) = c/(2\pi n_g R)$. Editing any one immediately recomputes the other two.</li>
                         </ul>
@@ -4314,8 +4390,11 @@
         const resT0Display = document.getElementById('resT0Display');
         const resBuildupDisplay = document.getElementById('resBuildupDisplay');
         const resLifetimeDisplay = document.getElementById('resLifetimeDisplay');
-        const resLengthDisplay = document.getElementById('resLengthDisplay');
-        const resRadiusDisplay = document.getElementById('resRadiusDisplay');
+        const resD0Display = document.getElementById('resD0Display');
+        const resFLDisplay = document.getElementById('resFLDisplay');
+        const RS = Object.fromEntries(['Kex2Input', 'Kex2UnitSelect', 'BsInput', 'BsUnitSelect', 'SpecScaleSelect', 'SpecTDisplay',
+            'SpecDDisplay', 'SpecRDisplay', 'SpecSplitDisplay', 'SpectrumCanvas', 'CombBetaInput', 'CombBetaSyncBtn', 'CombD2Input',
+            'CombSlopeDisplay', 'CombLinesDisplay', 'CombSpanDisplay', 'CombDispDisplay', 'CombCanvas'].map(id => [id, document.getElementById('res' + id)]));
         const resMeasLwInput = document.getElementById('resMeasLwInput');
         const resMeasLwUnitSelect = document.getElementById('resMeasLwUnitSelect');
         const resMeasDipInput = document.getElementById('resMeasDipInput');
@@ -6328,25 +6407,30 @@
                 } else if (source === 'eta') {
                     const eta = parseFloat(resEtaInput.value);
                     if (isNaN(eta) || eta < 0 || eta >= 1) return;
-                    kex_hz = eta * k0_hz / (1 - eta);
+                    // η = κex/κ with κ = κ0 + κex + κex,2
+                    const k2_hz = Math.max(0, parseFloat(RS.Kex2Input.value) * FREQ_SI[RS.Kex2UnitSelect.value] || 0);
+                    kex_hz = eta * (k0_hz + k2_hz) / (1 - eta);
                 } else {
                     kex_hz = parseFloat(resKexInput.value) * FREQ_SI[resKexUnitSelect.value];
                     if (isNaN(kex_hz) || kex_hz < 0) return;
                 }
 
-                const k_hz = k0_hz + kex_hz;
+                // Optional drop port: another external channel in the total decay rate
+                const kex2_hz = Math.max(0, parseFloat(RS.Kex2Input.value) * FREQ_SI[RS.Kex2UnitSelect.value] || 0);
+                const k_hz = k0_hz + kex_hz + kex2_hz;
                 const eta = kex_hz / k_hz;
-                const T0 = ((k0_hz - kex_hz) / k_hz) ** 2;
+                const T0 = ((k0_hz + kex2_hz - kex_hz) / k_hz) ** 2;
+                const D0 = 4 * kex_hz * kex2_hz / k_hz ** 2;
                 const QL = f0 / k_hz;
                 const kappa = 2 * Math.PI * k_hz; // angular, 1/s
                 const buildup = 4 * (2 * Math.PI * kex_hz) * fsr_hz / kappa ** 2;
-                const L_m = C / (ng * fsr_hz);
 
                 if (source !== 'kex') resKexInput.value = fmt(kex_hz / FREQ_SI[resKexUnitSelect.value]);
                 if (source !== 'qex') resQexInput.value = kex_hz > 0 ? fmtExp(f0 / kex_hz) : '∞';
                 if (source !== 'eta') resEtaInput.value = fmt(eta, Math.min(getPrecision(), 4));
 
-                const mismatch = (kex_hz - k0_hz) / k0_hz;
+                // Critical coupling: the bus rate equals all other losses (intrinsic + drop)
+                const mismatch = (kex_hz - (k0_hz + kex2_hz)) / (k0_hz + kex2_hz);
                 let regime, regimeClass;
                 if (Math.abs(mismatch) < 0.02) { regime = '≈ Critical'; regimeClass = 'text-emerald-700'; }
                 else if (mismatch < 0) { regime = 'Under-coupled'; regimeClass = 'text-amber-700'; }
@@ -6361,12 +6445,196 @@
                     : '0 % (∞ dB)';
                 resBuildupDisplay.textContent = `${fmt(buildup, 4)} ×`;
                 resLifetimeDisplay.textContent = `${fmtTime(1 / kappa, 4)} (${fmtTime(1 / (2 * Math.PI * k0_hz), 4)})`;
-                resLengthDisplay.textContent = fmtLen(L_m);
-                resRadiusDisplay.textContent = fmtLen(L_m / (2 * Math.PI));
+                resD0Display.textContent = kex2_hz > 0 ? `${fmt(D0 * 100, 4)} %` : '– (no drop port)';
+                resFLDisplay.textContent = fmt(fsr_hz / k_hz, 4);
+                ringState = { k0: 2 * Math.PI * k0_hz, kex: 2 * Math.PI * kex_hz, kex2: 2 * Math.PI * kex2_hz, fsr_hz, FL: fsr_hz / k_hz };
             } finally {
                 isSyncing = false;
             }
             updateResonatorExtraction();
+            updateRingSpectrum();
+            updateRingComb();
+        }
+
+        // --- Ring spectrum with drop port and backscatter (coupled cw/ccw modes) ---
+        let ringState = null;
+
+        // Steady-state CMT, angular rates; Δ is the laser detuning from the cold resonance.
+        // a+ = −√κex s z/(z² + g²), a− = −i g a+/z with z = iΔ − κ/2.
+        function ringResponse(delta, rs, g) {
+            const k = rs.k0 + rs.kex + rs.kex2;
+            const zr = -k / 2, zi = delta;
+            const qr = zr * zr - zi * zi + g * g, qi = 2 * zr * zi;          // z² + g²
+            const den = qr * qr + qi * qi;
+            const sq = Math.sqrt(rs.kex);
+            const ar = -sq * (zr * qr + zi * qi) / den;                      // a+/s
+            const ai = -sq * (zi * qr - zr * qi) / den;
+            const nr = g * ai, ni = -g * ar;                                 // −i g a+
+            const zz = zr * zr + zi * zi;
+            const br = (nr * zr + ni * zi) / zz, bi = (ni * zr - nr * zi) / zz; // a−/s
+            const tr = 1 - sq * ar, ti = -sq * ai;
+            const bb = br * br + bi * bi;
+            // T + D + Db + R + κ0(|a+|² + |a−|²)/|s|² = 1 (Db: the ccw wave leaving through the drop port)
+            return { T: tr * tr + ti * ti, D: rs.kex2 * (ar * ar + ai * ai), Db: rs.kex2 * bb, R: rs.kex * bb };
+        }
+
+        function updateRingSpectrum() {
+            const rs = ringState;
+            const g = Math.max(0, parseFloat(RS.BsInput.value) * FREQ_SI[RS.BsUnitSelect.value] || 0) * 2 * Math.PI;
+            if (!rs) {
+                [RS.SpecTDisplay, RS.SpecDDisplay, RS.SpecRDisplay, RS.SpecSplitDisplay].forEach(el => el.textContent = '-');
+                drawRingSpectrum(null, g);
+                return;
+            }
+            const r0 = ringResponse(0, rs, g);
+            const pct = (v) => `${fmt(100 * v, 4)} %`;
+            RS.SpecTDisplay.textContent = pct(r0.T);
+            RS.SpecDDisplay.textContent = rs.kex2 > 0 ? (g > 0 ? `${pct(r0.D)} + ${pct(r0.Db)} bwd` : pct(r0.D)) : '–';
+            RS.SpecRDisplay.textContent = g > 0 ? pct(r0.R) : '0';
+            const k = rs.k0 + rs.kex + rs.kex2;
+            RS.SpecSplitDisplay.textContent = g > 0 ? `${fmtFreq(2 * g / (2 * Math.PI), 3)} (${2 * g > k ? 'resolved' : 'unresolved'})` : '0';
+            drawRingSpectrum(rs, g);
+        }
+
+        function drawRingSpectrum(rs, g) {
+            if (!RS.SpectrumCanvas) return;
+            const prep = prepareCanvas(RS.SpectrumCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            if (!rs) return;
+            const box = { padL: 40, padR: 10, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const k = rs.k0 + rs.kex + rs.kex2;
+            const span = Math.max(3 * k, 2 * g + 2.5 * k) / (2 * Math.PI);  // half-span in Hz
+            const useGhz = span >= 1e9;
+            const unit = useGhz ? 1e9 : 1e6;
+            const dB = RS.SpecScaleSelect.value === 'db';
+            const floor = -40;
+            const xToPx = (fHz) => box.padL + (fHz + span) / (2 * span) * box.plotW;
+            const yToPx = (v) => dB
+                ? box.padT + (0 - Math.max(floor, v > 0 ? 10 * Math.log10(v) : floor)) / (0 - floor) * box.plotH
+                : box.padT + (1 - v) * box.plotH;
+            const curve = (key, color, dash) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash(dash);
+                ctx.beginPath();
+                for (let i = 0; i <= 800; i++) {
+                    const fHz = -span + 2 * span * i / 800;
+                    const v = ringResponse(2 * Math.PI * fHz, rs, g)[key];
+                    if (i === 0) ctx.moveTo(xToPx(fHz), yToPx(v)); else ctx.lineTo(xToPx(fHz), yToPx(v));
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+            };
+            curve('T', '#385C9E', []);
+            if (rs.kex2 > 0) curve('D', '#9E403D', []);
+            if (rs.kex2 > 0 && g > 0) curve('Db', '#9E403D', [2, 2]);
+            if (g > 0) curve('R', '#477A57', [5, 2]);
+            const xTicks = niceTicks(-span / unit, span / unit, 6).map(v => [xToPx(v * unit), fmt(v, 3)]);
+            const yTicks = dB ? [0, -10, -20, -30, -40].map(v => [yToPx(Math.pow(10, v / 10)), `${v}`])
+                : [0, 0.25, 0.5, 0.75, 1].map(v => [yToPx(v), `${v * 100}`]);
+            const legend = ['through (blue)'];
+            if (rs.kex2 > 0) legend.push(g > 0 ? 'drop fwd/bwd (red, solid/dotted)' : 'drop (red)');
+            if (g > 0) legend.push('back-reflection (green, dashed)');
+            const unitTxt = useGhz ? 'GHz' : 'MHz';
+            const xLabel = fitAxisLabel(ctx, `Detuning (${unitTxt}); ${legend.join(', ')}`,
+                `Detuning (${unitTxt}): T blue${rs.kex2 > 0 ? ', D red' : ''}${g > 0 ? ', R green' : ''}`, W - 8);
+            drawPlotFrame(ctx, box, xTicks, yTicks, xLabel, dB ? 'Power (dB)' : 'Power (%)');
+        }
+
+        // --- Resonant electro-optic comb envelope ---
+        let ringCombState = null;
+        function updateRingComb() {
+            ringCombState = null;
+            const rs = ringState;
+            const beta = parseFloat(RS.CombBetaInput.value);
+            const out = [RS.CombSlopeDisplay, RS.CombLinesDisplay, RS.CombSpanDisplay, RS.CombDispDisplay];
+            if (!rs || !(beta > 0) || !(rs.FL > 0)) {
+                out.forEach(el => el.textContent = '-');
+                drawRingComb();
+                return;
+            }
+            // Round-trip field factor from the loaded finesse: F = π√r/(1 − r)
+            const x = (-Math.PI + Math.sqrt(Math.PI ** 2 + 4 * rs.FL ** 2)) / (2 * rs.FL);
+            const r = x * x;
+            const slopeDb = 20 * Math.log10(Math.E) * Math.asinh(-Math.log(r) / beta); // dB per line (power)
+            const n10 = Math.floor(10 / slopeDb), n30 = Math.floor(30 / slopeDb);
+            RS.CombSlopeDisplay.textContent = `${fmt(slopeDb, 3)} dB/line`;
+            RS.CombLinesDisplay.textContent = `${2 * n10 + 1} / ${2 * n30 + 1}`;
+            const lam = parseFloat(resCenterNmInput.value) * LENGTH_SI[resCenterUnitSelect.value];
+            const d2kHz = parseFloat(RS.CombD2Input.value);
+            let muMax = NaN;
+            if (Math.abs(d2kHz) > 0) {
+                const D2 = 2 * Math.PI * Math.abs(d2kHz) * 1e3;
+                muMax = Math.sqrt(2 * beta * 2 * Math.PI * rs.fsr_hz / D2);
+                RS.CombDispDisplay.textContent = `±${fmt(muMax, 3)} lines (${fmtFreq(2 * muMax * rs.fsr_hz, 3)})`;
+            } else {
+                RS.CombDispDisplay.textContent = 'enter D₂';
+            }
+            // 30-dB span: envelope-limited, or dispersion-limited when ±μ_max is smaller
+            const dispLimited = isFinite(muMax) && muMax < n30;
+            const spanHz = 2 * (dispLimited ? Math.floor(muMax) : n30) * rs.fsr_hz;
+            if (!isFinite(muMax) && lam > 0 && spanHz > 0.3 * C / lam) {
+                RS.CombSpanDisplay.textContent = `${fmtFreq(spanHz, 3)}: beyond the model, enter D₂`;
+            } else {
+                RS.CombSpanDisplay.textContent = `${fmtFreq(spanHz, 3)} (${fmtLen(lam ** 2 * spanHz / C, 3)})${dispLimited ? ', dispersion-limited' : ''}`;
+            }
+            ringCombState = { slopeDb, n30, muMax };
+            drawRingComb();
+        }
+
+        function drawRingComb() {
+            if (!RS.CombCanvas) return;
+            const prep = prepareCanvas(RS.CombCanvas);
+            if (!prep) return;
+            const { ctx, W, H } = prep;
+            const s = ringCombState;
+            if (!s) return;
+            const box = { padL: 40, padR: 20, padT: 10, padB: 34 };
+            box.plotW = W - box.padL - box.padR;
+            box.plotH = H - box.padT - box.padB;
+            const floor = -40;
+            const nMax = Math.max(5, Math.min(2000, Math.ceil(45 / s.slopeDb)));
+            const xToPx = (n) => box.padL + (n + nMax) / (2 * nMax) * box.plotW;
+            const yToPx = (db) => box.padT + (0 - db) / (0 - floor) * box.plotH;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(box.padL, box.padT, box.plotW, box.plotH);
+            ctx.clip();
+            ctx.strokeStyle = '#385C9E';
+            ctx.lineWidth = 1.5;
+            if (2 * nMax + 1 <= box.plotW / 2) {
+                ctx.beginPath();
+                for (let n = -nMax; n <= nMax; n++) {
+                    ctx.moveTo(xToPx(n), yToPx(floor));
+                    ctx.lineTo(xToPx(n), yToPx(-Math.abs(n) * s.slopeDb));
+                }
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(xToPx(-nMax), yToPx(-nMax * s.slopeDb));
+                ctx.lineTo(xToPx(0), yToPx(0));
+                ctx.lineTo(xToPx(nMax), yToPx(-nMax * s.slopeDb));
+                ctx.stroke();
+            }
+            if (isFinite(s.muMax) && s.muMax < nMax) {
+                ctx.strokeStyle = '#9E403D';
+                ctx.setLineDash([5, 2]);
+                [-s.muMax, s.muMax].forEach(n => {
+                    ctx.beginPath();
+                    ctx.moveTo(xToPx(n), box.padT);
+                    ctx.lineTo(xToPx(n), box.padT + box.plotH);
+                    ctx.stroke();
+                });
+                ctx.setLineDash([]);
+            }
+            ctx.restore();
+            const xTicks = niceTicks(-nMax, nMax, 6).map(v => [xToPx(v), fmt(v, 4)]);
+            const yTicks = [0, -10, -20, -30, -40].map(v => [yToPx(v), `${v}`]);
+            drawPlotFrame(ctx, box, xTicks, yTicks, fitAxisLabel(ctx, 'Comb line number n (relative to the pump); dashed: dispersion limit',
+                'Line n from the pump; dashed: dispersion limit', W - 8), 'Line power (dB)');
         }
 
         // Invert a measured loaded linewidth and on-resonance dip into (κ0, κex).
@@ -6566,6 +6834,12 @@
         }
 
         // Shared boxed-axes helper for the small spectrum plots (plotting-guide style)
+        // Axis label that falls back to a shorter text when the full one does not fit (narrow screens)
+        function fitAxisLabel(ctx, full, short, maxW) {
+            ctx.font = '11px Arial, sans-serif';
+            return ctx.measureText(full).width <= maxW ? full : short;
+        }
+
         function drawPlotFrame(ctx, box, xTicks, yTicks, xLabel, yLabel) {
             const { padL, padT, plotW, plotH } = box;
             ctx.strokeStyle = '#000000';
@@ -9976,6 +10250,17 @@
         [resMeasLwInput, resMeasDipInput].forEach(el => el.addEventListener('input', updateResonatorExtraction));
         [resMeasLwUnitSelect, resMeasDipUnitSelect].forEach(el => el.addEventListener('change', updateResonatorExtraction));
         resExUseUnderBtn.addEventListener('click', () => applyResonatorExtraction('under'));
+        RS.Kex2Input.addEventListener('input', () => updateResonatorCoupling(lastEditedCouplingField));
+        RS.Kex2UnitSelect.addEventListener('change', () => updateResonatorCoupling(lastEditedCouplingField));
+        [RS.BsInput, RS.BsUnitSelect, RS.SpecScaleSelect].forEach(el => {
+            el.addEventListener('input', updateRingSpectrum);
+            el.addEventListener('change', updateRingSpectrum);
+        });
+        [RS.CombBetaInput, RS.CombD2Input].forEach(el => el.addEventListener('input', updateRingComb));
+        RS.CombBetaSyncBtn.addEventListener('click', () => {
+            const b = parseFloat(document.getElementById('eoBetaInput').value);
+            if (b > 0) { RS.CombBetaInput.value = fmt(b); updateRingComb(); }
+        });
         resExUseOverBtn.addEventListener('click', () => applyResonatorExtraction('over'));
 
         // Section 5: Soliton Listeners
@@ -10007,6 +10292,8 @@
             drawQpmSpectrum();
             drawEoSidebands();
             drawEoResponse();
+            updateRingSpectrum();
+            drawRingComb();
         });
 
         // ==========================================

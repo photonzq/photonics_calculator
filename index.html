@@ -2738,6 +2738,24 @@
                         </div>
                     </details>
 
+                    <details class="phys-note">
+                        <summary>Group-velocity dispersion (optional: needed for group-velocity-matched or broadband processes)</summary>
+                        <div class="px-3 pb-3 grid grid-cols-3 gap-3">
+                            <div>
+                                <label for="qpB21Input" class="input-label text-xs">$\beta_{2,1}$ (fs²/mm)</label>
+                                <input type="text" id="qpB21Input" placeholder="e.g. 100" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpB22Input" class="input-label text-xs">$\beta_{2,2}$ (fs²/mm)</label>
+                                <input type="text" id="qpB22Input" placeholder="e.g. 100" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpB23Input" class="input-label text-xs">$\beta_{2,3}$ (fs²/mm)</label>
+                                <input type="text" id="qpB23Input" placeholder="e.g. 400" class="calc-input text-xs">
+                            </div>
+                        </div>
+                    </details>
+
                     <div id="qpWarning" class="phys-warning is-info hidden"></div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -2754,10 +2772,48 @@
                         <div class="metric-badge"><div class="metric-label">Normalized $\eta_{\text{norm}}$</div><div id="qpEtaDisplay" class="metric-value text-sm mt-1">-</div></div>
                         <div class="metric-badge"><div class="metric-label" id="qpPgenLabel">Generated Power</div><div id="qpPgenDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
                         <div class="metric-badge"><div class="metric-label">Conversion</div><div id="qpConvDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" title="Lossless coupled-mode integration: includes pump depletion and, for DFG, parametric gain of the signal">Coupled-Mode Result</div><div id="qpPdepDisplay" class="metric-value text-sm text-emerald-700 mt-1">-</div></div>
+                        <div class="metric-badge"><div class="metric-label" id="qpOpaLabel">OPA Signal Gain</div><div id="qpOpaDisplay" class="metric-value text-sm mt-1">-</div></div>
                     </div>
 
                     <div class="relative w-full h-56 bg-white rounded-md border border-slate-200 p-2">
                         <canvas id="qpSpectrumCanvas" class="w-full h-full"></canvas>
+                    </div>
+
+                    <!-- Triply resonant ring OPO pumped at λ3 -->
+                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                        <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex justify-between items-center flex-wrap gap-2">
+                            <span>Ring OPO Threshold (triply resonant, pumped at λ₃ → λ₁ + λ₂)</span>
+                            <button type="button" id="qpRingSyncBtn" class="text-[10px] font-semibold normal-case text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200" title="Take the round-trip length and the loaded linewidth (for signal and idler) from the Microresonator card">⇐ L and κ_s = κ_i from Microresonator card</button>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <div>
+                                <label for="qpRingLInput" class="input-label text-xs">Round-Trip Length (µm)</label>
+                                <input type="number" id="qpRingLInput" value="440" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpKpInput" class="input-label text-xs">Pump $\kappa_p/2\pi$ (MHz, loaded)</label>
+                                <input type="number" id="qpKpInput" value="400" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpKexpInput" class="input-label text-xs">Pump $\kappa_{\text{ex},p}/2\pi$ (MHz)</label>
+                                <input type="number" id="qpKexpInput" value="200" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpKsInput" class="input-label text-xs">Signal $\kappa_s/2\pi$ (MHz, loaded)</label>
+                                <input type="number" id="qpKsInput" value="200" step="any" class="calc-input text-xs">
+                            </div>
+                            <div>
+                                <label for="qpKiInput" class="input-label text-xs">Idler $\kappa_i/2\pi$ (MHz, loaded)</label>
+                                <input type="number" id="qpKiInput" value="200" step="any" class="calc-input text-xs">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div class="metric-badge"><div class="metric-label">Threshold $P_{\text{th}}$ (bus)</div><div id="qpOpoThDisplay" class="metric-value text-sm text-indigo-700 mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">Nonlinear Coupling $g_0/2\pi$</div><div id="qpOpoG0Display" class="metric-value text-sm mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">Pump Coupling $\eta_p$</div><div id="qpOpoEtaDisplay" class="metric-value text-sm mt-1">-</div></div>
+                            <div class="metric-badge"><div class="metric-label">$\eta_{\text{SFG}}$ at $\lambda_3$ (waveguide)</div><div id="qpOpoEtaSfgDisplay" class="metric-value text-sm mt-1">-</div></div>
+                        </div>
                     </div>
 
                     <details class="phys-note">
@@ -2768,6 +2824,10 @@
                             <li>Acceptance bandwidths come from expanding $\Delta k$ to first order in frequency: $\partial\Delta k/\partial\omega = \Delta n_g/c$ with the group-index combination of the tuned wave. SHG (both fundamental photons tuned): $\Delta n_g = 2(n_{g,3} - n_{g,1})$, giving $0.443\,\lambda_1^2/(L|n_{g,3} - n_{g,1}|)$. SFG, λ₁ tuned at fixed λ₂: $n_{g,3} - n_{g,1}$. DFG, signal tuned at fixed pump: $n_{g,2} - n_{g,1}$ (group-velocity matching of signal and idler makes this very broad and then GVD, not included, sets the width). The FWHM of $\text{sinc}^2$ corresponds to $|\Delta k_r L/2| = 1.392$.</li>
                             <li>Efficiency: undepleted pump, lossless waveguide, fields normalized to the overlap area $A_{\text{eff}}$ (the usual three-mode overlap integral; roughly the mode area for well-overlapped modes). SHG: $\eta_{\text{norm}} = \frac{8\pi^2 d_{\text{eff}}^2}{\varepsilon_0 c\, n_1^2 n_3 \lambda_1^2 A_{\text{eff}}}$ and $P_3 = \eta_{\text{norm}}P_1^2L^2\,\text{sinc}^2$. SFG/DFG: $\frac{8\pi^2 d_{\text{eff}}^2}{\varepsilon_0 c\, n_1 n_2 n_3 \lambda_{\text{gen}}^2 A_{\text{eff}}}$ with the generated wavelength, and $P_{\text{gen}} = \eta P_a P_b L^2\,\text{sinc}^2$. A warning appears once the conversion exceeds 10 % (depletion).</li>
                             <li>$d_{33}$ of LiNbO₃ is about 25–27 pm/V at 1064 nm and somewhat lower (≈ 20 pm/V) for 1550 nm SHG by Miller's rule; use the value you trust for your wavelengths. With the defaults (thin-film LN-like modes) $\eta_{\text{norm}} \approx 2100$ %/W/cm², the order of reported TFLN devices.</li>
+                            <li>Dispersion: with the optional $\beta_2$ values, $\Delta k$ is expanded to second order in the tuning frequency $\Omega$: $\Delta k(\Omega) = \Delta k_r + a\Omega + b\Omega^2$ with $b = 2\beta_{2,3} - \beta_{2,1}$ (SHG), $\tfrac12(\beta_{2,3} - \beta_{2,1})$ (SFG, λ₁ tuned) or $-\tfrac12(\beta_{2,1} + \beta_{2,2})$ (DFG, signal tuned with the idler moving oppositely). The acceptance is then the exact width where $|\Delta k L/2| \le 1.392$, which stays finite for group-velocity-matched (degenerate) DFG/OPA. The tuning curve uses the same expansion.</li>
+                            <li>Coupled-mode result: the badge integrates the lossless coupled-mode equations with the residual mismatch $\Delta k_r$ (RK4). SHG: $dA_2/dz = -i\kappa A_1^2e^{-i\Delta k_r z}$, $dA_1/dz = -i\kappa A_2A_1^*e^{i\Delta k_r z}$ with $\kappa^2 = \eta_{\text{norm}}$ (reduces to $P_2 = P_1\tanh^2(\sqrt{\eta P_1}L)$ when phase-matched). SFG/DFG: three-wave equations in $b_j = A_j/\sqrt{\omega_j}$ with $G^2 = \eta_{\text{SFG}}\,\omega_1\omega_2/\omega_3$, which conserve energy and obey the Manley–Rowe relations.</li>
+                            <li>OPA (DFG process): small-signal signal gain $1 + (\Gamma^2/g^2)\sinh^2(gL)$ with $g^2 = \Gamma^2 - (\Delta k_r/2)^2$ and $\Gamma^2 = \frac{8\pi^2 d_{\text{eff}}^2 P_3}{\varepsilon_0 c\,n_1n_2n_3 A_{\text{eff}}\lambda_1\lambda_2}$; the depleted value comes from the integration.</li>
+                            <li>Ring OPO: signal, idler and pump resonant, all on resonance and phase-matched (QPM) around the ring, equal group velocities $v_g = c/\bar n_g$, $\Lambda$-independent overlap. With $\dot a_s = -\tfrac{\kappa_s}{2}a_s - ig_0a_pa_i^*$ (and permutations), $g_0^2 = \eta_{\text{SFG}}\,\hbar\omega_s\omega_i v_g^3/(\omega_pL_{\text{rt}})$ and $P_{\text{th}} = \frac{\kappa_p\kappa_s\kappa_i\,\omega_p^2\,L_{\text{rt}}}{16\,\eta_p\,v_g^3\,\eta_{\text{SFG}}\,\omega_s\omega_i}$ ($\eta_p = \kappa_{\text{ex},p}/\kappa_p$, all $\kappa$ loaded energy decay rates). The same formula is the $\omega_s \to \omega_i$ limit of the degenerate OPO. Verified against a time-domain coupled-mode simulation of the three modes.</li>
                             <li>Temperature: $\partial\Delta k_r/\partial T = 2\pi\sum \pm\frac{1}{\lambda_i}\frac{dn_i}{dT} + \frac{2\pi m}{\Lambda}\alpha_T$ (the second term is the thermal expansion of the poling period). The temperature FWHM is $5.566/(L\,|\partial\Delta k_r/\partial T|)$ and the phase-matched wavelength moves by $-(\partial\Delta k_r/\partial T)/(\partial\Delta k_r/\partial\lambda)$.</li>
                         </ul>
                     </details>
@@ -7929,7 +7989,9 @@
             'Ng1Input', 'Ng2Input', 'Ng3Input', 'LengthInput', 'LengthUnitSelect', 'OrderInput', 'DutyInput', 'PeriodInput', 'PeriodIdealBtn',
             'D33Input', 'AeffInput', 'PaInput', 'PbInput', 'PaLabel', 'PbLabel', 'PbBox', 'Dn1Input', 'Dn2Input', 'Dn3Input', 'ExpInput',
             'Warning', 'SpectrumCanvas', 'DkDisplay', 'IdealDisplay', 'LcDisplay', 'ResidualDisplay', 'PmLabel', 'PmDisplay', 'DeffDisplay',
-            'Bw1Label', 'Bw1Display', 'Bw2Label', 'Bw2Display', 'PeriodTolDisplay', 'TempDisplay', 'EtaDisplay', 'PgenLabel', 'PgenDisplay', 'ConvDisplay'];
+            'Bw1Label', 'Bw1Display', 'Bw2Label', 'Bw2Display', 'PeriodTolDisplay', 'TempDisplay', 'EtaDisplay', 'PgenLabel', 'PgenDisplay', 'ConvDisplay',
+            'B21Input', 'B22Input', 'B23Input', 'PdepDisplay', 'OpaLabel', 'OpaDisplay', 'RingSyncBtn', 'RingLInput', 'KpInput', 'KexpInput',
+            'KsInput', 'KiInput', 'OpoThDisplay', 'OpoG0Display', 'OpoEtaDisplay', 'OpoEtaSfgDisplay'];
         const QP = Object.fromEntries(qpIds.map(id => [id, document.getElementById('qp' + id)]));
         const EPS0 = 8.8541878128e-12;
         const SINC2_HALF_WIDTH = 5.56623; // full width of sinc²(ΔkL/2) at half maximum, in units of 1/L
@@ -7940,11 +8002,11 @@
         // Which wavelengths are inputs, and the labels, for each process
         const QP_PROCESS = {
             shg: { labels: ['λ₁ fundamental (nm)', 'λ₂ = λ₁ (nm)', 'λ₃ second harmonic (nm)'], free: [true, false, false],
-                pa: 'Fundamental Power P₁ (mW)', pb: null, gen: 'SH Power P₃', tuned: 'λ₁' },
+                pa: 'Fundamental Power P₁ (mW)', pb: null, gen: 'SH Power P₃ (undepleted)', tuned: 'λ₁' },
             sfg: { labels: ['λ₁ input (nm)', 'λ₂ input (nm)', 'λ₃ sum frequency (nm)'], free: [true, true, false],
-                pa: 'Power P₁ (mW)', pb: 'Power P₂ (mW)', gen: 'Sum Power P₃', tuned: 'λ₁ (λ₂ fixed)' },
+                pa: 'Power P₁ (mW)', pb: 'Power P₂ (mW)', gen: 'Sum Power P₃ (undepleted)', tuned: 'λ₁ (λ₂ fixed)' },
             dfg: { labels: ['λ₁ signal (nm)', 'λ₂ idler (nm)', 'λ₃ pump (nm)'], free: [true, false, true],
-                pa: 'Pump Power P₃ (mW)', pb: 'Signal Power P₁ (mW)', gen: 'Idler Power P₂', tuned: 'λ₁ signal (pump fixed)' }
+                pa: 'Pump Power P₃ (mW)', pb: 'Signal Power P₁ (mW)', gen: 'Idler Power P₂ (undepleted)', tuned: 'λ₁ signal (pump fixed)' }
         };
 
         function qpApplyProcessUI() {
@@ -7969,6 +8031,50 @@
         function setCaseSafeLabel(el, text) {
             el.innerHTML = text.replace(/([α-ωµ]+)/g, '<span style="text-transform:none">$1</span>');
         }
+
+        // Half-widths of |aΩ + bΩ²| ≤ D around Ω = 0 (the sinc² FWHM when D = 2·1.392/L):
+        // the nearest root on each side of the two quadratics bΩ² + aΩ ∓ D = 0
+        // Real roots of b x² + a x + c = 0 without cancellation (b may be 0)
+        function qpmQuadRoots(b, a, c) {
+            if (b === 0) return a !== 0 ? [-c / a] : [];
+            const disc = a * a - 4 * b * c;
+            if (disc < 0) return [];
+            const q = -0.5 * (a + (a >= 0 ? 1 : -1) * Math.sqrt(disc));
+            if (q === 0) return [0];
+            return [q / b, c / q];
+        }
+        function qpmHalfWidths(a, b, D) {
+            const roots = [...qpmQuadRoots(b, a, -D), ...qpmQuadRoots(b, a, D)];
+            const pos = roots.filter(r => r > 0), neg = roots.filter(r => r < 0);
+            return [neg.length ? Math.max(...neg) : -Infinity, pos.length ? Math.min(...pos) : Infinity];
+        }
+
+        // Root of Δk_r + aΩ + bΩ² = 0 nearest to Ω = 0 (NaN if none)
+        function qpmNearestRoot(dkr, a, b) {
+            const r = qpmQuadRoots(b, a, dkr);
+            return r.length ? r.reduce((u, v) => Math.abs(v) < Math.abs(u) ? v : u) : NaN;
+        }
+
+        // RK4 on complex state vectors stored as [re0, im0, re1, im1, ...]
+        function rk4Complex(deriv, y0, L, n) {
+            let y = y0.slice();
+            const h = L / n;
+            const add = (u, v, k) => u.map((x, i) => x + k * v[i]);
+            for (let i = 0; i < n; i++) {
+                const z = i * h;
+                const k1 = deriv(z, y), k2 = deriv(z + h / 2, add(y, k1, h / 2));
+                const k3 = deriv(z + h / 2, add(y, k2, h / 2)), k4 = deriv(z + h, add(y, k3, h));
+                y = y.map((x, j) => x + h / 6 * (k1[j] + 2 * k2[j] + 2 * k3[j] + k4[j]));
+            }
+            return y;
+        }
+        // (−i k) · u · v · e^{iφ} for complex u, v given as [re, im]
+        const cTriple = (k, u, v, phi) => {
+            const pr = u[0] * v[0] - u[1] * v[1], pi = u[0] * v[1] + u[1] * v[0];
+            const er = Math.cos(phi), ei = Math.sin(phi);
+            const qr = pr * er - pi * ei, qi = pr * ei + pi * er;
+            return [k * qi, -k * qr];
+        };
 
         function updateQpm(source = 'inputs') {
             if (qpIsSyncing) return;
@@ -8031,31 +8137,45 @@
                 QP.PeriodTolDisplay.textContent = isFinite(idealPeriod) ? fmtLen(SINC2_HALF_WIDTH * period ** 2 / (2 * Math.PI * m * L), 3) : '-';
                 if (Math.abs(dk) * L < 2 * Math.PI) warnings.push('|Δk| L < 2π: the process is essentially phase-matched without poling (modal or birefringent phase matching).');
 
-                // Acceptance bandwidths: ∂Δk/∂ω = Δn_g / c for the tuned wave
-                const fwhmLambda = (lam, dng) => Math.abs(dng) > 0 ? SINC2_HALF_WIDTH / L * lam ** 2 / (2 * Math.PI * Math.abs(dng)) : Infinity;
-                let tunedLam, dngT, bw2, bw2Label;
+                // Acceptance bandwidths from Δk(Ω) = Δk_r + aΩ + bΩ² (a = Δn_g/c; b from the optional GVD)
+                const b2 = [QP.B21Input, QP.B22Input, QP.B23Input].map(el => { const v = qpNum(el); return isNaN(v) ? 0 : v * 1e-27; });
+                const gvdGiven = [QP.B21Input, QP.B22Input, QP.B23Input].some(el => !isNaN(qpNum(el)));
+                const Dhalf = SINC2_HALF_WIDTH / (2 * L);
+                const fwhmLambda = (lam, a, b) => {
+                    const [om, op] = qpmHalfWidths(a, b, Dhalf);
+                    return isFinite(om) && isFinite(op) ? lam ** 2 * (op - om) / (2 * Math.PI * C) : Infinity;
+                };
+                let tunedLam, dngT, bQ, bw2, bw2Label;
                 if (proc === 'shg') {
-                    tunedLam = l1; dngT = 2 * (g3 - g1);
-                    bw2Label = 'SH-side Width Δλ₃ = Δλ₁/2'; bw2 = fwhmLambda(l1, dngT) / 2;
+                    tunedLam = l1; dngT = 2 * (g3 - g1); bQ = 2 * b2[2] - b2[0];
+                    bw2Label = 'SH-side Width Δλ₃ = Δλ₁/2'; bw2 = fwhmLambda(l1, dngT / C, bQ) / 2;
                 } else if (proc === 'sfg') {
-                    tunedLam = l1; dngT = g3 - g1;
-                    bw2Label = 'λ₂ Acceptance (λ₁ fixed)'; bw2 = fwhmLambda(l2, g3 - g2);
+                    tunedLam = l1; dngT = g3 - g1; bQ = 0.5 * (b2[2] - b2[0]);
+                    bw2Label = 'λ₂ Acceptance (λ₁ fixed)'; bw2 = fwhmLambda(l2, (g3 - g2) / C, 0.5 * (b2[2] - b2[1]));
                 } else {
-                    tunedLam = l1; dngT = g2 - g1;
-                    bw2Label = 'Pump λ₃ Acceptance (signal fixed)'; bw2 = fwhmLambda(l3, g3 - g2);
+                    tunedLam = l1; dngT = g2 - g1; bQ = -0.5 * (b2[0] + b2[1]);
+                    bw2Label = 'Pump λ₃ Acceptance (signal fixed)'; bw2 = fwhmLambda(l3, (g3 - g2) / C, 0.5 * (b2[2] - b2[1]));
                 }
-                const bw1 = fwhmLambda(tunedLam, dngT);
+                const aQ = dngT / C;
+                const bw1 = fwhmLambda(tunedLam, aQ, bQ);
                 setCaseSafeLabel(QP.Bw1Label, `${cfg.tuned} Acceptance`);
                 setCaseSafeLabel(QP.Bw2Label, bw2Label);
                 const withGhz = (dl, lam) => isFinite(dl) ? `${fmtLen(dl, 3)} · ${fmtFreq(C * dl / lam ** 2, 3)}` : '∞ (see note)';
                 QP.Bw1Display.textContent = [g1, g2, g3].some(isNaN) ? '-' : withGhz(bw1, tunedLam);
                 QP.Bw2Display.textContent = [g1, g2, g3].some(isNaN) ? '-' : withGhz(bw2, proc === 'sfg' ? l2 : proc === 'dfg' ? l3 : l3);
-                if (Math.abs(dngT) < 1e-3 && ![g1, g2, g3].some(isNaN)) warnings.push('The tuned waves are group-velocity matched: the first-order acceptance diverges and group-velocity dispersion (not included) sets the real bandwidth.');
+                if (Math.abs(dngT) < 1e-3 && ![g1, g2, g3].some(isNaN)) {
+                    warnings.push(gvdGiven
+                        ? 'The tuned waves are group-velocity matched: the acceptance is set by the GVD terms (second-order expansion).'
+                        : 'The tuned waves are group-velocity matched: the first-order acceptance diverges; enter the GVD values (optional panel) for the real bandwidth.');
+                }
 
                 // Phase-matched wavelength of the tuned wave for the chosen period
-                const dDkDl = -2 * Math.PI * dngT / tunedLam ** 2; // ∂Δk/∂λ_tuned (1/m²)
+                const dDkDl = -2 * Math.PI * dngT / tunedLam ** 2; // ∂Δk/∂λ_tuned (1/m²), first order
                 let lamPm = NaN;
-                if (Math.abs(dDkDl) > 0 && period > 0) lamPm = tunedLam - dkr / dDkDl;
+                if (period > 0) {
+                    const om = qpmNearestRoot(dkr, aQ, bQ);
+                    if (isFinite(om)) lamPm = 1 / (1 / tunedLam + om / (2 * Math.PI * C));
+                }
                 setCaseSafeLabel(QP.PmLabel, `Phase-Matched ${proc === 'dfg' ? 'Signal λ₁' : 'λ₁'} for Λ`);
                 QP.PmDisplay.textContent = isFinite(lamPm) ? `${fmt(lamPm * 1e9, 6)} nm` : '-';
 
@@ -8077,12 +8197,12 @@
                 const A = qpNum(QP.AeffInput) * 1e-12;
                 QP.DeffDisplay.textContent = isNaN(deff) ? '-' : `${fmt(deff * 1e12, 3)} pm/V`;
                 if (deff === 0) warnings.push(`d_eff = 0: order m = ${m} vanishes at duty cycle ${fmt(duty, 2)}.`);
+                const Pa = qpNum(QP.PaInput) * 1e-3, Pb = qpNum(QP.PbInput) * 1e-3;
                 let etaNorm = NaN, pGen = NaN, conv = NaN;
                 if (deff > 0 && A > 0) {
                     const lamGen = proc === 'dfg' ? l2 : l3;
                     const pref = 8 * Math.PI ** 2 * deff ** 2 / (EPS0 * C * A);
                     etaNorm = proc === 'shg' ? pref / (n1 ** 2 * n3 * l1 ** 2) : pref / (n1 * n2 * n3 * lamGen ** 2);
-                    const Pa = qpNum(QP.PaInput) * 1e-3, Pb = qpNum(QP.PbInput) * 1e-3;
                     if (proc === 'shg' && Pa > 0) { pGen = etaNorm * Pa ** 2 * L ** 2 * sinc2; conv = pGen / Pa; }
                     else if (proc !== 'shg' && Pa > 0 && Pb > 0) { pGen = etaNorm * Pa * Pb * L ** 2 * sinc2; conv = pGen / Math.min(Pa, Pb); }
                 }
@@ -8090,7 +8210,76 @@
                 QP.EtaDisplay.textContent = isFinite(etaNorm) ? `${fmt(etaNorm * 1e-4 * 100, 4)} %/W/cm²` : '-';
                 QP.PgenDisplay.textContent = isFinite(pGen) ? fmtPower(pGen, 4) : '-';
                 QP.ConvDisplay.textContent = isFinite(conv) ? `${fmt(100 * conv, 3)} %` : '-';
-                if (conv > 0.1) warnings.push(`Conversion ≈ ${fmt(100 * conv, 3)} %: beyond ~10 % the undepleted-pump result overestimates the output.`);
+                if (conv > 0.1) warnings.push(proc === 'dfg'
+                    ? `Conversion ≈ ${fmt(100 * conv, 3)} %: outside the undepleted, no-gain limit; the coupled-mode result includes parametric gain and depletion.`
+                    : `Conversion ≈ ${fmt(100 * conv, 3)} %: the undepleted estimate overestimates; use the coupled-mode result.`);
+
+                // Pump depletion: lossless coupled-mode equations with the residual mismatch Δk_r (RK4)
+                const w1 = 2 * Math.PI * C / l1, w2 = 2 * Math.PI * C / l2, w3 = 2 * Math.PI * C / l3;
+                const etaSfg3 = deff > 0 && A > 0 ? 8 * Math.PI ** 2 * deff ** 2 / (EPS0 * C * A) / (n1 * n2 * n3 * l3 ** 2) : NaN;
+                QP.PdepDisplay.textContent = '-';
+                QP.OpaDisplay.textContent = '-';
+                setCaseSafeLabel(QP.OpaLabel, proc === 'dfg' ? 'OPA Signal Gain (small-signal · depleted)' : 'OPA Signal Gain (DFG only)');
+                const cycles = Math.abs(dkr) * L / (2 * Math.PI);
+                if (isFinite(etaNorm) && Pa > 0 && cycles > 300) {
+                    QP.PdepDisplay.textContent = 'far from phase matching';
+                } else if (isFinite(etaNorm) && Pa > 0) {
+                    const growth = proc === 'shg' ? Math.sqrt(etaNorm * Pa) * L : Math.sqrt(etaSfg3 * Math.max(Pa, Pb || 0)) * L;
+                    const nSteps = Math.min(20000, Math.ceil(60 * cycles + 80 * growth + 200));
+                    if (proc === 'shg') {
+                        const kk = Math.sqrt(etaNorm);
+                        const y = rk4Complex((z, v) => {
+                            const A1 = [v[0], v[1]], A2 = [v[2], v[3]];
+                            const d2 = cTriple(kk, A1, A1, -dkr * z);
+                            const d1 = cTriple(kk, A2, [A1[0], -A1[1]], dkr * z);
+                            return [d1[0], d1[1], d2[0], d2[1]];
+                        }, [Math.sqrt(Pa), 0, 0, 0], L, nSteps);
+                        const p2 = y[2] ** 2 + y[3] ** 2;
+                        QP.PdepDisplay.textContent = `${fmtPower(p2, 4)} (${fmt(100 * p2 / Pa, 3)} %)`;
+                    } else if (Pb > 0) {
+                        const G = Math.sqrt(etaSfg3 * w1 * w2 / w3);
+                        // b_j = A_j/√ω_j; SFG: P1 = Pa, P2 = Pb; DFG: pump P3 = Pa, signal P1 = Pb
+                        const P0 = proc === 'sfg' ? [Pa, Pb, 0] : [Pb, 0, Pa];
+                        const y0 = [Math.sqrt(P0[0] / w1), 0, Math.sqrt(P0[1] / w2), 0, Math.sqrt(P0[2] / w3), 0];
+                        const y = rk4Complex((z, v) => {
+                            const b1 = [v[0], v[1]], b2v = [v[2], v[3]], b3 = [v[4], v[5]];
+                            const d1 = cTriple(G, b3, [b2v[0], -b2v[1]], dkr * z);
+                            const d2 = cTriple(G, b3, [b1[0], -b1[1]], dkr * z);
+                            const d3 = cTriple(G, b1, b2v, -dkr * z);
+                            return [d1[0], d1[1], d2[0], d2[1], d3[0], d3[1]];
+                        }, y0, L, nSteps);
+                        const P = [(y[0] ** 2 + y[1] ** 2) * w1, (y[2] ** 2 + y[3] ** 2) * w2, (y[4] ** 2 + y[5] ** 2) * w3];
+                        const pg = proc === 'sfg' ? P[2] : P[1];
+                        QP.PdepDisplay.textContent = `${fmtPower(pg, 4)} (${fmt(100 * pg / (proc === 'sfg' ? Math.min(Pa, Pb) : Pb), 3)} %)`;
+                        if (proc === 'dfg') {
+                            const Gam2 = G ** 2 * Pa / w3;
+                            const gg2 = Gam2 - (dkr / 2) ** 2;
+                            const gL = Math.sqrt(Math.abs(gg2)) * L;
+                            const ss = gg2 > 0 ? Gam2 / gg2 * Math.sinh(gL) ** 2 : gg2 < 0 ? Gam2 / -gg2 * Math.sin(gL) ** 2 : Gam2 * L * L;
+                            const gainSmall = 1 + ss, gainDep = P[0] / Pb;
+                            QP.OpaDisplay.textContent = `${fmt(10 * Math.log10(gainSmall), 3)} dB · ${fmt(10 * Math.log10(gainDep), 3)} dB`;
+                        }
+                    }
+                }
+
+                // Triply resonant ring OPO pumped at λ3 (perfect phase matching around the ring)
+                const ngs = [g1, g2, g3].filter(v => v > 0);
+                const vg = C / (ngs.length === 3 ? (g1 + g2 + g3) / 3 : (n1 + n2 + n3) / 3);
+                const Lr = qpNum(QP.RingLInput) * 1e-6;
+                const kp = 2 * Math.PI * 1e6 * qpNum(QP.KpInput), kexp = 2 * Math.PI * 1e6 * qpNum(QP.KexpInput);
+                const ks = 2 * Math.PI * 1e6 * qpNum(QP.KsInput), ki = 2 * Math.PI * 1e6 * qpNum(QP.KiInput);
+                QP.OpoEtaSfgDisplay.textContent = isFinite(etaSfg3) ? `${fmt(etaSfg3 * 1e-4 * 100, 4)} %/W/cm²` : '-';
+                if (isFinite(etaSfg3) && [Lr, kp, kexp, ks, ki].every(v => v > 0) && kexp <= kp) {
+                    const etaP = kexp / kp;
+                    const g0sq = etaSfg3 * H_PLANCK / (2 * Math.PI) * w1 * w2 * vg ** 3 / (w3 * Lr);
+                    const Pth = kp * ks * ki * w3 ** 2 * Lr / (16 * etaP * vg ** 3 * etaSfg3 * w1 * w2);
+                    QP.OpoThDisplay.textContent = fmtPower(Pth, 4);
+                    QP.OpoG0Display.textContent = fmtFreq(Math.sqrt(g0sq) / (2 * Math.PI), 4);
+                    QP.OpoEtaDisplay.textContent = fmt(etaP, 3);
+                } else {
+                    QP.OpoThDisplay.textContent = QP.OpoG0Display.textContent = '-';
+                    QP.OpoEtaDisplay.textContent = kexp > kp ? 'κ_ex,p > κ_p' : '-';
+                }
 
                 if (warnings.length) {
                     QP.Warning.innerHTML = warnings.map(t => `• ${t}`).join('<br>');
@@ -8099,25 +8288,25 @@
                     QP.Warning.className = 'phys-warning is-info hidden';
                 }
 
-                qpLastState = { tunedLam, dkr, dDkDl, L, lamPm, bw1, label: cfg.tuned };
+                qpLastState = { tunedLam, dkr, aQ, bQ, L, lamPm, bw1, label: cfg.tuned };
             } finally {
                 qpIsSyncing = false;
                 drawQpmSpectrum();
             }
         }
 
-        // Normalized efficiency sinc²(Δk_r(λ) L/2) versus the tuned wavelength (first-order Δk)
+        // Normalized efficiency sinc²(Δk(λ) L/2) versus the tuned wavelength (Δk to second order)
         function drawQpmSpectrum() {
             if (!QP.SpectrumCanvas) return;
             const prep = prepareCanvas(QP.SpectrumCanvas);
             if (!prep) return;
             const { ctx, W, H } = prep;
             const s = qpLastState;
-            if (!s || !isFinite(s.bw1) || !(Math.abs(s.dDkDl) > 0)) {
+            if (!s || !isFinite(s.bw1) || !(Math.abs(s.aQ) > 0 || Math.abs(s.bQ) > 0)) {
                 ctx.fillStyle = '#767676';
                 ctx.font = '11px Arial, sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(s ? 'Tuning curve needs group indices with a non-zero group-index difference.' : 'Enter wavelengths and indices.', W / 2, H / 2);
+                ctx.fillText(s ? 'Tuning curve needs a non-zero group-index difference or the GVD values.' : 'Enter wavelengths and indices.', W / 2, H / 2);
                 return;
             }
             const box = { padL: 46, padR: 12, padT: 12, padB: 36 };
@@ -8131,7 +8320,8 @@
             const xToPx = (nm) => box.padL + (nm - center + half) / (2 * half) * box.plotW;
             const yToPx = (v) => box.padT + (1 - v) * box.plotH;
             const eff = (nm) => {
-                const xx = (s.dkr + s.dDkDl * (nm - lam0) * 1e-9) * s.L / 2;
+                const om = 2 * Math.PI * C * (1 / (nm * 1e-9) - 1 / (lam0 * 1e-9));
+                const xx = (s.dkr + s.aQ * om + s.bQ * om * om) * s.L / 2;
                 return Math.abs(xx) < 1e-9 ? 1 : (Math.sin(xx) / xx) ** 2;
             };
             ctx.strokeStyle = '#385C9E';
@@ -8164,6 +8354,19 @@
             'DutyInput', 'D33Input', 'AeffInput', 'PaInput', 'PbInput', 'Dn1Input', 'Dn2Input', 'Dn3Input', 'ExpInput']
             .forEach(id => QP[id].addEventListener('input', () => updateQpm('inputs')));
         QP.LengthUnitSelect.addEventListener('change', () => updateQpm('inputs'));
+        ['B21Input', 'B22Input', 'B23Input', 'RingLInput', 'KpInput', 'KexpInput', 'KsInput', 'KiInput']
+            .forEach(id => QP[id].addEventListener('input', () => updateQpm('inputs')));
+        QP.RingSyncBtn.addEventListener('click', () => {
+            // Round-trip length and loaded linewidth (κ0 + κex + κex,2) from the Microresonator card
+            const Lm = parseFloat(resLengthInput.value) * LENGTH_SI[resLengthUnitSelect.value];
+            if (Lm > 0) QP.RingLInput.value = fmt(Lm * 1e6);
+            if (ringState) {
+                const kHz = (ringState.k0 + ringState.kex + ringState.kex2) / (2 * Math.PI);
+                QP.KsInput.value = fmt(kHz / 1e6);
+                QP.KiInput.value = fmt(kHz / 1e6);
+            }
+            updateQpm('inputs');
+        });
         QP.PeriodInput.addEventListener('input', () => { qpPeriodMode = 'custom'; updateQpm('period'); });
         QP.PeriodIdealBtn.addEventListener('click', () => updateQpm('ideal'));
         qpApplyProcessUI();

@@ -6158,6 +6158,8 @@
             const loss_unit = fpLossUnit.value;
             let R1 = parseFloat(fpR1Input.value);
             let R2 = parseFloat(fpR2Input.value);
+            if (R1 > 1.0) R1 = R1 / 100.0;   // values above 1 are percent
+            if (R2 > 1.0) R2 = R2 / 100.0;
             const solveTarget = fpSolveTargetSelect.value;
 
             if ([centerVal, ng].some(isNaN) || centerVal <= 0 || ng <= 0) {
@@ -6243,9 +6245,6 @@
                     }
                 }
             }
-
-            if (R1 > 1.0) R1 = R1 / 100.0;
-            if (R2 > 1.0) R2 = R2 / 100.0;
 
             const r_rt = Math.sqrt(Math.max(1e-9, R1 * R2)) * Math.exp(-alpha_per_m * L_m);
             if (r_rt > 0 && r_rt < 1.0 && L_m > 0) {
@@ -6716,10 +6715,16 @@
             const T0 = resMeasDipUnitSelect.value === 'db' ? Math.pow(10, -dipVal / 10) : dipVal / 100;
             if (!(T0 >= 0 && T0 < 1)) { cells.forEach(c => c.textContent = '-'); return; }
             const s = Math.sqrt(T0);
-            const under = { k0: k_hz * (1 + s) / 2, kex: k_hz * (1 - s) / 2 };
-            const over = { k0: k_hz * (1 - s) / 2, kex: k_hz * (1 + s) / 2 };
+            // κ0 + κex,2 = κ(1 ± √T0)/2, κex = κ(1 ∓ √T0)/2, with κex,2 from the card (0 = all-pass)
+            const kex2_hz = Math.max(0, parseFloat(RS.Kex2Input.value) * FREQ_SI[RS.Kex2UnitSelect.value] || 0);
+            const under = { k0: k_hz * (1 + s) / 2 - kex2_hz, kex: k_hz * (1 - s) / 2 };
+            const over = { k0: k_hz * (1 - s) / 2 - kex2_hz, kex: k_hz * (1 + s) / 2 };
             resExtractSolutions = { under, over };
             const fill = (sol, k0Cell, kexCell, q0Cell, qexCell) => {
+                if (!(sol.k0 > 0)) {   // drop port larger than κ0 + κex,2 allows
+                    [k0Cell, kexCell, q0Cell, qexCell].forEach(c => c.textContent = '–');
+                    return;
+                }
                 k0Cell.textContent = fmtFreq(sol.k0, 4);
                 kexCell.textContent = fmtFreq(sol.kex, 4);
                 q0Cell.textContent = sol.k0 > 0 ? fmtExp(base.f0 / sol.k0, 4) : '∞';
@@ -7584,7 +7589,8 @@
 
             let tfwhm_s = tfwhm_val * TIME_SI[tfwhm_unit];
             let t0_s = tfwhm_s / shapeFactors.t0_factor;
-            const fundamentalEnergy_J = (2 * Math.abs(beta2_s2_per_m)) / (gamma_si * t0_s);
+            // Energy at which N = 1: E1 = k |β2| / (γ T0) with P0 = E / (k T0); k = 2 (sech², exact soliton), √π (Gaussian)
+            const fundamentalEnergy_J = (shapeFactors.power_factor * Math.abs(beta2_s2_per_m)) / (gamma_si * t0_s);
 
             let energy_J = energy_val * ENERGY_SI[energy_unit];
 
@@ -8256,7 +8262,7 @@
                         }, y0, L, nSteps);
                         const P = [(y[0] ** 2 + y[1] ** 2) * w1, (y[2] ** 2 + y[3] ** 2) * w2, (y[4] ** 2 + y[5] ** 2) * w3];
                         const pg = proc === 'sfg' ? P[2] : P[1];
-                        QP.PdepDisplay.textContent = `${fmtPower(pg, 4)} (${fmt(100 * pg / (proc === 'sfg' ? Math.min(Pa, Pb) : Pb), 3)} %)`;
+                        QP.PdepDisplay.textContent = `${fmtPower(pg, 4)} (${fmt(100 * pg / Math.min(Pa, Pb), 3)} %)`;
                         if (proc === 'dfg') {
                             const Gam2 = G ** 2 * Pa / w3;
                             const gg2 = Gam2 - (dkr / 2) ** 2;

@@ -178,6 +178,7 @@
             font-size: 1.05rem;
             font-weight: 700;
             color: #0f172a;
+            cursor: copy;
         }
         .metric-label {
             font-size: 0.7rem;
@@ -415,12 +416,14 @@
                 </div>
             </div>
 
-            <!-- Global Precision -->
-            <div class="flex items-center gap-4">
+            <!-- Global Precision, shareable link and reset -->
+            <div class="flex items-center justify-center flex-wrap gap-2">
                 <div class="flex items-center bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 shadow-sm">
                     <label for="precisionInput" class="text-xs font-semibold text-slate-600 mr-2 uppercase tracking-wide" title="Significant figures shown in every calculated field">Sig. figs:</label>
                     <input type="number" id="precisionInput" value="6" min="1" max="15" class="w-12 text-center text-sm font-mono font-bold bg-white border border-slate-300 rounded p-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
                 </div>
+                <button type="button" id="copyLinkBtn" class="text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-md px-2.5 py-2 shadow-sm" title="Copy a link that reopens the calculator with every input you changed (your last session is also kept in this browser)">🔗 Copy link</button>
+                <button type="button" id="resetStateBtn" class="text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-300 rounded-md px-2.5 py-2 shadow-sm" title="Restore every input to its default and forget the saved session">↺ Reset</button>
             </div>
         </div>
 
@@ -4167,6 +4170,9 @@
     <footer class="border-t border-slate-200 bg-white py-6 mt-12 text-center text-xs text-slate-400 font-inter">
         <p>Powered by KaTeX and Tailwind CSS, created with AI assistance, and <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer" class="underline hover:text-slate-600 transition-colors">CC0 Public Domain</a>.</p>
     </footer>
+
+    <!-- Copy / link feedback -->
+    <div id="copyToast" role="status" aria-live="polite" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] truncate px-3 py-1.5 rounded-md bg-slate-800 text-white text-xs font-mono shadow-lg opacity-0 pointer-events-none transition-opacity duration-200"></div>
 
     <!-- ========================================== -->
     <!-- JAVASCRIPT CALCULATION & INTERACTIVITY -->
@@ -10623,6 +10629,179 @@
             sections.forEach(sec => observer.observe(sec));
         }
 
+        // --- Shareable state: link with the changed inputs, last session in this browser, click-to-copy ---
+        // Every input/select with an id is tracked. The saved state holds the values that differ from the
+        // defaults plus the order in which fields were edited; restoring sets all values, recomputes, then
+        // replays the edits in that order so each card ends with the field you typed last as its source.
+        const STATE_KEY = 'photonics-calculator-state-v1';
+        const STATE_MAX_VALUE_LEN = 64;
+        const SLIDER_MIRROR = { fresnelAngleSlider: 'fresnelAngleInput', gbZDistanceSlider: 'gbZDistanceInput' };
+        const STATE_NO_REPLAY = new Set(['gcAlphaUnitSelect']); // its change handler converts the number in place
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const resetStateBtn = document.getElementById('resetStateBtn');
+        let stateEls = [], stateById = new Map(), stateDefaults = {}, stateOrder = [];
+        let stateRestoring = false, stateDisabled = false, stateSaveTimer = null;
+
+        const stateRead = (el) => el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+        function stateWrite(el, v) {
+            if (el.type === 'checkbox') { el.checked = v === '1'; return true; }
+            if (el.tagName === 'SELECT' && ![...el.options].some(o => o.value === v)) return false;
+            el.value = v;
+            return true;
+        }
+        function stateSnapshot() {
+            const vals = {};
+            stateEls.forEach(el => { const v = stateRead(el); if (v !== stateDefaults[el.id]) vals[el.id] = v; });
+            return { v: 1, vals, order: stateOrder.filter(id => stateById.has(id)).slice(-80), tabs: { gb: gbCurrentTab, vis: currentVisTab } };
+        }
+        function stateSaveNow() {
+            clearTimeout(stateSaveTimer);
+            if (stateDisabled || stateRestoring) return;
+            try { localStorage.setItem(STATE_KEY, JSON.stringify(stateSnapshot())); } catch (e) { /* storage unavailable */ }
+        }
+        function stateScheduleSave() {
+            if (stateDisabled || stateRestoring) return;
+            clearTimeout(stateSaveTimer);
+            stateSaveTimer = setTimeout(stateSaveNow, 400);
+        }
+        function stateNoteEdit(e) {
+            if (stateRestoring || !e.target || !e.target.id) return;
+            const id = SLIDER_MIRROR[e.target.id] || e.target.id;
+            if (!stateById.has(id)) return;
+            const i = stateOrder.indexOf(id);
+            if (i >= 0) stateOrder.splice(i, 1);
+            stateOrder.push(id);
+            stateScheduleSave();
+        }
+        function stateApply(st) {
+            if (!st || typeof st !== 'object') return;
+            const vals = st.vals && typeof st.vals === 'object' ? st.vals : {};
+            const has = (id) => Object.prototype.hasOwnProperty.call(vals, id) && typeof vals[id] === 'string' && vals[id].length <= STATE_MAX_VALUE_LEN;
+            const order = Array.isArray(st.order) ? st.order.filter(id => typeof id === 'string' && stateById.has(id)) : [];
+            stateRestoring = true;
+            try {
+                stateEls.forEach(el => { if (has(el.id)) stateWrite(el, vals[el.id]); });
+                customTbpInput.classList.toggle('hidden', pulseShapeSelect.value !== 'custom');
+                qpApplyProcessUI();
+                updateAllCalculations();
+                order.forEach(id => {
+                    const el = stateById.get(id);
+                    if (!stateWrite(el, has(id) ? vals[id] : stateDefaults[id]) || STATE_NO_REPLAY.has(id)) return;
+                    el.dispatchEvent(new Event(el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input', { bubbles: true }));
+                });
+                stateOrder = order;
+                const tabs = st.tabs && typeof st.tabs === 'object' ? st.tabs : {};
+                if (Object.prototype.hasOwnProperty.call(GB_TABS, tabs.gb) && tabs.gb !== gbCurrentTab) setGbTab(tabs.gb);
+                if (tabs.vis === 'curve' && currentVisTab !== 'curve') visTabCurveBtn.click();
+            } finally {
+                stateRestoring = false;
+            }
+        }
+        function stateToQuery(st) {
+            const q = new URLSearchParams();
+            stateEls.forEach(el => { if (Object.prototype.hasOwnProperty.call(st.vals, el.id)) q.append(el.id, st.vals[el.id]); });
+            if (st.order.length) q.append('_order', st.order.join(','));
+            const tabs = [];
+            if (st.tabs.gb && st.tabs.gb !== 'caustic') tabs.push(`gb.${st.tabs.gb}`);
+            if (st.tabs.vis === 'curve') tabs.push('vis.curve');
+            if (tabs.length) q.append('_tabs', tabs.join(','));
+            return q.toString();
+        }
+        function stateFromQuery(search) {
+            const q = new URLSearchParams(search);
+            const vals = {};
+            q.forEach((v, k) => { if (stateById.has(k)) vals[k] = v; });
+            const order = (q.get('_order') || '').split(',').filter(Boolean);
+            const tabs = {};
+            (q.get('_tabs') || '').split(',').forEach(t => { const [k, v] = t.split('.'); if (k && v) tabs[k] = v; });
+            return Object.keys(vals).length || order.length || Object.keys(tabs).length ? { v: 1, vals, order, tabs } : null;
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+            return new Promise((resolve, reject) => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try { if (document.execCommand('copy')) resolve(); else reject(new Error('copy refused')); } catch (err) { reject(err); } finally { ta.remove(); }
+            });
+        }
+        let toastTimer = null;
+        function showToast(msg) {
+            const t = document.getElementById('copyToast');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.remove('opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.add('opacity-0'), 1800);
+        }
+        // Text of a result badge without KaTeX's hidden MathML copy
+        function metricText(el) {
+            const c = el.cloneNode(true);
+            c.querySelectorAll('.katex-mathml').forEach(n => n.remove());
+            return c.textContent.replace(/\s+/g, ' ').trim();
+        }
+
+        document.addEventListener('click', (e) => {
+            const t = e.target && e.target.closest ? e.target : null;
+            if (!t) return;
+            const mv = t.closest('.metric-value');
+            if (mv) {
+                if (window.getSelection && String(window.getSelection()).length) return; // keep a manual selection
+                const txt = metricText(mv);
+                if (!txt || txt === '-') return;
+                copyText(txt).then(() => showToast(`Copied: ${txt}`), () => showToast('Copy failed: select the text manually'));
+                return;
+            }
+            if (t.closest('#qpPeriodIdealBtn')) stateOrder = stateOrder.filter(id => id !== 'qpPeriodInput');
+            if (t.closest('button')) stateScheduleSave(); // sync and preset buttons write fields without input events
+        });
+
+        copyLinkBtn.addEventListener('click', () => {
+            const q = stateToQuery(stateSnapshot());
+            const base = window.location.href.split(/[?#]/)[0];
+            const url = base + (q ? `?${q}` : '') + window.location.hash;
+            copyText(url).then(
+                () => showToast(q ? (url.length > 6000 ? 'Link copied (long: many fields changed)' : 'Link to this state copied') : 'Link copied (all inputs at defaults)'),
+                () => window.prompt('Copy this link:', url));
+        });
+        resetStateBtn.addEventListener('click', () => {
+            if (!window.confirm('Reset every input to its default value? The saved session in this browser is cleared too.')) return;
+            stateDisabled = true;
+            try { localStorage.removeItem(STATE_KEY); } catch (e) { /* storage unavailable */ }
+            history.replaceState(null, '', window.location.href.split(/[?#]/)[0] + window.location.hash);
+            window.location.reload();
+        });
+
+        function initStatePersistence() {
+            stateEls = [precisionInput, ...document.querySelectorAll('main input[id], main select[id]')]
+                .filter(el => !['button', 'range', 'file', 'hidden', 'submit', 'reset'].includes(el.type));
+            stateById = new Map(stateEls.map(el => [el.id, el]));
+            stateEls.forEach(el => { stateDefaults[el.id] = stateRead(el); });
+            document.querySelectorAll('.metric-value').forEach(el => { if (!el.title) el.title = 'Click to copy'; });
+            document.addEventListener('input', stateNoteEdit, true);
+            document.addEventListener('change', stateNoteEdit, true);
+            window.addEventListener('pagehide', stateSaveNow);
+
+            const fromUrl = stateFromQuery(window.location.search);
+            let saved = fromUrl;
+            if (!saved) {
+                try { saved = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch (e) { saved = null; }
+            }
+            if (saved) {
+                try { stateApply(saved); } catch (err) { console.warn('Saved state skipped:', err); }
+            }
+            if (fromUrl) {
+                // The link has been applied: drop the query so reloads keep your later edits
+                history.replaceState(null, '', window.location.href.split(/[?#]/)[0] + window.location.hash);
+                stateSaveNow();
+            }
+        }
+
         // --- DOM Ready Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             try {
@@ -10640,6 +10819,11 @@
                 updateAllCalculations();
             } catch (calcErr) {
                 console.error('Calculation init error:', calcErr);
+            }
+            try {
+                initStatePersistence();
+            } catch (stateErr) {
+                console.warn('State persistence unavailable:', stateErr);
             }
             if (window.location.hash) {
                 setTimeout(handleHashJump, 150);
